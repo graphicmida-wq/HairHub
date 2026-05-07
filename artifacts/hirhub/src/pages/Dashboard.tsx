@@ -153,7 +153,7 @@ export const Dashboard = () => {
             </div>
           </section>
         ) : (
-          <section className="hidden lg:block">
+          <section>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium text-stone-900">Clienti recenti</h2>
               <Link to="/clienti" className="text-sm text-brand-dark font-medium flex items-center gap-1 active:opacity-70">
