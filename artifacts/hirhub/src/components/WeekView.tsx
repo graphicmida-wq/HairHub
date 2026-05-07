@@ -58,7 +58,7 @@ export const WeekView = ({
   const today = new Date();
 
   const getAppsForSlot = (day: Date, hour: string) => {
-    const dateStr = day.toISOString().split('T')[0];
+    const dateStr = format(day, 'yyyy-MM-dd');
     const hourNum = hour.split(':')[0];
     return appointments.filter(
       a => a.date === dateStr && a.time.split(':')[0] === hourNum
@@ -119,7 +119,7 @@ export const WeekView = ({
               <div key={day.toISOString()} className="flex-1 min-w-[80px] border-l border-stone-100 first:border-l-0 flex flex-col">
                 {HOURS.map(hour => {
                   const slotApps = getAppsForSlot(day, hour);
-                  const dateStr = day.toISOString().split('T')[0];
+                  const dateStr = format(day, 'yyyy-MM-dd');
 
                   return (
                     <div

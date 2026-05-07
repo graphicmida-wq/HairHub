@@ -29,7 +29,7 @@ export const Appointments = () => {
 
   const isLoading = loadingAppts || loadingClients || loadingServices;
 
-  const dateString = selectedDate.toISOString().split('T')[0];
+  const dateString = format(selectedDate, 'yyyy-MM-dd');
 
   const dailyAppointments = appointments
     .filter(a => a.date === dateString)
