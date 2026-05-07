@@ -100,11 +100,10 @@ export const Appointments = () => {
           <Plus className="w-4 h-4" /> Nuovo Appuntamento
         </button>
       </div>
-
       {/* View toggle + navigation */}
       <div className="flex flex-col gap-3">
         {/* Toggle */}
-        <div className="flex bg-stone-100 rounded-xl p-1 self-center">
+        <div className="flex rounded-xl p-1 self-center text-left bg-[#f5f5f400]">
           <button
             onClick={() => setView('day')}
             className={cn(
@@ -144,7 +143,6 @@ export const Appointments = () => {
           </button>
         </div>
       </div>
-
       {/* Day view */}
       {view === 'day' && (
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-2 relative pb-20">
@@ -210,7 +208,6 @@ export const Appointments = () => {
           </div>
         </div>
       )}
-
       {/* Week view */}
       {view === 'week' && (
         <WeekView
@@ -222,7 +219,6 @@ export const Appointments = () => {
           onSlotClick={handleSlotClick}
         />
       )}
-
       <ManageAppointmentModal
         isOpen={!!manageAppId}
         onClose={() => setManageAppId(null)}
@@ -230,19 +226,16 @@ export const Appointments = () => {
         onEdit={(id) => setEditAppId(id)}
         onComplete={(id) => setCompleteAppId(id)}
       />
-
       <EditAppointmentModal
         isOpen={!!editAppId}
         onClose={() => setEditAppId(null)}
         appointmentId={editAppId}
       />
-
       <CompleteAppointmentModal
         isOpen={!!completeAppId}
         onClose={() => setCompleteAppId(null)}
         appointmentId={completeAppId}
       />
-
       {/* Local modal for slot-click prefill (day and week view) */}
       <NewAppointmentModal
         isOpen={isSlotModalOpen}
