@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { store, useStore } from '../lib/store';
+import { store } from '../lib/store';
+import { useListAppointments, useListClients, useListServices } from '@workspace/api-client-react';
 import { format, addDays, subDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
@@ -14,7 +15,9 @@ export const Appointments = () => {
   const [editAppId, setEditAppId] = useState<string | null>(null);
   const [completeAppId, setCompleteAppId] = useState<string | null>(null);
 
-  const { appointments, clients, services } = useStore();
+  const { data: appointments = [] } = useListAppointments();
+  const { data: clients = [] } = useListClients();
+  const { data: services = [] } = useListServices();
 
   const dateString = selectedDate.toISOString().split('T')[0];
 

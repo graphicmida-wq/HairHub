@@ -1,12 +1,15 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { useStore } from '../lib/store';
+import { useListClients, useListAppointments, useListServices, useListProducts } from '@workspace/api-client-react';
 import { Clock, Calendar as CalendarIcon, Phone, Mail, FileText, AlertTriangle, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOpen: boolean, onClose: () => void, clientId: string | null, onEdit: (id: string) => void }) => {
-  const { clients, appointments, services, products } = useStore();
+  const { data: clients = [] } = useListClients();
+  const { data: appointments = [] } = useListAppointments();
+  const { data: services = [] } = useListServices();
+  const { data: products = [] } = useListProducts();
 
   const client = clients.find(c => c.id === clientId);
 

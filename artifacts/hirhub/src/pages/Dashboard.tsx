@@ -1,10 +1,15 @@
 import React from 'react';
-import { store, useStore } from '../lib/store';
-import { Clock, AlertCircle, Plus, Users, ArrowRight } from 'lucide-react';
+import { store } from '../lib/store';
+import { useListAppointments, useListClients, useListProducts, useListServices } from '@workspace/api-client-react';
+import { Clock, AlertCircle, Plus, Users, ArrowRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Dashboard = () => {
-  const { appointments, clients, products } = useStore();
+  const { data: appointments = [], isLoading: loadingApps } = useListAppointments();
+  const { data: clients = [] } = useListClients();
+  const { data: products = [] } = useListProducts();
+  const { data: services = [] } = useListServices();
+
   const today = new Date().toISOString().split('T')[0];
 
   const todaysAppointments = appointments
@@ -36,7 +41,7 @@ export const Dashboard = () => {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-3xl font-light text-stone-900">{store.clients.length}</p>
+              <p className="text-3xl font-light text-stone-900">{clients.length}</p>
               <p className="text-sm text-stone-500 font-medium">Clienti totali</p>
             </div>
           </div>
@@ -49,15 +54,15 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
         <button onClick={() => store.openModal('isNewAppointmentOpen')} className="bg-stone-900 text-white p-4 rounded-2xl flex items-center gap-3 hover:bg-stone-800 transition-colors w-full text-left">
           <div className="bg-stone-800 p-2 rounded-xl"><Plus className="w-5 h-5 text-stone-100" /></div>
-          <span className="font-medium text-sm md:text-base cursor-pointer">Nuovo Appuntamento</span>
+          <span className="font-medium text-sm md:text-base">Nuovo Appuntamento</span>
         </button>
         <button onClick={() => store.openModal('isNewClientOpen')} className="bg-stone-100 text-stone-900 p-4 rounded-2xl flex items-center gap-3 hover:bg-stone-200 transition-colors border border-stone-200 w-full text-left">
           <div className="bg-white p-2 rounded-xl"><Users className="w-5 h-5 text-stone-600" /></div>
-          <span className="font-medium text-sm md:text-base cursor-pointer">Nuovo Cliente</span>
+          <span className="font-medium text-sm md:text-base">Nuovo Cliente</span>
         </button>
         <button onClick={() => store.openModal('isNewProductOpen')} className="bg-stone-100 text-stone-900 p-4 rounded-2xl flex items-center gap-3 hover:bg-stone-200 transition-colors border border-stone-200 w-full text-left">
           <div className="bg-white p-2 rounded-xl flex items-center justify-center shrink-0"><Plus className="w-5 h-5 text-stone-600" /></div>
-          <span className="font-medium text-sm md:text-base cursor-pointer">Nuovo Prodotto</span>
+          <span className="font-medium text-sm md:text-base">Nuovo Prodotto</span>
         </button>
       </div>
 
@@ -70,12 +75,14 @@ export const Dashboard = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden divide-y divide-stone-100">
-          {todaysAppointments.length === 0 ? (
+          {loadingApps ? (
+            <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-stone-400" /></div>
+          ) : todaysAppointments.length === 0 ? (
             <div className="p-6 text-center text-stone-500 text-sm">Nessun appuntamento previsto per oggi.</div>
           ) : (
             todaysAppointments.map(app => {
-              const client = store.clients.find(c => c.id === app.clientId);
-              const service = store.services.find(s => s.id === app.serviceId);
+              const client = clients.find(c => c.id === app.clientId);
+              const service = services.find(s => s.id === app.serviceId);
 
               return (
                 <div key={app.id} className="p-4 flex items-center gap-4 hover:bg-stone-50 transition-colors">
@@ -85,7 +92,7 @@ export const Dashboard = () => {
                   <div className="bg-stone-200 w-px h-10"></div>
                   <div className="flex-1 pb-1">
                     <p className="font-medium text-stone-900 text-base">{client?.firstName} {client?.lastName}</p>
-                    <p className="text-sm text-stone-500">{service?.name}</p>
+                    <p className="text-sm text-stone-500">{service?.name ?? app.serviceId}</p>
                   </div>
                   {app.status === 'completato' && <div className="w-2 h-2 rounded-full bg-green-500"></div>}
                   {app.status === 'prenotato' && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}

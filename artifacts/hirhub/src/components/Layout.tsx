@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Users, Home, Package2, Menu, Plus } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
-import { store, useStore } from '../lib/store';
+import { store, useModalStore } from '../lib/store';
 import { NewClientModal } from './NewClientModal';
 import { NewAppointmentModal } from './NewAppointmentModal';
 import { NewProductModal } from './NewProductModal';
@@ -11,7 +11,7 @@ import { NewProductModal } from './NewProductModal';
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isFabOpen, setIsFabOpen] = React.useState(false);
-  const { modalState } = useStore();
+  const modalState = useModalStore();
 
   const navItems = [
     { icon: Home, label: 'Dashboard', path: '/' },

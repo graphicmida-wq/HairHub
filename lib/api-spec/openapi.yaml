@@ -2,14 +2,25 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 0.2.0
+  description: HirHub salon management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: clients
+    description: Client management
+  - name: services
+    description: Service management
+  - name: products
+    description: Product/inventory management
+  - name: appointments
+    description: Appointment management
+  - name: settings
+    description: Salon settings
+
 paths:
   /healthz:
     get:
@@ -24,6 +35,334 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List all clients
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a new client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientInput"
+      responses:
+        "201":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get a client by ID
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    put:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClientInput"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete a client and their appointments
+      responses:
+        "204":
+          description: Deleted
+
+  /services:
+    get:
+      operationId: listServices
+      tags: [services]
+      summary: List all services
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+    post:
+      operationId: createService
+      tags: [services]
+      summary: Create a new service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceInput"
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  /services/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updateService
+      tags: [services]
+      summary: Update a service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceInput"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteService
+      tags: [services]
+      summary: Delete a service
+      responses:
+        "204":
+          description: Deleted
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all products
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductInput"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductInput"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      responses:
+        "204":
+          description: Deleted
+
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List all appointments
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Create a new appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentInput"
+      responses:
+        "201":
+          description: Created appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+
+  /appointments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updateAppointment
+      tags: [appointments]
+      summary: Update an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAppointmentInput"
+      responses:
+        "200":
+          description: Updated appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteAppointment
+      tags: [appointments]
+      summary: Delete an appointment
+      responses:
+        "204":
+          description: Deleted
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get salon settings
+      responses:
+        "200":
+          description: Salon settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalonSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update salon settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SalonSettings"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalonSettings"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +373,345 @@ components:
       required:
         - status
 
+    ApiError:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        allergies:
+          type: string
+          nullable: true
+        hairSpecs:
+          type: string
+          nullable: true
+      required:
+        - id
+        - firstName
+        - lastName
+        - phone
+        - email
+
+    CreateClientInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        allergies:
+          type: string
+          nullable: true
+        hairSpecs:
+          type: string
+          nullable: true
+      required:
+        - firstName
+        - lastName
+        - phone
+        - email
+
+    UpdateClientInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        allergies:
+          type: string
+          nullable: true
+        hairSpecs:
+          type: string
+          nullable: true
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        durationMins:
+          type: integer
+        price:
+          type: number
+        notes:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+        - category
+        - durationMins
+        - price
+
+    CreateServiceInput:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        durationMins:
+          type: integer
+        price:
+          type: number
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - category
+        - durationMins
+        - price
+
+    UpdateServiceInput:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        durationMins:
+          type: integer
+        price:
+          type: number
+        notes:
+          type: string
+          nullable: true
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        supplier:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+        - category
+        - brand
+        - quantity
+        - minThreshold
+
+    CreateProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        supplier:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - category
+        - brand
+        - quantity
+        - minThreshold
+
+    UpdateProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        supplier:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    AppointmentStatus:
+      type: string
+      enum:
+        - prenotato
+        - confermato
+        - completato
+        - annullato
+        - no-show
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        serviceId:
+          type: string
+        date:
+          type: string
+          description: "YYYY-MM-DD"
+        time:
+          type: string
+          description: "HH:MM"
+        durationMins:
+          type: integer
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        notes:
+          type: string
+          nullable: true
+        usedProductIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+      required:
+        - id
+        - clientId
+        - serviceId
+        - date
+        - time
+        - durationMins
+        - status
+
+    CreateAppointmentInput:
+      type: object
+      properties:
+        clientId:
+          type: string
+        serviceId:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        durationMins:
+          type: integer
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        notes:
+          type: string
+          nullable: true
+        usedProductIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+      required:
+        - clientId
+        - serviceId
+        - date
+        - time
+        - durationMins
+        - status
+
+    UpdateAppointmentInput:
+      type: object
+      properties:
+        clientId:
+          type: string
+        serviceId:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        durationMins:
+          type: integer
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        notes:
+          type: string
+          nullable: true
+        usedProductIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    SalonSettings:
+      type: object
+      properties:
+        salonName:
+          type: string
+        address:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+      required:
+        - salonName

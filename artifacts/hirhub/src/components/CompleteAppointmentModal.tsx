@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
-import { store, useStore } from '../lib/store';
+import { useListAppointments, useListClients, useListServices, useListProducts, useUpdateAppointment, useUpdateProduct, getListAppointmentsQueryKey, getListProductsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, Box, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpen: boolean, onClose: () => void, appointmentId: string | null }) => {
-  const { appointments, clients, services, products } = useStore();
+  const queryClient = useQueryClient();
+  const { data: appointments = [] } = useListAppointments();
+  const { data: clients = [] } = useListClients();
+  const { data: services = [] } = useListServices();
+  const { data: products = [] } = useListProducts();
+
+  const { mutate: updateAppointment } = useUpdateAppointment({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        onClose();
+      },
+    },
+  });
+  const { mutateAsync: updateProduct } = useUpdateProduct();
+
   const appointment = appointments.find(a => a.id === appointmentId);
   const client = clients.find(c => c.id === appointment?.clientId);
   const service = services.find(s => s.id === appointment?.serviceId);
@@ -23,23 +40,24 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
 
   if (!appointment || !client || !service) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    selectedProductIds.forEach(pid => {
-      const p = products.find(prod => prod.id === pid);
-      if (p) {
-        store.updateProduct(pid, { quantity: Math.max(0, p.quantity - 1) });
-      }
-    });
+    await Promise.all(
+      selectedProductIds.map(pid => {
+        const p = products.find(prod => prod.id === pid);
+        if (p) {
+          return updateProduct({ id: pid, data: { quantity: Math.max(0, p.quantity - 1) } });
+        }
+        return Promise.resolve();
+      })
+    );
 
-    store.updateAppointment(appointment.id, {
+    updateAppointment({ id: appointment.id, data: {
       status: 'completato',
-      notes,
-      usedProductIds: selectedProductIds
-    });
-
-    onClose();
+      notes: notes || null,
+      usedProductIds: selectedProductIds,
+    }});
   };
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));

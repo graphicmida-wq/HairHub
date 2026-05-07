@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface SalonSettings {
+  salonName: string;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
 }

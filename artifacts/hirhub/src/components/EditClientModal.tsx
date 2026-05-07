@@ -1,55 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
-import { store, useStore } from '../lib/store';
+import { useListClients, useUpdateClient, useDeleteClient, getListClientsQueryKey, getListAppointmentsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean, onClose: () => void, clientId: string | null }) => {
-  const { clients } = useStore();
+  const queryClient = useQueryClient();
+  const { data: clients = [] } = useListClients();
+  const client = clients.find(c => c.id === clientId);
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    dob: '',
-    notes: '',
-    allergies: '',
+  const { mutate: updateClient, isPending: isUpdating } = useUpdateClient({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
+        onClose();
+      },
+    },
   });
 
+  const { mutate: deleteClient, isPending: isDeleting } = useDeleteClient({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        onClose();
+      },
+    },
+  });
+
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', email: '', dob: '', notes: '', allergies: '' });
+
   useEffect(() => {
-    if (clientId) {
-      const c = clients.find(cl => cl.id === clientId);
-      if (c) {
-        setFormData({
-          firstName: c.firstName,
-          lastName: c.lastName,
-          phone: c.phone,
-          email: c.email || '',
-          dob: c.dob || '',
-          notes: c.notes || '',
-          allergies: c.allergies || '',
-        });
-      }
+    if (client) {
+      setFormData({
+        firstName: client.firstName, lastName: client.lastName,
+        phone: client.phone, email: client.email ?? '',
+        dob: client.dob ?? '', notes: client.notes ?? '', allergies: client.allergies ?? '',
+      });
     }
-  }, [clientId, clients]);
+  }, [client]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (clientId) {
-      store.updateClient(clientId, {
-        ...formData,
-        dob: formData.dob || undefined,
-        notes: formData.notes || undefined,
-        allergies: formData.allergies || undefined,
-      });
-      onClose();
-    }
+    if (!clientId) return;
+    updateClient({ id: clientId, data: {
+      ...formData, dob: formData.dob || null, notes: formData.notes || null, allergies: formData.allergies || null,
+    }});
   };
 
   const handleDelete = () => {
-    if (clientId && window.confirm('Sei sicuro di voler eliminare questo cliente? Verranno eliminati anche i suoi appuntamenti.')) {
-      store.deleteClient(clientId);
-      onClose();
-    }
+    if (!clientId || !window.confirm('Sei sicuro di voler eliminare questo cliente?')) return;
+    deleteClient({ id: clientId });
   };
 
   return (
@@ -58,91 +58,53 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-stone-700">Nome</label>
-            <input
-              required
-              type="text"
-              value={formData.firstName}
-              onChange={e => setFormData(p => ({...p, firstName: e.target.value}))}
-              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
-            />
+            <input required type="text" value={formData.firstName} onChange={e => setFormData(p => ({...p, firstName: e.target.value}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-stone-700">Cognome</label>
-            <input
-              required
-              type="text"
-              value={formData.lastName}
-              onChange={e => setFormData(p => ({...p, lastName: e.target.value}))}
-              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
-            />
+            <input required type="text" value={formData.lastName} onChange={e => setFormData(p => ({...p, lastName: e.target.value}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
           </div>
         </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Telefono</label>
-          <input
-            required
-            type="tel"
-            value={formData.phone}
-            onChange={e => setFormData(p => ({...p, phone: e.target.value}))}
-            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
-          />
+          <input required type="tel" value={formData.phone} onChange={e => setFormData(p => ({...p, phone: e.target.value}))}
+            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-stone-700">Data di Nascita</label>
-            <input
-              type="date"
-              value={formData.dob}
-              onChange={e => setFormData(p => ({...p, dob: e.target.value}))}
-              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
-            />
+            <input type="date" value={formData.dob} onChange={e => setFormData(p => ({...p, dob: e.target.value}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-stone-700">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={e => setFormData(p => ({...p, email: e.target.value}))}
-              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
-            />
+            <input type="email" value={formData.email} onChange={e => setFormData(p => ({...p, email: e.target.value}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
           </div>
         </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Allergie / Intolleranze</label>
-          <input
-            type="text"
-            value={formData.allergies}
-            onChange={e => setFormData(p => ({...p, allergies: e.target.value}))}
-            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
-          />
+          <input type="text" value={formData.allergies} onChange={e => setFormData(p => ({...p, allergies: e.target.value}))}
+            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
         </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Note</label>
-          <textarea
-            rows={2}
-            value={formData.notes}
-            onChange={e => setFormData(p => ({...p, notes: e.target.value}))}
-            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full resize-none"
-          />
+          <textarea rows={2} value={formData.notes} onChange={e => setFormData(p => ({...p, notes: e.target.value}))}
+            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full resize-none" />
         </div>
-
         <div className="flex items-center gap-2 mt-4">
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="flex-1 bg-red-50 text-red-600 font-medium py-3 rounded-xl hover:bg-red-100 transition-colors"
-          >
-            Elimina
+          <button type="button" onClick={handleDelete} disabled={isDeleting}
+            className="flex-1 bg-red-50 text-red-600 font-medium py-3 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-60">
+            {isDeleting ? '...' : 'Elimina'}
           </button>
-          <button type="submit" className="flex-[2] bg-stone-900 text-white font-medium py-3 rounded-xl hover:bg-stone-800 transition-colors">
-            Salva Modifiche
+          <button type="submit" disabled={isUpdating}
+            className="flex-[2] bg-stone-900 text-white font-medium py-3 rounded-xl hover:bg-stone-800 transition-colors disabled:opacity-60">
+            {isUpdating ? 'Salvataggio...' : 'Salva Modifiche'}
           </button>
         </div>
       </form>
     </Modal>
   );
-}
+};

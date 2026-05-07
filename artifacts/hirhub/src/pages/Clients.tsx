@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { store, useStore } from '../lib/store';
-import { Search, UserPlus, Phone, SearchX } from 'lucide-react';
+import { store } from '../lib/store';
+import { useListClients } from '@workspace/api-client-react';
+import { Search, UserPlus, Phone, SearchX, Loader2 } from 'lucide-react';
 import { ClientDetailsModal } from '../components/ClientDetailsModal';
 import { EditClientModal } from '../components/EditClientModal';
 
 export const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { clients } = useStore();
+  const { data: clients = [], isLoading } = useListClients();
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [editClientId, setEditClientId] = useState<string | null>(null);
 
@@ -36,7 +37,9 @@ export const Clients = () => {
       </div>
 
       <div className="flex flex-col gap-3">
-        {filteredClients.length === 0 ? (
+        {isLoading ? (
+          <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
+        ) : filteredClients.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-stone-400">
             <SearchX className="w-12 h-12 mb-3 opacity-50" />
             <p>Nessun cliente trovato</p>

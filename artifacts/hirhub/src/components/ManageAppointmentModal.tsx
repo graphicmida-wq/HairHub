@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { useStore, store } from '../lib/store';
+import { useListAppointments, useListClients, useListServices, useListProducts, useDeleteAppointment, getListAppointmentsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Calendar, Text, CheckCircle2, Edit2, Trash2, Box } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -18,7 +19,20 @@ export const ManageAppointmentModal = ({
   onEdit: (id: string) => void,
   onComplete: (id: string) => void
 }) => {
-  const { appointments, clients, services, products } = useStore();
+  const queryClient = useQueryClient();
+  const { data: appointments = [] } = useListAppointments();
+  const { data: clients = [] } = useListClients();
+  const { data: services = [] } = useListServices();
+  const { data: products = [] } = useListProducts();
+
+  const { mutate: deleteAppointment } = useDeleteAppointment({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        onClose();
+      },
+    },
+  });
 
   const appointment = appointments.find(a => a.id === appointmentId);
   const client = clients.find(c => c.id === appointment?.clientId);
@@ -28,8 +42,7 @@ export const ManageAppointmentModal = ({
 
   const handleDelete = () => {
     if (window.confirm('Sei sicuro di voler eliminare questo appuntamento?')) {
-      store.deleteAppointment(appointment.id);
-      onClose();
+      deleteAppointment({ id: appointment.id });
     }
   };
 

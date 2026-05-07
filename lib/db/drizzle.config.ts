@@ -1,14 +1,24 @@
 import { defineConfig } from "drizzle-kit";
 import path from "path";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
+const dbHost = process.env.DB_HOST;
+const dbUser = process.env.DB_USER;
+const dbPassword = process.env.DB_PASS ?? "";
+const dbName = process.env.DB_NAME;
+const dbPort = Number(process.env.DB_PORT ?? 3306);
+
+if (!dbHost || !dbUser || !dbName) {
+  throw new Error("DB_HOST, DB_USER, DB_NAME must be set for migrations. See DEPLOY.md for instructions.");
 }
 
 export default defineConfig({
   schema: path.join(__dirname, "./src/schema/index.ts"),
-  dialect: "postgresql",
+  dialect: "mysql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    host: dbHost,
+    port: dbPort,
+    user: dbUser,
+    password: dbPassword,
+    database: dbName,
   },
 });
