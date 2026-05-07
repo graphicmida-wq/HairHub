@@ -126,7 +126,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </aside>
-
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative rounded-l-2xl" style={{ backgroundColor: '#FAF7EE' }}>
         <header
           className="md:hidden px-6 h-[65px] flex items-center justify-between shrink-0"
@@ -151,13 +150,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
         </header>
 
-        <main className="flex-1 overflow-y-auto pb-24 md:pb-8 scroll-smooth no-scrollbar p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 bg-[#61533e21]">
           <div className="max-w-5xl mx-auto">
             {children}
           </div>
         </main>
       </div>
-
       <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40 flex flex-col items-end gap-3">
         <AnimatePresence>
           {isFabOpen && (
@@ -209,12 +207,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </motion.div>
         </button>
       </div>
-
       <NewClientModal isOpen={modalState.isNewClientOpen} onClose={() => store.closeModal('isNewClientOpen')} />
       <NewAppointmentModal isOpen={modalState.isNewAppointmentOpen} onClose={() => store.closeModal('isNewAppointmentOpen')} />
       <NewProductModal isOpen={modalState.isNewProductOpen} onClose={() => store.closeModal('isNewProductOpen')} />
       <NewServiceModal isOpen={modalState.isNewServiceOpen} onClose={() => store.closeModal('isNewServiceOpen')} />
-
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 border-t pb-safe z-30"
         style={{ backgroundColor: SIDEBAR_BG, borderColor: SIDEBAR_BORDER }}
