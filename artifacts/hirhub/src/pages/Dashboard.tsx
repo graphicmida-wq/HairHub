@@ -36,7 +36,7 @@ const KpiCard = ({
     style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
   >
     <div
-      className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0 bg-[#c4aa7e]"
+      className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0 bg-[#b8a785]"
       style={{ backgroundColor: ACCENT_LIGHT }}
     >
       {icon}
