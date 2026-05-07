@@ -4,17 +4,18 @@ import { UpdateSettingsBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/settings", (_req, res) => {
-  res.json(dbGetSettings());
+router.get("/settings", async (_req, res) => {
+  const settings = await dbGetSettings();
+  res.json(settings);
 });
 
-router.put("/settings", (req, res) => {
+router.put("/settings", async (req, res) => {
   const result = UpdateSettingsBody.safeParse(req.body);
   if (!result.success) {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dbUpdateSettings(result.data);
+  const updated = await dbUpdateSettings(result.data);
   res.json(updated);
 });
 

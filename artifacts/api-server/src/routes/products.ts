@@ -15,22 +15,28 @@ import {
 
 const router: IRouter = Router();
 
-router.get("/products", (_req, res) => {
-  res.json(dbGetProducts());
+router.get("/products", async (_req, res) => {
+  const products = await dbGetProducts();
+  res.json(products);
 });
 
-router.post("/products", (req, res) => {
+router.post("/products", async (req, res) => {
   const result = CreateProductBody.safeParse(req.body);
   if (!result.success) {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const product = dbCreateProduct(result.data);
+  const product = await dbCreateProduct(result.data);
   res.status(201).json(product);
 });
 
-router.get("/products/:id", (req, res) => {
-  const product = dbGetProduct(req.params.id);
+router.get("/products/:id", async (req, res) => {
+  const params = UpdateProductParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  const product = await dbGetProduct(params.data.id);
   if (!product) {
     res.status(404).json({ message: "Product not found" });
     return;
@@ -38,7 +44,7 @@ router.get("/products/:id", (req, res) => {
   res.json(product);
 });
 
-router.put("/products/:id", (req, res) => {
+router.put("/products/:id", async (req, res) => {
   const params = UpdateProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -49,7 +55,7 @@ router.put("/products/:id", (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dbUpdateProduct(params.data.id, body.data);
+  const updated = await dbUpdateProduct(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Product not found" });
     return;
@@ -57,18 +63,18 @@ router.put("/products/:id", (req, res) => {
   res.json(updated);
 });
 
-router.delete("/products/:id", (req, res) => {
+router.delete("/products/:id", async (req, res) => {
   const params = DeleteProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  const existing = dbGetProduct(params.data.id);
+  const existing = await dbGetProduct(params.data.id);
   if (!existing) {
     res.status(404).json({ message: "Product not found" });
     return;
   }
-  dbDeleteProduct(params.data.id);
+  await dbDeleteProduct(params.data.id);
   res.status(204).send();
 });
 

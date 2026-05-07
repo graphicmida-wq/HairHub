@@ -9,34 +9,35 @@ import {
 import {
   CreateClientBody,
   UpdateClientBody,
-  DeleteClientParams,
   GetClientParams,
   UpdateClientParams,
+  DeleteClientParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/clients", (_req, res) => {
-  res.json(dbGetClients());
+router.get("/clients", async (_req, res) => {
+  const clients = await dbGetClients();
+  res.json(clients);
 });
 
-router.post("/clients", (req, res) => {
+router.post("/clients", async (req, res) => {
   const result = CreateClientBody.safeParse(req.body);
   if (!result.success) {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const client = dbCreateClient(result.data);
+  const client = await dbCreateClient(result.data);
   res.status(201).json(client);
 });
 
-router.get("/clients/:id", (req, res) => {
+router.get("/clients/:id", async (req, res) => {
   const params = GetClientParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  const client = dbGetClient(params.data.id);
+  const client = await dbGetClient(params.data.id);
   if (!client) {
     res.status(404).json({ message: "Client not found" });
     return;
@@ -44,7 +45,7 @@ router.get("/clients/:id", (req, res) => {
   res.json(client);
 });
 
-router.put("/clients/:id", (req, res) => {
+router.put("/clients/:id", async (req, res) => {
   const params = UpdateClientParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -55,7 +56,7 @@ router.put("/clients/:id", (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dbUpdateClient(params.data.id, body.data);
+  const updated = await dbUpdateClient(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Client not found" });
     return;
@@ -63,18 +64,18 @@ router.put("/clients/:id", (req, res) => {
   res.json(updated);
 });
 
-router.delete("/clients/:id", (req, res) => {
+router.delete("/clients/:id", async (req, res) => {
   const params = DeleteClientParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  const existing = dbGetClient(params.data.id);
+  const existing = await dbGetClient(params.data.id);
   if (!existing) {
     res.status(404).json({ message: "Client not found" });
     return;
   }
-  dbDeleteClient(params.data.id);
+  await dbDeleteClient(params.data.id);
   res.status(204).send();
 });
 
