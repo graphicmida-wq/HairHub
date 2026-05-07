@@ -12,23 +12,38 @@ import {
   GetClientParams,
   UpdateClientParams,
   DeleteClientParams,
+  ListClientsResponse,
+  GetClientResponse,
+  UpdateClientResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/clients", async (_req, res) => {
-  const clients = await dbGetClients();
-  res.json(clients);
+router.get("/clients", async (req, res) => {
+  const data = await dbGetClients();
+  const parsed = ListClientsResponse.safeParse(data);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /clients");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.post("/clients", async (req, res) => {
-  const result = CreateClientBody.safeParse(req.body);
-  if (!result.success) {
-    res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
+  const body = CreateClientBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const client = await dbCreateClient(result.data);
-  res.status(201).json(client);
+  const created = await dbCreateClient(body.data);
+  const parsed = GetClientResponse.safeParse(created);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /clients");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.status(201).json(parsed.data);
 });
 
 router.get("/clients/:id", async (req, res) => {
@@ -42,7 +57,13 @@ router.get("/clients/:id", async (req, res) => {
     res.status(404).json({ message: "Client not found" });
     return;
   }
-  res.json(client);
+  const parsed = GetClientResponse.safeParse(client);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /clients/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.put("/clients/:id", async (req, res) => {
@@ -61,7 +82,13 @@ router.put("/clients/:id", async (req, res) => {
     res.status(404).json({ message: "Client not found" });
     return;
   }
-  res.json(updated);
+  const parsed = UpdateClientResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /clients/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.delete("/clients/:id", async (req, res) => {

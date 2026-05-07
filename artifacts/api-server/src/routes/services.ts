@@ -9,29 +9,45 @@ import {
 import {
   CreateServiceBody,
   UpdateServiceBody,
+  GetServiceParams,
   UpdateServiceParams,
   DeleteServiceParams,
+  ListServicesResponse,
+  GetServiceResponse,
+  UpdateServiceResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/services", async (_req, res) => {
-  const services = await dbGetServices();
-  res.json(services);
+router.get("/services", async (req, res) => {
+  const data = await dbGetServices();
+  const parsed = ListServicesResponse.safeParse(data);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /services");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.post("/services", async (req, res) => {
-  const result = CreateServiceBody.safeParse(req.body);
-  if (!result.success) {
-    res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
+  const body = CreateServiceBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const service = await dbCreateService(result.data);
-  res.status(201).json(service);
+  const created = await dbCreateService(body.data);
+  const parsed = GetServiceResponse.safeParse(created);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /services");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.status(201).json(parsed.data);
 });
 
 router.get("/services/:id", async (req, res) => {
-  const params = UpdateServiceParams.safeParse(req.params);
+  const params = GetServiceParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
@@ -41,7 +57,13 @@ router.get("/services/:id", async (req, res) => {
     res.status(404).json({ message: "Service not found" });
     return;
   }
-  res.json(service);
+  const parsed = GetServiceResponse.safeParse(service);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /services/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.put("/services/:id", async (req, res) => {
@@ -60,7 +82,13 @@ router.put("/services/:id", async (req, res) => {
     res.status(404).json({ message: "Service not found" });
     return;
   }
-  res.json(updated);
+  const parsed = UpdateServiceResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /services/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.delete("/services/:id", async (req, res) => {

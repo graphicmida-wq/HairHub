@@ -9,29 +9,45 @@ import {
 import {
   CreateAppointmentBody,
   UpdateAppointmentBody,
+  GetAppointmentParams,
   UpdateAppointmentParams,
   DeleteAppointmentParams,
+  ListAppointmentsResponse,
+  GetAppointmentResponse,
+  UpdateAppointmentResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/appointments", async (_req, res) => {
-  const appointments = await dbGetAppointments();
-  res.json(appointments);
+router.get("/appointments", async (req, res) => {
+  const data = await dbGetAppointments();
+  const parsed = ListAppointmentsResponse.safeParse(data);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /appointments");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.post("/appointments", async (req, res) => {
-  const result = CreateAppointmentBody.safeParse(req.body);
-  if (!result.success) {
-    res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
+  const body = CreateAppointmentBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const appointment = await dbCreateAppointment(result.data);
-  res.status(201).json(appointment);
+  const created = await dbCreateAppointment(body.data);
+  const parsed = GetAppointmentResponse.safeParse(created);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.status(201).json(parsed.data);
 });
 
 router.get("/appointments/:id", async (req, res) => {
-  const params = UpdateAppointmentParams.safeParse(req.params);
+  const params = GetAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
@@ -41,7 +57,13 @@ router.get("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
-  res.json(appointment);
+  const parsed = GetAppointmentResponse.safeParse(appointment);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /appointments/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.put("/appointments/:id", async (req, res) => {
@@ -60,7 +82,13 @@ router.put("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
-  res.json(updated);
+  const parsed = UpdateAppointmentResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /appointments/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.delete("/appointments/:id", async (req, res) => {

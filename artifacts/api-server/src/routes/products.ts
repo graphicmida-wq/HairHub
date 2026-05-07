@@ -9,29 +9,45 @@ import {
 import {
   CreateProductBody,
   UpdateProductBody,
+  GetProductParams,
   UpdateProductParams,
   DeleteProductParams,
+  ListProductsResponse,
+  GetProductResponse,
+  UpdateProductResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/products", async (_req, res) => {
-  const products = await dbGetProducts();
-  res.json(products);
+router.get("/products", async (req, res) => {
+  const data = await dbGetProducts();
+  const parsed = ListProductsResponse.safeParse(data);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /products");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.post("/products", async (req, res) => {
-  const result = CreateProductBody.safeParse(req.body);
-  if (!result.success) {
-    res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
+  const body = CreateProductBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const product = await dbCreateProduct(result.data);
-  res.status(201).json(product);
+  const created = await dbCreateProduct(body.data);
+  const parsed = GetProductResponse.safeParse(created);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /products");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.status(201).json(parsed.data);
 });
 
 router.get("/products/:id", async (req, res) => {
-  const params = UpdateProductParams.safeParse(req.params);
+  const params = GetProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
@@ -41,7 +57,13 @@ router.get("/products/:id", async (req, res) => {
     res.status(404).json({ message: "Product not found" });
     return;
   }
-  res.json(product);
+  const parsed = GetProductResponse.safeParse(product);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /products/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.put("/products/:id", async (req, res) => {
@@ -60,7 +82,13 @@ router.put("/products/:id", async (req, res) => {
     res.status(404).json({ message: "Product not found" });
     return;
   }
-  res.json(updated);
+  const parsed = UpdateProductResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /products/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
 });
 
 router.delete("/products/:id", async (req, res) => {
