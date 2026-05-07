@@ -18,7 +18,7 @@ interface CategoryInputProps {
   required?: boolean;
 }
 
-export const CategoryInput = ({ value, onChange }: CategoryInputProps) => {
+export const CategoryInput = ({ value, onChange, required }: CategoryInputProps) => {
   const { data: products = [] } = useListProducts();
   const [isOpen, setIsOpen] = useState(false);
   const [addingNew, setAddingNew] = useState(false);
@@ -60,15 +60,15 @@ export const CategoryInput = ({ value, onChange }: CategoryInputProps) => {
   const handleDelete = (cat: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isBuiltin(cat)) return;
-    // remove from session if it's a session category
     if (sessionCategories.includes(cat)) {
+      // session-only: just remove from local state, no localStorage
       setSessionCategories(prev => prev.filter(c => c !== cat));
+    } else {
+      // product-derived: persist suppression to localStorage (deduplicated)
+      const next = Array.from(new Set([...suppressed, cat]));
+      setSuppressed(next);
+      saveSuppressed(next);
     }
-    // suppress (persisted) for product-derived categories
-    const next = [...suppressed, cat];
-    setSuppressed(next);
-    saveSuppressed(next);
-    // clear value if it was the selected one
     if (value === cat) onChange('');
   };
 
@@ -102,6 +102,16 @@ export const CategoryInput = ({ value, onChange }: CategoryInputProps) => {
 
   return (
     <div ref={containerRef} className="relative w-full">
+      {/* Hidden input to preserve native required/form validation */}
+      <input
+        type="text"
+        required={required}
+        value={value}
+        onChange={() => {/* controlled by dropdown */}}
+        tabIndex={-1}
+        aria-hidden="true"
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+      />
       {/* Trigger */}
       <button
         type="button"
