@@ -30,6 +30,10 @@ export const Appointments = () => {
 
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
 
+  type ResourceColumn = { id: string | null; name: string; color: string };
+  const resourceColumns: ResourceColumn[] = staff.map(m => ({ id: m.id, name: m.name, color: m.color }));
+  const allResourceCols: ResourceColumn[] = [...resourceColumns, { id: null, name: 'Non assegnato', color: '#94a3b8' }];
+
   const isLoading = loadingAppts || loadingClients || loadingServices;
 
   const dateString = format(selectedDate, 'yyyy-MM-dd');
@@ -185,8 +189,89 @@ export const Appointments = () => {
           </button>
         </div>
       </div>
-      {/* Day view */}
-      {view === 'day' && (
+      {/* Day view — resource mode (multiple staff, no filter) */}
+      {view === 'day' && staff.length > 0 && staffFilter === null && (
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden relative">
+          {/* Column headers */}
+          <div className="flex border-b border-stone-100 sticky top-0 bg-white z-10">
+            <div className="w-14 shrink-0" />
+            <div className="flex flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {allResourceCols.map(col => (
+                <div
+                  key={col.id ?? '__none__'}
+                  className="flex-1 min-w-[110px] text-center py-2 px-2 border-l border-stone-100 first:border-l-0 flex items-center justify-center gap-1.5"
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
+                  <span className="text-xs font-medium text-stone-700 truncate">{col.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Body */}
+          <div className="flex flex-col pb-20">
+            {hours.map((hour) => {
+              const hourNum = hour.split(':')[0];
+              const appsInHour = dailyAppointments.filter(a => a.time.split(':')[0] === hourNum);
+              return (
+                <div key={hour} className="flex border-b border-stone-50 last:border-0 min-h-[72px] group relative">
+                  <div className="w-14 text-right pt-2 shrink-0 pr-2">
+                    <span className="text-xs font-medium text-stone-400">{hour}</span>
+                  </div>
+                  <div className="flex flex-1 overflow-x-auto">
+                    {allResourceCols.map(col => {
+                      const colApps = appsInHour.filter(a =>
+                        col.id === null ? (!a.staffId) : a.staffId === col.id
+                      );
+                      return (
+                        <div
+                          key={col.id ?? '__none__'}
+                          className="flex-1 min-w-[110px] p-1 border-l border-stone-100 first:border-l-0 relative"
+                        >
+                          {colApps.map(app => {
+                            const client = clients.find(c => c.id === app.clientId);
+                            const service = services.find(s => s.id === app.serviceId);
+                            return (
+                              <div
+                                key={app.id}
+                                onClick={() => setManageAppId(app.id)}
+                                className={cn(
+                                  "p-2 rounded-xl border flex flex-col gap-0.5 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] mb-1",
+                                  app.status === 'completato' ? "bg-stone-50 border-stone-200 text-stone-500" :
+                                  app.status === 'prenotato' ? "text-white" :
+                                  "bg-white border-stone-200 text-stone-900"
+                                )}
+                                style={app.status === 'prenotato' ? {
+                                  backgroundColor: 'var(--color-brand-dark)',
+                                  borderColor: 'var(--color-brand-dark)',
+                                } : undefined}
+                              >
+                                <p className="font-medium text-xs truncate">{client?.firstName} {client?.lastName}</p>
+                                <p className={cn("text-[10px] truncate", app.status === 'prenotato' ? "opacity-70" : "text-stone-500")}>
+                                  {app.time} · {service?.name}
+                                </p>
+                              </div>
+                            );
+                          })}
+                          {colApps.length === 0 && (
+                            <button
+                              onClick={() => handleSlotClick(dateString, hour)}
+                              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Plus className="w-3.5 h-3.5 text-stone-300" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {/* Day view — single column (no staff configured, or filter active) */}
+      {view === 'day' && (staff.length === 0 || staffFilter !== null) && (
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-2 relative pb-20">
           <div className="flex flex-col">
             {hours.map((hour) => {
@@ -225,7 +310,7 @@ export const Appointments = () => {
                               style={app.status === 'prenotato' ? {
                                 backgroundColor: 'var(--color-brand-dark)',
                                 borderColor: 'var(--color-brand-dark)',
-                              } : undefined}
+                              } : staffMember ? { borderLeftColor: staffMember.color, borderLeftWidth: '4px' } : undefined}
                             >
                               <div className="flex justify-between items-start gap-1">
                                 <p className="font-medium text-sm truncate">

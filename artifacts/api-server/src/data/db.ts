@@ -380,15 +380,16 @@ export async function dbDeleteProduct(id: string) {
 
 export async function dbGetStaff() {
   if (_useMysql) {
-    logger.warn("MySQL staff not implemented, returning empty list");
-    return Promise.resolve([]);
+    const { staffMembersTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(staffMembersTable).execute();
   }
   return Promise.resolve(getSqliteDb().select().from(sqliteStaff).all());
 }
 
 export async function dbGetStaffMember(id: string) {
   if (_useMysql) {
-    return Promise.resolve(undefined);
+    const { staffMembersTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(staffMembersTable).where(eq(staffMembersTable.id, id)).execute().then(r => r[0]);
   }
   return Promise.resolve(getSqliteDb().select().from(sqliteStaff).where(eq(sqliteStaff.id, id)).get());
 }
@@ -396,8 +397,9 @@ export async function dbGetStaffMember(id: string) {
 export async function dbCreateStaffMember(data: Omit<typeof sqliteStaff.$inferInsert, "id">) {
   const id = uid();
   if (_useMysql) {
-    logger.warn("MySQL staff not implemented");
-    return Promise.resolve({ id, ...data, role: data.role ?? null });
+    const { staffMembersTable } = await import("@workspace/db");
+    await getMysqlDb().insert(staffMembersTable).values({ ...data, id });
+    return getMysqlDb().select().from(staffMembersTable).where(eq(staffMembersTable.id, id)).execute().then(r => r[0]!);
   }
   getSqliteDb().insert(sqliteStaff).values({ ...data, id }).run();
   return Promise.resolve(getSqliteDb().select().from(sqliteStaff).where(eq(sqliteStaff.id, id)).get()!);
@@ -405,8 +407,9 @@ export async function dbCreateStaffMember(data: Omit<typeof sqliteStaff.$inferIn
 
 export async function dbUpdateStaffMember(id: string, data: Partial<Omit<typeof sqliteStaff.$inferInsert, "id">>) {
   if (_useMysql) {
-    logger.warn("MySQL staff not implemented");
-    return Promise.resolve(undefined);
+    const { staffMembersTable } = await import("@workspace/db");
+    await getMysqlDb().update(staffMembersTable).set(data).where(eq(staffMembersTable.id, id));
+    return getMysqlDb().select().from(staffMembersTable).where(eq(staffMembersTable.id, id)).execute().then(r => r[0]);
   }
   getSqliteDb().update(sqliteStaff).set(data).where(eq(sqliteStaff.id, id)).run();
   return Promise.resolve(getSqliteDb().select().from(sqliteStaff).where(eq(sqliteStaff.id, id)).get());
@@ -414,7 +417,8 @@ export async function dbUpdateStaffMember(id: string, data: Partial<Omit<typeof 
 
 export async function dbDeleteStaffMember(id: string) {
   if (_useMysql) {
-    logger.warn("MySQL staff not implemented");
+    const { staffMembersTable } = await import("@workspace/db");
+    await getMysqlDb().delete(staffMembersTable).where(eq(staffMembersTable.id, id));
     return;
   }
   getSqliteDb().delete(sqliteStaff).where(eq(sqliteStaff.id, id)).run();
@@ -463,6 +467,7 @@ export async function dbCreateAppointment(data: {
       id,
       clientId: data.clientId,
       serviceId: data.serviceId,
+      staffId: data.staffId ?? null,
       date: data.date,
       time: data.time,
       durationMins: data.durationMins,
@@ -503,6 +508,7 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
     const mysqlPatch: Partial<typeof appointmentsTable.$inferInsert> = {};
     if (data.clientId !== undefined) mysqlPatch.clientId = data.clientId;
     if (data.serviceId !== undefined) mysqlPatch.serviceId = data.serviceId;
+    if (data.staffId !== undefined) mysqlPatch.staffId = data.staffId;
     if (data.date !== undefined) mysqlPatch.date = data.date;
     if (data.time !== undefined) mysqlPatch.time = data.time;
     if (data.durationMins !== undefined) mysqlPatch.durationMins = data.durationMins;

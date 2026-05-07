@@ -180,6 +180,7 @@ export const WeekView = ({
                           {slotApps.map(app => {
                             const client = clients.find(c => c.id === app.clientId);
                             const service = services.find(s => s.id === app.serviceId);
+                            const staffMember = staff.find(m => m.id === app.staffId);
                             return (
                               <div
                                 key={app.id}
@@ -193,10 +194,7 @@ export const WeekView = ({
                                 style={app.status === 'prenotato' ? {
                                   backgroundColor: 'var(--color-brand-dark)',
                                   borderColor: 'var(--color-brand-dark)',
-                                } : (() => {
-                                  const sm = staff.find(m => m.id === app.staffId);
-                                  return sm ? { borderLeftColor: sm.color, borderLeftWidth: '3px' } : undefined;
-                                })()}
+                                } : staffMember ? { borderLeftColor: staffMember.color, borderLeftWidth: '3px' } : undefined}
                               >
                                 <p className="text-[10px] font-semibold leading-tight truncate">
                                   {client?.firstName} {client?.lastName}
@@ -207,6 +205,12 @@ export const WeekView = ({
                                 )}>
                                   {app.time} · {service?.name}
                                 </p>
+                                {staffMember && (
+                                  <span
+                                    className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full"
+                                    style={{ backgroundColor: staffMember.color, opacity: app.status === 'prenotato' ? 0.75 : 1 }}
+                                  />
+                                )}
                               </div>
                             );
                           })}
