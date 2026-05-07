@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Plus } from 'lucide-react';
@@ -56,6 +56,8 @@ export const WeekView = ({
   onSlotClick,
 }: WeekViewProps) => {
   const today = new Date();
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
 
   const getAppsForSlot = (day: Date, hour: string) => {
     const dateStr = format(day, 'yyyy-MM-dd');
@@ -65,20 +67,41 @@ export const WeekView = ({
     );
   };
 
+  const onBodyScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (headerScrollRef.current) {
+      headerScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
+  const onHeaderScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (bodyScrollRef.current) {
+      bodyScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
+  const dayColClass =
+    'shrink-0 w-[calc((100vw-2.5rem)/3)] md:flex-1 md:w-0 border-l border-stone-100 first:border-l-0';
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-      {/* Day headers */}
+      {/* Day headers row */}
       <div className="flex border-b border-stone-100 sticky top-0 bg-white z-10">
-        {/* Time gutter header */}
-        <div className="w-10 shrink-0 md:w-14" />
-        <div className="flex-1 overflow-x-auto">
-          <div className="flex min-w-[560px]">
+        {/* Time gutter */}
+        <div className="w-10 md:w-14 shrink-0" />
+        {/* Scrollable header — hidden scrollbar, synced with body */}
+        <div
+          ref={headerScrollRef}
+          onScroll={onHeaderScroll}
+          className="flex-1 overflow-x-auto"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          <div className="flex">
             {weekDays.map(day => {
               const isToday = isSameDay(day, today);
               return (
                 <div
                   key={day.toISOString()}
-                  className="flex-1 min-w-[80px] text-center py-2 px-1 border-l border-stone-100 first:border-l-0"
+                  className={cn(dayColClass, 'text-center py-2 px-1')}
                 >
                   <p className={cn(
                     'text-[10px] font-semibold uppercase tracking-wider',
@@ -101,8 +124,8 @@ export const WeekView = ({
         </div>
       </div>
 
-      {/* Body: time rows */}
-      <div className="flex overflow-y-auto max-h-[60vh] md:max-h-[65vh]">
+      {/* Body */}
+      <div className="flex max-h-[62vh] overflow-y-auto">
         {/* Time gutter */}
         <div className="w-10 md:w-14 shrink-0 flex flex-col">
           {HOURS.map(hour => (
@@ -112,11 +135,15 @@ export const WeekView = ({
           ))}
         </div>
 
-        {/* Day columns – horizontal scroll on mobile */}
-        <div className="flex-1 overflow-x-auto">
-          <div className="flex min-w-[560px]">
+        {/* Day columns — horizontal scroll on mobile (3 visible) */}
+        <div
+          ref={bodyScrollRef}
+          onScroll={onBodyScroll}
+          className="flex-1 overflow-x-auto"
+        >
+          <div className="flex">
             {weekDays.map(day => (
-              <div key={day.toISOString()} className="flex-1 min-w-[80px] border-l border-stone-100 first:border-l-0 flex flex-col">
+              <div key={day.toISOString()} className={cn(dayColClass, 'flex flex-col')}>
                 {HOURS.map(hour => {
                   const slotApps = getAppsForSlot(day, hour);
                   const dateStr = format(day, 'yyyy-MM-dd');
