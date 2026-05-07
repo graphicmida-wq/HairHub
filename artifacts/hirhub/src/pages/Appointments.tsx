@@ -3,7 +3,7 @@ import { store } from '../lib/store';
 import { useListAppointments, useListClients, useListServices } from '@workspace/api-client-react';
 import { format, addDays, subDays } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ManageAppointmentModal } from '../components/ManageAppointmentModal';
 import { EditAppointmentModal } from '../components/EditAppointmentModal';
@@ -15,9 +15,11 @@ export const Appointments = () => {
   const [editAppId, setEditAppId] = useState<string | null>(null);
   const [completeAppId, setCompleteAppId] = useState<string | null>(null);
 
-  const { data: appointments = [] } = useListAppointments();
-  const { data: clients = [] } = useListClients();
-  const { data: services = [] } = useListServices();
+  const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
+  const { data: clients = [], isLoading: loadingClients } = useListClients();
+  const { data: services = [], isLoading: loadingServices } = useListServices();
+
+  const isLoading = loadingAppts || loadingClients || loadingServices;
 
   const dateString = selectedDate.toISOString().split('T')[0];
 
@@ -26,6 +28,24 @@ export const Appointments = () => {
     .sort((a, b) => a.time.localeCompare(b.time));
 
   const hours = Array.from({ length: 11 }, (_, i) => `${(i + 9).toString().padStart(2, '0')}:00`);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-stone-400">
+        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+        <span className="text-sm">Caricamento agenda...</span>
+      </div>
+    );
+  }
+
+  if (errorAppts) {
+    return (
+      <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4">
+        <AlertCircle className="w-5 h-5 shrink-0" />
+        <p className="text-sm">Impossibile caricare gli appuntamenti. Riprova più tardi.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">

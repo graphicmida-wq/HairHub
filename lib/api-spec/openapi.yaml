@@ -162,6 +162,23 @@ paths:
         required: true
         schema:
           type: string
+    get:
+      operationId: getService
+      tags: [services]
+      summary: Get a service by ID
+      responses:
+        "200":
+          description: Service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
     put:
       operationId: updateService
       tags: [services]
@@ -232,6 +249,23 @@ paths:
         required: true
         schema:
           type: string
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by ID
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
     put:
       operationId: updateProduct
       tags: [products]
@@ -302,6 +336,23 @@ paths:
         required: true
         schema:
           type: string
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get an appointment by ID
+      responses:
+        "200":
+          description: Appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
     put:
       operationId: updateAppointment
       tags: [appointments]

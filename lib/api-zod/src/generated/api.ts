@@ -126,6 +126,22 @@ export const CreateServiceBody = zod.object({
 });
 
 /**
+ * @summary Get a service by ID
+ */
+export const GetServiceParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetServiceResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  category: zod.string(),
+  durationMins: zod.number(),
+  price: zod.number(),
+  notes: zod.string().nullish(),
+});
+
+/**
  * @summary Update a service
  */
 export const UpdateServiceParams = zod.object({
@@ -175,6 +191,24 @@ export const ListProductsResponse = zod.array(ListProductsResponseItem);
  * @summary Create a new product
  */
 export const CreateProductBody = zod.object({
+  name: zod.string(),
+  category: zod.string(),
+  brand: zod.string(),
+  quantity: zod.number(),
+  minThreshold: zod.number(),
+  supplier: zod.string().nullish(),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Get a product by ID
+ */
+export const GetProductParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetProductResponse = zod.object({
+  id: zod.string(),
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
@@ -249,6 +283,31 @@ export const CreateAppointmentBody = zod.object({
   serviceId: zod.string(),
   date: zod.string(),
   time: zod.string(),
+  durationMins: zod.number(),
+  status: zod.enum([
+    "prenotato",
+    "confermato",
+    "completato",
+    "annullato",
+    "no-show",
+  ]),
+  notes: zod.string().nullish(),
+  usedProductIds: zod.array(zod.string()).nullish(),
+});
+
+/**
+ * @summary Get an appointment by ID
+ */
+export const GetAppointmentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetAppointmentResponse = zod.object({
+  id: zod.string(),
+  clientId: zod.string(),
+  serviceId: zod.string(),
+  date: zod.string().describe("YYYY-MM-DD"),
+  time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
   status: zod.enum([
     "prenotato",
