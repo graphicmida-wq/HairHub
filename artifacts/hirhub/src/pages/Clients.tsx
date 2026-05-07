@@ -20,7 +20,7 @@ export const Clients = () => {
     <div className="flex flex-col gap-6 page-enter h-full">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif text-stone-900">Clienti</h1>
-        <button onClick={() => store.openModal('isNewClientOpen')} className="hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--color-brand-dark)' }}>
+        <button onClick={() => store.openModal('isNewClientOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <UserPlus className="w-4 h-4" /> Nuovo Cliente
         </button>
       </div>

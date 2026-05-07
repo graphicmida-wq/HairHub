@@ -185,8 +185,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
                 type="button"
                 onClick={confirmNew}
                 disabled={!newCategory.trim()}
-                className="p-1.5 rounded-lg text-white transition-colors disabled:opacity-40"
-                style={{ backgroundColor: 'var(--color-brand-dark)' }}
+                className="btn-brand p-1.5 rounded-lg text-white disabled:opacity-40"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>

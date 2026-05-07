@@ -113,7 +113,7 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
             {isDeleting ? '...' : 'Elimina'}
           </button>
           <button type="submit" disabled={isUpdating}
-            className="flex-[2] text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-60" style={{ backgroundColor: 'var(--color-brand-dark)' }}>
+            className="btn-brand flex-[2] text-white font-medium py-3 rounded-xl disabled:opacity-60">
             {isUpdating ? 'Salvataggio...' : 'Salva Modifiche'}
           </button>
         </div>

@@ -36,3 +36,11 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .page-enter { animation: page-enter 0.4s ease-out both; }
+
+.btn-brand {
+  background-color: var(--color-brand-dark);
+  transition: background-color 0.15s ease;
+}
+.btn-brand:not(:disabled):hover {
+  background-color: var(--color-brand-primary);
+}

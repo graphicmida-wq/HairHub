@@ -199,8 +199,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
         <button
           onClick={() => setIsFabOpen(!isFabOpen)}
-          className="w-14 h-14 text-white rounded-full flex items-center justify-center shadow-xl transition-transform active:scale-95 focus:outline-none focus:ring-4"
-          style={{ backgroundColor: 'var(--color-brand-dark)', focusRingColor: 'rgba(92,88,112,0.3)' } as React.CSSProperties}
+          className="btn-brand w-14 h-14 text-white rounded-full flex items-center justify-center shadow-xl transition-transform active:scale-95 focus:outline-none focus:ring-4"
         >
           <motion.div animate={{ rotate: isFabOpen ? 45 : 0 }}>
             <Plus className="w-6 h-6" />

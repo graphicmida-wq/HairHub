@@ -95,8 +95,7 @@ export const Dashboard = () => {
           </Link>
           <button
             onClick={() => store.openModal('isNewAppointmentOpen')}
-            className="px-5 py-2.5 rounded-full text-white font-medium text-sm flex items-center gap-2 transition-colors"
-            style={{ backgroundColor: ACCENT }}
+            className="btn-brand px-5 py-2.5 rounded-full text-white font-medium text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Nuovo Appuntamento
