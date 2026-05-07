@@ -25,7 +25,7 @@ export const Dashboard = () => {
         <span className="text-stone-500 text-sm font-medium tracking-wide uppercase">Bentornato</span>
         <h1 className="text-3xl font-serif text-stone-900 mt-1 mb-6">Panoramica di Oggi</h1>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between items-start h-32">
             <div className="w-10 h-10 rounded-full bg-brand-light flex items-center justify-center text-brand-dark">
               <Clock className="w-5 h-5" />
@@ -86,7 +86,7 @@ export const Dashboard = () => {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-stone-900">Agenda di oggi</h2>
