@@ -46,7 +46,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       >
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <span style={{ color: 'var(--color-brand-gold)', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
+            <span style={{ color: 'var(--color-brand-muted)', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
             <h1
               className="text-[#F5F0E3] text-xl font-semibold tracking-wide leading-tight"
               style={{ fontFamily: '"Playfair Display", serif' }}
@@ -132,7 +132,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           style={{ backgroundColor: SIDEBAR_BG }}
         >
           <div className="flex items-center gap-2">
-            <span style={{ color: 'var(--color-brand-gold)' }}>♥</span>
+            <span style={{ color: 'var(--color-brand-muted)' }}>♥</span>
             <h1
               className="text-[#F5F0E3] text-xl font-semibold"
               style={{ fontFamily: '"Playfair Display", serif' }}
