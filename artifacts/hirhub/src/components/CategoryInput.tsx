@@ -16,13 +16,15 @@ export const CategoryInput = ({ value, onChange, required }: CategoryInputProps)
   const { data: products = [] } = useListProducts();
   const [addingNew, setAddingNew] = useState(false);
   const [newCategory, setNewCategory] = useState('');
+  // custom categories created during this session (not yet saved in any product)
+  const [sessionCategories, setSessionCategories] = useState<string[]>([]);
 
   const existingFromProducts = Array.from(
     new Set(products.map(p => p.category).filter(Boolean))
   );
 
   const allCategories = Array.from(
-    new Set([...BUILTIN_CATEGORIES, ...existingFromProducts])
+    new Set([...BUILTIN_CATEGORIES, ...existingFromProducts, ...sessionCategories])
   ).sort((a, b) => a.localeCompare(b, 'it'));
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -38,6 +40,10 @@ export const CategoryInput = ({ value, onChange, required }: CategoryInputProps)
   const confirmNew = () => {
     const trimmed = newCategory.trim();
     if (!trimmed) return;
+    // add to session list so it stays visible in the dropdown
+    if (!allCategories.includes(trimmed)) {
+      setSessionCategories(prev => [...prev, trimmed]);
+    }
     onChange(trimmed);
     setAddingNew(false);
     setNewCategory('');
