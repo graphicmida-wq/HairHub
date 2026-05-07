@@ -18,7 +18,7 @@ export const Inventory = () => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-serif text-stone-900">Magazzino</h2>
+        <h1 className="text-3xl font-serif text-stone-900">Magazzino</h1>
         <button onClick={() => store.openModal('isNewProductOpen')} className="hidden md:flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors">
           <Plus className="w-4 h-4" /> Nuovo Prodotto
         </button>
@@ -35,16 +35,16 @@ export const Inventory = () => {
         />
       </div>
 
-      <div className="flex flex-col gap-3">
-        {isLoading ? (
-          <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
-        ) : isError ? (
-          <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
-            <AlertCircle className="w-8 h-8 opacity-70" />
-            <p className="text-sm">Errore nel caricamento del magazzino.</p>
-          </div>
-        ) : (
-          filteredProducts.map(product => {
+      {isLoading ? (
+        <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
+      ) : isError ? (
+        <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
+          <AlertCircle className="w-8 h-8 opacity-70" />
+          <p className="text-sm">Errore nel caricamento del magazzino.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filteredProducts.map(product => {
             const isLowStock = product.quantity <= product.minThreshold;
             return (
               <div
@@ -60,7 +60,7 @@ export const Inventory = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-stone-900 truncate">{product.name}</h3>
-                  <p className="text-sm text-stone-500">{product.brand} &bull; {product.category}</p>
+                  <p className="text-sm text-stone-500 truncate">{product.brand} &bull; {product.category}</p>
                 </div>
                 <div className="flex flex-col items-end shrink-0">
                   <span className={cn("text-lg font-medium", isLowStock ? "text-red-600" : "text-stone-900")}>
@@ -68,15 +68,15 @@ export const Inventory = () => {
                   </span>
                   {isLowStock && (
                     <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-red-600 mt-1 bg-red-50 px-2 py-0.5 rounded-sm">
-                      <AlertCircle className="w-3 h-3" /> Scorta scarsa
+                      <AlertCircle className="w-3 h-3" /> Esaurito
                     </span>
                   )}
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       <EditProductModal
         isOpen={!!editProductId}

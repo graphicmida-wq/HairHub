@@ -19,7 +19,7 @@ export const Clients = () => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500 h-full">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-serif text-stone-900">Clienti</h2>
+        <h1 className="text-3xl font-serif text-stone-900">Clienti</h1>
         <button onClick={() => store.openModal('isNewClientOpen')} className="hidden md:flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors">
           <UserPlus className="w-4 h-4" /> Nuovo Cliente
         </button>
@@ -36,42 +36,40 @@ export const Clients = () => {
         />
       </div>
 
-      <div className="flex flex-col gap-3">
-        {isLoading ? (
-          <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
-        ) : isError ? (
-          <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
-            <AlertCircle className="w-8 h-8 opacity-70" />
-            <p className="text-sm">Errore nel caricamento dei clienti.</p>
-          </div>
-        ) : filteredClients.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-stone-400">
-            <SearchX className="w-12 h-12 mb-3 opacity-50" />
-            <p>Nessun cliente trovato</p>
-          </div>
-        ) : (
-          filteredClients.map(client => (
+      {isLoading ? (
+        <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
+      ) : isError ? (
+        <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
+          <AlertCircle className="w-8 h-8 opacity-70" />
+          <p className="text-sm">Errore nel caricamento dei clienti.</p>
+        </div>
+      ) : filteredClients.length === 0 ? (
+        <div className="py-12 flex flex-col items-center justify-center text-stone-400">
+          <SearchX className="w-12 h-12 mb-3 opacity-50" />
+          <p>Nessun cliente trovato</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filteredClients.map(client => (
             <div
               key={client.id}
               onClick={() => setDetailClientId(client.id)}
-              className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer hover:border-brand-dark/30 hover:shadow-md"
+              className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer hover:border-brand-dark/30 hover:shadow-md"
             >
-              <div className="flex gap-4 items-center">
-                <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-serif text-lg">
-                  {client.firstName.charAt(0)}{client.lastName.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="font-medium text-stone-900">{client.firstName} {client.lastName}</h3>
-                  <div className="flex items-center gap-1 text-sm text-stone-500 mt-1">
-                    <Phone className="w-3 h-3" />
-                    <span>{client.phone}</span>
-                  </div>
+              <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-serif text-lg shrink-0">
+                {client.firstName.charAt(0)}{client.lastName.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-stone-900 truncate">{client.firstName} {client.lastName}</h3>
+                <div className="flex items-center gap-1 text-sm text-stone-500 mt-1">
+                  <Phone className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{client.phone}</span>
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       <ClientDetailsModal
         isOpen={!!detailClientId}

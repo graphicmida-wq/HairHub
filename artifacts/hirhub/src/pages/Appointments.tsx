@@ -50,7 +50,7 @@ export const Appointments = () => {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-serif text-stone-900">Agenda</h2>
+        <h1 className="text-3xl font-serif text-stone-900">Agenda</h1>
         <button onClick={() => store.openModal('isNewAppointmentOpen')} className="hidden md:flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors">
           <Plus className="w-4 h-4" /> Nuovo Appuntamento
         </button>
@@ -91,15 +91,15 @@ export const Appointments = () => {
 
             return (
               <div key={hour} className="flex gap-4 min-h-[80px] group relative">
-                <div className="w-14 text-right pt-2">
+                <div className="w-14 text-right pt-2 shrink-0">
                   <span className="text-xs font-medium text-stone-400">{hour}</span>
                 </div>
 
-                <div className="w-px bg-stone-100 relative top-4 flex-shrink-0">
+                <div className="w-px bg-stone-100 relative top-4 shrink-0">
                   <div className="w-2 h-2 rounded-full absolute -left-[3px] -top-1 bg-stone-200"></div>
                 </div>
 
-                <div className="flex-1 pt-2 pb-4 pr-2">
+                <div className="flex-1 pt-2 pb-4 pr-2 min-w-0">
                   {appointmentInHour ? (
                     <div
                       onClick={() => setManageAppId(appointmentInHour.id)}
@@ -110,16 +110,16 @@ export const Appointments = () => {
                         "bg-white border-stone-200 text-stone-900"
                       )}
                     >
-                      <div className="flex justify-between items-start">
-                        <p className="font-medium text-sm">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="font-medium text-sm truncate">
                           {client?.firstName} {client?.lastName}
                         </p>
-                        <span className="text-[10px] uppercase opacity-70 tracking-wide font-mono">
+                        <span className="text-[10px] uppercase opacity-70 tracking-wide font-mono shrink-0">
                           {appointmentInHour.time}
                         </span>
                       </div>
                       <p className={cn(
-                        "text-sm",
+                        "text-sm truncate",
                         appointmentInHour.status === 'prenotato' ? "text-stone-300" : "text-stone-500"
                       )}>
                         {service?.name}
