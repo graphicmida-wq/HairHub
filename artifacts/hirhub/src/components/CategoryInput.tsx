@@ -22,13 +22,16 @@ interface CategoryInputProps {
   source?: 'products' | 'services';
 }
 
-export const CategoryInput = ({ value, onChange, required, source = 'products' }: CategoryInputProps) => {
-  const { data: products = [] } = useListProducts();
-  const { data: services = [] } = useListServices();
+interface CategoryInputCoreProps {
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  builtins: string[];
+  lsKey: string;
+  existingCategories: string[];
+}
 
-  const builtins = source === 'services' ? SERVICE_BUILTINS : PRODUCT_BUILTINS;
-  const lsKey   = source === 'services' ? LS_SERVICES : LS_PRODUCTS;
-
+const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existingCategories }: CategoryInputCoreProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [addingNew, setAddingNew] = useState(false);
   const [newCategory, setNewCategory] = useState('');
@@ -54,16 +57,8 @@ export const CategoryInput = ({ value, onChange, required, source = 'products' }
     if (addingNew && newInputRef.current) newInputRef.current.focus();
   }, [addingNew]);
 
-  const existingFromData = Array.from(
-    new Set(
-      source === 'services'
-        ? services.map(s => s.category).filter(Boolean)
-        : products.map(p => p.category).filter(Boolean)
-    )
-  );
-
   const allCategories = Array.from(
-    new Set([...builtins, ...existingFromData, ...sessionCategories])
+    new Set([...builtins, ...existingCategories, ...sessionCategories])
   )
     .filter(cat => !suppressed.includes(cat))
     .sort((a, b) => a.localeCompare(b, 'it'));
@@ -218,4 +213,21 @@ export const CategoryInput = ({ value, onChange, required, source = 'products' }
       )}
     </div>
   );
+};
+
+const CategoryInputProducts = (props: Omit<CategoryInputCoreProps, 'builtins' | 'lsKey' | 'existingCategories'>) => {
+  const { data: products = [] } = useListProducts();
+  const existingCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+  return <CategoryInputCore {...props} builtins={PRODUCT_BUILTINS} lsKey={LS_PRODUCTS} existingCategories={existingCategories} />;
+};
+
+const CategoryInputServices = (props: Omit<CategoryInputCoreProps, 'builtins' | 'lsKey' | 'existingCategories'>) => {
+  const { data: services = [] } = useListServices();
+  const existingCategories = Array.from(new Set(services.map(s => s.category).filter(Boolean)));
+  return <CategoryInputCore {...props} builtins={SERVICE_BUILTINS} lsKey={LS_SERVICES} existingCategories={existingCategories} />;
+};
+
+export const CategoryInput = ({ source = 'products', ...rest }: CategoryInputProps) => {
+  if (source === 'services') return <CategoryInputServices {...rest} />;
+  return <CategoryInputProducts {...rest} />;
 };
