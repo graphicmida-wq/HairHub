@@ -3,12 +3,13 @@ import { format, startOfMonth, endOfMonth, subMonths, addDays } from 'date-fns';
 import { useListAppointments, useListClients, useListProducts, useListServices } from '@workspace/api-client-react';
 
 export function useStats() {
-  const { data: appointments = [], isLoading: loadingAppts, isError } = useListAppointments();
-  const { data: clients = [], isLoading: loadingClients } = useListClients();
-  const { data: services = [], isLoading: loadingServices } = useListServices();
-  const { data: products = [], isLoading: loadingProducts } = useListProducts();
+  const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
+  const { data: clients = [], isLoading: loadingClients, isError: errorClients } = useListClients();
+  const { data: services = [], isLoading: loadingServices, isError: errorServices } = useListServices();
+  const { data: products = [], isLoading: loadingProducts, isError: errorProducts } = useListProducts();
 
   const isLoading = loadingAppts || loadingClients || loadingServices || loadingProducts;
+  const isError = errorAppts || errorClients || errorServices || errorProducts;
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -107,7 +108,7 @@ export function useStats() {
 
   return {
     isLoading,
-    isError,
+    isError: !!isError,
     appointments,
     clients,
     services,

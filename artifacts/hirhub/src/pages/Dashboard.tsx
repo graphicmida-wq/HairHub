@@ -89,7 +89,7 @@ export const Dashboard = () => {
               iconBg="bg-brand-light"
               iconColor="text-brand-dark"
               value={`€${fatturato.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
-              label="Fatturato del mese"
+              label="Fatturato stimato del mese"
             />
             <StatCard
               icon={<Clock className="w-5 h-5" />}
@@ -173,7 +173,7 @@ export const Dashboard = () => {
                             <div className={cn(
                               'w-2 h-2 rounded-full shrink-0',
                               app.status === 'completato' ? 'bg-green-500' :
-                              app.status === 'confermato' ? 'bg-blue-400' :
+                              app.status === 'confermato' || app.status === 'prenotato' ? 'bg-blue-400' :
                               'bg-stone-300'
                             )} />
                           </div>
