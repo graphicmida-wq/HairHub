@@ -35,6 +35,14 @@ const DEFAULT_HOURS: WorkingHours = {
 };
 
 const LS_KEY = 'hirhub_working_hours';
+const LS_INFO_KEY = 'hirhub_salon_info';
+
+interface SalonInfo {
+  salonName: string;
+  address: string;
+  phone: string;
+  email: string;
+}
 
 function loadHours(): WorkingHours {
   try {
@@ -44,6 +52,20 @@ function loadHours(): WorkingHours {
     }
   } catch {}
   return DEFAULT_HOURS;
+}
+
+function loadInfoFallback(): SalonInfo | null {
+  try {
+    const raw = localStorage.getItem(LS_INFO_KEY);
+    if (raw) return JSON.parse(raw) as SalonInfo;
+  } catch {}
+  return null;
+}
+
+function saveInfoFallback(info: SalonInfo) {
+  try {
+    localStorage.setItem(LS_INFO_KEY, JSON.stringify(info));
+  } catch {}
 }
 
 const inputClass =
@@ -69,21 +91,35 @@ export const Settings = () => {
       setAddress(apiSettings.address ?? '');
       setPhone(apiSettings.phone ?? '');
       setEmail(apiSettings.email ?? '');
+    } else if (!isLoading) {
+      const fallback = loadInfoFallback();
+      if (fallback) {
+        setSalonName(fallback.salonName);
+        setAddress(fallback.address);
+        setPhone(fallback.phone);
+        setEmail(fallback.email);
+      }
     }
-  }, [apiSettings]);
+  }, [apiSettings, isLoading]);
 
   useEffect(() => {
     setHours(loadHours());
   }, []);
 
   const handleSaveInfo = () => {
+    const payload = { salonName, address: address || null, phone: phone || null, email: email || null };
+    queryClient.setQueryData(getGetSettingsQueryKey(), payload);
     updateSettings.mutate(
-      { data: { salonName, address: address || null, phone: phone || null, email: email || null } },
+      { data: payload },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
+          saveInfoFallback({ salonName, address, phone, email });
           setInfoSaved(true);
           setTimeout(() => setInfoSaved(false), 2500);
+        },
+        onError: () => {
+          queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
         },
       }
     );
