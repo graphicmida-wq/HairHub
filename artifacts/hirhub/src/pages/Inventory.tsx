@@ -68,7 +68,7 @@ export const Inventory = () => {
                   </span>
                   {isLowStock && (
                     <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-red-600 mt-1 bg-red-50 px-2 py-0.5 rounded-sm">
-                      <AlertCircle className="w-3 h-3" /> Esaurito
+                      <AlertCircle className="w-3 h-3" /> Scorta scarsa
                     </span>
                   )}
                 </div>
