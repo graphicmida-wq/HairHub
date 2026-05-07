@@ -260,6 +260,7 @@ export const ListAppointmentsResponseItem = zod.object({
   id: zod.string(),
   clientId: zod.string(),
   serviceId: zod.string(),
+  staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
@@ -275,6 +276,7 @@ export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 export const CreateAppointmentBody = zod.object({
   clientId: zod.string(),
   serviceId: zod.string(),
+  staffId: zod.string().nullish(),
   date: zod.string(),
   time: zod.string(),
   durationMins: zod.number(),
@@ -294,6 +296,7 @@ export const GetAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
   serviceId: zod.string(),
+  staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
@@ -312,6 +315,7 @@ export const UpdateAppointmentParams = zod.object({
 export const UpdateAppointmentBody = zod.object({
   clientId: zod.string().optional(),
   serviceId: zod.string().optional(),
+  staffId: zod.string().nullish(),
   date: zod.string().optional(),
   time: zod.string().optional(),
   durationMins: zod.number().optional(),
@@ -326,6 +330,7 @@ export const UpdateAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
   serviceId: zod.string(),
+  staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
@@ -338,6 +343,53 @@ export const UpdateAppointmentResponse = zod.object({
  * @summary Delete an appointment
  */
 export const DeleteAppointmentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary List all staff members
+ */
+export const ListStaffResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  role: zod.string().nullish(),
+  color: zod.string().describe("Hex color string, e.g. #e05c5c"),
+});
+export const ListStaffResponse = zod.array(ListStaffResponseItem);
+
+/**
+ * @summary Create a new staff member
+ */
+export const CreateStaffMemberBody = zod.object({
+  name: zod.string(),
+  role: zod.string().nullish(),
+  color: zod.string(),
+});
+
+/**
+ * @summary Update a staff member
+ */
+export const UpdateStaffMemberParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateStaffMemberBody = zod.object({
+  name: zod.string().optional(),
+  role: zod.string().nullish(),
+  color: zod.string().optional(),
+});
+
+export const UpdateStaffMemberResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  role: zod.string().nullish(),
+  color: zod.string().describe("Hex color string, e.g. #e05c5c"),
+});
+
+/**
+ * @summary Delete a staff member
+ */
+export const DeleteStaffMemberParams = zod.object({
   id: zod.coerce.string(),
 });
 

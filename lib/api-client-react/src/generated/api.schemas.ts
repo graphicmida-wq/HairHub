@@ -113,10 +113,31 @@ export const AppointmentStatus = {
   "no-show": "no-show",
 } as const;
 
+export interface StaffMember {
+  id: string;
+  name: string;
+  role?: string | null;
+  /** Hex color string, e.g. #e05c5c */
+  color: string;
+}
+
+export interface CreateStaffMemberInput {
+  name: string;
+  role?: string | null;
+  color: string;
+}
+
+export interface UpdateStaffMemberInput {
+  name?: string;
+  role?: string | null;
+  color?: string;
+}
+
 export interface Appointment {
   id: string;
   clientId: string;
   serviceId: string;
+  staffId?: string | null;
   /** YYYY-MM-DD */
   date: string;
   /** HH:MM */
@@ -130,6 +151,7 @@ export interface Appointment {
 export interface CreateAppointmentInput {
   clientId: string;
   serviceId: string;
+  staffId?: string | null;
   date: string;
   time: string;
   durationMins: number;
@@ -141,6 +163,7 @@ export interface CreateAppointmentInput {
 export interface UpdateAppointmentInput {
   clientId?: string;
   serviceId?: string;
+  staffId?: string | null;
   date?: string;
   time?: string;
   durationMins?: number;

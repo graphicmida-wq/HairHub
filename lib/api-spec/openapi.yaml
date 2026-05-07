@@ -20,6 +20,8 @@ tags:
     description: Appointment management
   - name: settings
     description: Salon settings
+  - name: staff
+    description: Staff/team management
 
 paths:
   /healthz:
@@ -384,6 +386,76 @@ paths:
         "204":
           description: Deleted
 
+  /staff:
+    get:
+      operationId: listStaff
+      tags: [staff]
+      summary: List all staff members
+      responses:
+        "200":
+          description: List of staff members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffMember"
+    post:
+      operationId: createStaffMember
+      tags: [staff]
+      summary: Create a new staff member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStaffMemberInput"
+      responses:
+        "201":
+          description: Created staff member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffMember"
+
+  /staff/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updateStaffMember
+      tags: [staff]
+      summary: Update a staff member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStaffMemberInput"
+      responses:
+        "200":
+          description: Updated staff member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffMember"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteStaffMember
+      tags: [staff]
+      summary: Delete a staff member
+      responses:
+        "204":
+          description: Deleted
+
   /settings:
     get:
       operationId: getSettings
@@ -658,6 +730,49 @@ components:
         - annullato
         - no-show
 
+    StaffMember:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          nullable: true
+        color:
+          type: string
+          description: "Hex color string, e.g. #e05c5c"
+      required:
+        - id
+        - name
+        - color
+
+    CreateStaffMemberInput:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          nullable: true
+        color:
+          type: string
+      required:
+        - name
+        - color
+
+    UpdateStaffMemberInput:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          nullable: true
+        color:
+          type: string
+
     Appointment:
       type: object
       properties:
@@ -667,6 +782,9 @@ components:
           type: string
         serviceId:
           type: string
+        staffId:
+          type: string
+          nullable: true
         date:
           type: string
           description: "YYYY-MM-DD"
@@ -701,6 +819,9 @@ components:
           type: string
         serviceId:
           type: string
+        staffId:
+          type: string
+          nullable: true
         date:
           type: string
         time:
@@ -732,6 +853,9 @@ components:
           type: string
         serviceId:
           type: string
+        staffId:
+          type: string
+          nullable: true
         date:
           type: string
         time:

@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from '@workspace/api-client-react';
+import {
+  useGetSettings, useUpdateSettings, getGetSettingsQueryKey,
+  useListStaff, useCreateStaffMember, useUpdateStaffMember, useDeleteStaffMember,
+  getListStaffQueryKey,
+} from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Save, Loader2, CheckCircle2, Palette, Scissors, Calendar, Star } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Palette, Calendar, Users, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from '../components/Toast';
 import {
@@ -156,10 +160,60 @@ function BrandPreview({ palette }: { palette: BrandPalette }) {
   );
 }
 
+const STAFF_COLORS = [
+  '#6b7280', '#ef4444', '#f97316', '#eab308', '#22c55e',
+  '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6',
+];
+
 export const Settings = () => {
   const queryClient = useQueryClient();
   const { data: apiSettings, isLoading } = useGetSettings();
   const updateSettings = useUpdateSettings();
+
+  // Team
+  const { data: staffList = [] } = useListStaff();
+  const [newMember, setNewMember] = useState({ name: '', role: '', color: '#6b7280' });
+  const [addingMember, setAddingMember] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ name: '', role: '', color: '#6b7280' });
+
+  const { mutate: createMember, isPending: isCreating } = useCreateStaffMember({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
+        setNewMember({ name: '', role: '', color: '#6b7280' });
+        setAddingMember(false);
+        toast.show('Membro aggiunto');
+      },
+      onError: () => toast.show('Errore durante il salvataggio', 'error'),
+    },
+  });
+
+  const { mutate: updateMember, isPending: isUpdating } = useUpdateStaffMember({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
+        setEditingId(null);
+        toast.show('Membro aggiornato');
+      },
+      onError: () => toast.show('Errore durante il salvataggio', 'error'),
+    },
+  });
+
+  const { mutate: deleteMember } = useDeleteStaffMember({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListStaffQueryKey() });
+        toast.show('Membro rimosso');
+      },
+      onError: () => toast.show('Errore durante la rimozione', 'error'),
+    },
+  });
+
+  const startEdit = (member: { id: string; name: string; role?: string | null; color: string }) => {
+    setEditingId(member.id);
+    setEditData({ name: member.name, role: member.role ?? '', color: member.color });
+  };
 
   const [salonName, setSalonName] = useState('');
   const [address, setAddress] = useState('');
@@ -483,6 +537,132 @@ export const Settings = () => {
                     Salva colore
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Team card */}
+            <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-stone-100">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-stone-400" />
+                  <h2 className="text-base font-semibold text-stone-900">Team</h2>
+                </div>
+                <p className="text-sm text-stone-500 mt-0.5">Gestisci gli operatori del salone.</p>
+              </div>
+
+              <div className="divide-y divide-stone-50">
+                {staffList.map(member => (
+                  <div key={member.id} className="px-6 py-3 flex items-center gap-3">
+                    {editingId === member.id ? (
+                      <>
+                        <input
+                          type="color"
+                          value={editData.color}
+                          onChange={e => setEditData(p => ({ ...p, color: e.target.value }))}
+                          className="w-8 h-8 rounded-lg border border-stone-200 cursor-pointer p-0.5 bg-white shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={editData.name}
+                          onChange={e => setEditData(p => ({ ...p, name: e.target.value }))}
+                          placeholder="Nome"
+                          className="flex-1 min-w-0 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                        />
+                        <input
+                          type="text"
+                          value={editData.role}
+                          onChange={e => setEditData(p => ({ ...p, role: e.target.value }))}
+                          placeholder="Ruolo (opz.)"
+                          className="w-28 shrink-0 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                        />
+                        <button
+                          onClick={() => updateMember({ id: member.id, data: { name: editData.name, role: editData.role || null, color: editData.color } })}
+                          disabled={isUpdating || !editData.name.trim()}
+                          className="p-1.5 rounded-lg bg-stone-900 text-white hover:bg-stone-700 disabled:opacity-50 shrink-0"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 shrink-0">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-8 h-8 rounded-full shrink-0 border border-stone-100" style={{ backgroundColor: member.color }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-stone-900 truncate">{member.name}</p>
+                          {member.role && <p className="text-xs text-stone-400 truncate">{member.role}</p>}
+                        </div>
+                        <button onClick={() => startEdit(member)} className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 transition-colors shrink-0">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => window.confirm(`Rimuovere ${member.name}?`) && deleteMember({ id: member.id })}
+                          className="p-1.5 rounded-lg text-red-300 hover:text-red-500 transition-colors shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+
+                {addingMember ? (
+                  <div className="px-6 py-3 flex items-center gap-3 bg-stone-50">
+                    <input
+                      type="color"
+                      value={newMember.color}
+                      onChange={e => setNewMember(p => ({ ...p, color: e.target.value }))}
+                      className="w-8 h-8 rounded-lg border border-stone-200 cursor-pointer p-0.5 bg-white shrink-0"
+                    />
+                    <div className="flex gap-1.5 flex-wrap mb-0">
+                      {STAFF_COLORS.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setNewMember(p => ({ ...p, color: c }))}
+                          className={cn('w-5 h-5 rounded-full border-2 shrink-0 transition-all', newMember.color === c ? 'border-stone-900 scale-110' : 'border-transparent')}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={newMember.name}
+                      onChange={e => setNewMember(p => ({ ...p, name: e.target.value }))}
+                      placeholder="Nome operatore"
+                      className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    />
+                    <input
+                      type="text"
+                      value={newMember.role}
+                      onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))}
+                      placeholder="Ruolo (opz.)"
+                      className="w-28 shrink-0 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    />
+                    <button
+                      onClick={() => createMember({ data: { name: newMember.name, role: newMember.role || null, color: newMember.color } })}
+                      disabled={isCreating || !newMember.name.trim()}
+                      className="p-1.5 rounded-lg bg-stone-900 text-white hover:bg-stone-700 disabled:opacity-50 shrink-0"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setAddingMember(false)} className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="px-6 py-3">
+                    <button
+                      onClick={() => setAddingMember(true)}
+                      className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Aggiungi operatore
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -24,14 +24,17 @@ import type {
   CreateClientInput,
   CreateProductInput,
   CreateServiceInput,
+  CreateStaffMemberInput,
   HealthStatus,
   Product,
   SalonSettings,
   Service,
+  StaffMember,
   UpdateAppointmentInput,
   UpdateClientInput,
   UpdateProductInput,
   UpdateServiceInput,
+  UpdateStaffMemberInput,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1789,6 +1792,330 @@ export const useDeleteAppointment = <
   TContext
 > => {
   return useMutation(getDeleteAppointmentMutationOptions(options));
+};
+
+/**
+ * @summary List all staff members
+ */
+export const getListStaffUrl = () => {
+  return `/api/staff`;
+};
+
+export const listStaff = async (
+  options?: RequestInit,
+): Promise<StaffMember[]> => {
+  return customFetch<StaffMember[]>(getListStaffUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListStaffQueryKey = () => {
+  return [`/api/staff`] as const;
+};
+
+export const getListStaffQueryOptions = <
+  TData = Awaited<ReturnType<typeof listStaff>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListStaffQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listStaff>>> = ({
+    signal,
+  }) => listStaff({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listStaff>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListStaffQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listStaff>>
+>;
+export type ListStaffQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all staff members
+ */
+
+export function useListStaff<
+  TData = Awaited<ReturnType<typeof listStaff>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListStaffQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new staff member
+ */
+export const getCreateStaffMemberUrl = () => {
+  return `/api/staff`;
+};
+
+export const createStaffMember = async (
+  createStaffMemberInput: CreateStaffMemberInput,
+  options?: RequestInit,
+): Promise<StaffMember> => {
+  return customFetch<StaffMember>(getCreateStaffMemberUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createStaffMemberInput),
+  });
+};
+
+export const getCreateStaffMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStaffMember>>,
+    TError,
+    { data: BodyType<CreateStaffMemberInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStaffMember>>,
+  TError,
+  { data: BodyType<CreateStaffMemberInput> },
+  TContext
+> => {
+  const mutationKey = ["createStaffMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStaffMember>>,
+    { data: BodyType<CreateStaffMemberInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createStaffMember(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStaffMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createStaffMember>>
+>;
+export type CreateStaffMemberMutationBody = BodyType<CreateStaffMemberInput>;
+export type CreateStaffMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new staff member
+ */
+export const useCreateStaffMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStaffMember>>,
+    TError,
+    { data: BodyType<CreateStaffMemberInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createStaffMember>>,
+  TError,
+  { data: BodyType<CreateStaffMemberInput> },
+  TContext
+> => {
+  return useMutation(getCreateStaffMemberMutationOptions(options));
+};
+
+/**
+ * @summary Update a staff member
+ */
+export const getUpdateStaffMemberUrl = (id: string) => {
+  return `/api/staff/${id}`;
+};
+
+export const updateStaffMember = async (
+  id: string,
+  updateStaffMemberInput: UpdateStaffMemberInput,
+  options?: RequestInit,
+): Promise<StaffMember> => {
+  return customFetch<StaffMember>(getUpdateStaffMemberUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateStaffMemberInput),
+  });
+};
+
+export const getUpdateStaffMemberMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStaffMember>>,
+    TError,
+    { id: string; data: BodyType<UpdateStaffMemberInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateStaffMember>>,
+  TError,
+  { id: string; data: BodyType<UpdateStaffMemberInput> },
+  TContext
+> => {
+  const mutationKey = ["updateStaffMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateStaffMember>>,
+    { id: string; data: BodyType<UpdateStaffMemberInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateStaffMember(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateStaffMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateStaffMember>>
+>;
+export type UpdateStaffMemberMutationBody = BodyType<UpdateStaffMemberInput>;
+export type UpdateStaffMemberMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Update a staff member
+ */
+export const useUpdateStaffMember = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStaffMember>>,
+    TError,
+    { id: string; data: BodyType<UpdateStaffMemberInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateStaffMember>>,
+  TError,
+  { id: string; data: BodyType<UpdateStaffMemberInput> },
+  TContext
+> => {
+  return useMutation(getUpdateStaffMemberMutationOptions(options));
+};
+
+/**
+ * @summary Delete a staff member
+ */
+export const getDeleteStaffMemberUrl = (id: string) => {
+  return `/api/staff/${id}`;
+};
+
+export const deleteStaffMember = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteStaffMemberUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteStaffMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStaffMember>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteStaffMember>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteStaffMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteStaffMember>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteStaffMember(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteStaffMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteStaffMember>>
+>;
+
+export type DeleteStaffMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a staff member
+ */
+export const useDeleteStaffMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStaffMember>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteStaffMember>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteStaffMemberMutationOptions(options));
 };
 
 /**

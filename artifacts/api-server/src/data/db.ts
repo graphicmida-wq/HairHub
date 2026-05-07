@@ -29,6 +29,7 @@ import {
   clients as sqliteClients,
   services as sqliteServices,
   products as sqliteProducts,
+  staffMembers as sqliteStaff,
   appointments as sqliteAppts,
   salonSettings as sqliteSalon,
 } from "./sqlite-schema";
@@ -82,10 +83,17 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       supplier TEXT,
       notes TEXT
     );
+    CREATE TABLE IF NOT EXISTS staff_members (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      role TEXT,
+      color TEXT NOT NULL DEFAULT '#6b7280'
+    );
     CREATE TABLE IF NOT EXISTS appointments (
       id TEXT PRIMARY KEY,
       client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
       service_id TEXT NOT NULL REFERENCES services(id),
+      staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL,
       date TEXT NOT NULL,
       time TEXT NOT NULL,
       duration_mins INTEGER NOT NULL,
@@ -102,8 +110,9 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       brand_color TEXT
     );
   `);
-  // Migration: add brand_color to existing databases (no-op if already present)
+  // Migrations: no-op if column already present
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE appointments ADD COLUMN staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL"); } catch { /* already exists */ }
 }
 
 function seedSqliteIfEmpty(db: SqliteDb) {
@@ -367,6 +376,50 @@ export async function dbDeleteProduct(id: string) {
   getSqliteDb().delete(sqliteProducts).where(eq(sqliteProducts.id, id)).run();
 }
 
+// ── Staff ──────────────────────────────────────────────────────────────────────
+
+export async function dbGetStaff() {
+  if (_useMysql) {
+    logger.warn("MySQL staff not implemented, returning empty list");
+    return Promise.resolve([]);
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteStaff).all());
+}
+
+export async function dbGetStaffMember(id: string) {
+  if (_useMysql) {
+    return Promise.resolve(undefined);
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteStaff).where(eq(sqliteStaff.id, id)).get());
+}
+
+export async function dbCreateStaffMember(data: Omit<typeof sqliteStaff.$inferInsert, "id">) {
+  const id = uid();
+  if (_useMysql) {
+    logger.warn("MySQL staff not implemented");
+    return Promise.resolve({ id, ...data, role: data.role ?? null });
+  }
+  getSqliteDb().insert(sqliteStaff).values({ ...data, id }).run();
+  return Promise.resolve(getSqliteDb().select().from(sqliteStaff).where(eq(sqliteStaff.id, id)).get()!);
+}
+
+export async function dbUpdateStaffMember(id: string, data: Partial<Omit<typeof sqliteStaff.$inferInsert, "id">>) {
+  if (_useMysql) {
+    logger.warn("MySQL staff not implemented");
+    return Promise.resolve(undefined);
+  }
+  getSqliteDb().update(sqliteStaff).set(data).where(eq(sqliteStaff.id, id)).run();
+  return Promise.resolve(getSqliteDb().select().from(sqliteStaff).where(eq(sqliteStaff.id, id)).get());
+}
+
+export async function dbDeleteStaffMember(id: string) {
+  if (_useMysql) {
+    logger.warn("MySQL staff not implemented");
+    return;
+  }
+  getSqliteDb().delete(sqliteStaff).where(eq(sqliteStaff.id, id)).run();
+}
+
 // ── Appointments ───────────────────────────────────────────────────────────────
 
 export async function dbGetAppointments() {
@@ -395,6 +448,7 @@ export async function dbGetAppointment(id: string) {
 export async function dbCreateAppointment(data: {
   clientId: string;
   serviceId: string;
+  staffId?: string | null;
   date: string;
   time: string;
   durationMins: number;
@@ -422,6 +476,7 @@ export async function dbCreateAppointment(data: {
     id,
     clientId: data.clientId,
     serviceId: data.serviceId,
+    staffId: data.staffId ?? null,
     date: data.date,
     time: data.time,
     durationMins: data.durationMins,
@@ -435,6 +490,7 @@ export async function dbCreateAppointment(data: {
 export async function dbUpdateAppointment(id: string, data: Partial<{
   clientId: string;
   serviceId: string;
+  staffId: string | null;
   date: string;
   time: string;
   durationMins: number;
@@ -459,6 +515,7 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
   const sqlitePatch: Partial<typeof sqliteAppts.$inferInsert> = {};
   if (data.clientId !== undefined) sqlitePatch.clientId = data.clientId;
   if (data.serviceId !== undefined) sqlitePatch.serviceId = data.serviceId;
+  if (data.staffId !== undefined) sqlitePatch.staffId = data.staffId;
   if (data.date !== undefined) sqlitePatch.date = data.date;
   if (data.time !== undefined) sqlitePatch.time = data.time;
   if (data.durationMins !== undefined) sqlitePatch.durationMins = data.durationMins;

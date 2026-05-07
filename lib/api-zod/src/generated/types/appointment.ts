@@ -11,6 +11,7 @@ export interface Appointment {
   id: string;
   clientId: string;
   serviceId: string;
+  staffId?: string | null;
   /** YYYY-MM-DD */
   date: string;
   /** HH:MM */

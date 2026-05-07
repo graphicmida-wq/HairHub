@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
-import { useListAppointments, useListClients, useListServices, useUpdateAppointment, useDeleteAppointment, getListAppointmentsQueryKey } from '@workspace/api-client-react';
+import {
+  useListAppointments, useListClients, useListServices, useListStaff,
+  useUpdateAppointment, useDeleteAppointment, getListAppointmentsQueryKey,
+} from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
 
@@ -8,6 +11,7 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
   const queryClient = useQueryClient();
   const { data: clients = [] } = useListClients();
   const { data: services = [] } = useListServices();
+  const { data: staff = [] } = useListStaff();
   const { data: appointments = [] } = useListAppointments();
   const appointment = appointments.find(a => a.id === appointmentId);
 
@@ -39,12 +43,17 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     },
   });
 
-  const [formData, setFormData] = useState<{ clientId: string; serviceId: string; date: string; time: string; durationMins: number; status: import('@workspace/api-client-react').AppointmentStatus }>({ clientId: '', serviceId: '', date: '', time: '', durationMins: 30, status: 'prenotato' as import('@workspace/api-client-react').AppointmentStatus });
+  const [formData, setFormData] = useState<{
+    clientId: string; serviceId: string; staffId: string | null;
+    date: string; time: string; durationMins: number;
+    status: import('@workspace/api-client-react').AppointmentStatus;
+  }>({ clientId: '', serviceId: '', staffId: null, date: '', time: '', durationMins: 30, status: 'prenotato' as import('@workspace/api-client-react').AppointmentStatus });
 
   useEffect(() => {
     if (appointment) {
       setFormData({
         clientId: appointment.clientId, serviceId: appointment.serviceId,
+        staffId: appointment.staffId ?? null,
         date: appointment.date, time: appointment.time,
         durationMins: appointment.durationMins, status: appointment.status,
       });
@@ -96,6 +105,16 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
               className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
           </div>
         </div>
+        {staff.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-700">Operatore <span className="text-stone-400 font-normal">(opzionale)</span></label>
+            <select value={formData.staffId ?? ''} onChange={e => setFormData(p => ({...p, staffId: e.target.value || null}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full">
+              <option value="">Nessun operatore</option>
+              {staff.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+            </select>
+          </div>
+        )}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Stato</label>
           <select value={formData.status} onChange={e => setFormData(p => ({...p, status: e.target.value as import('@workspace/api-client-react').AppointmentStatus}))}

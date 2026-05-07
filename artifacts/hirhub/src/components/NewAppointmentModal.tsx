@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
-import { useCreateAppointment, useListClients, useListServices, getListAppointmentsQueryKey } from '@workspace/api-client-react';
+import {
+  useCreateAppointment, useListClients, useListServices, useListStaff,
+  getListAppointmentsQueryKey,
+} from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppointmentStatus } from '@workspace/api-client-react';
 import { toast } from './Toast';
@@ -31,9 +34,12 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
     },
   });
 
+  const { data: staff = [] } = useListStaff();
+
   const makeDefault = () => ({
     clientId: '',
     serviceId: '',
+    staffId: null as string | null,
     date: defaultDate ?? new Date().toISOString().split('T')[0],
     time: defaultTime ?? '10:00',
     durationMins: 30,
@@ -88,6 +94,16 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
               className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full" />
           </div>
         </div>
+        {staff.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-700">Operatore <span className="text-stone-400 font-normal">(opzionale)</span></label>
+            <select value={formData.staffId ?? ''} onChange={e => setFormData(p => ({...p, staffId: e.target.value || null}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full">
+              <option value="">Nessun operatore</option>
+              {staff.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+            </select>
+          </div>
+        )}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Stato</label>
           <select value={formData.status} onChange={e => setFormData(p => ({...p, status: e.target.value as typeof AppointmentStatus[keyof typeof AppointmentStatus]}))}

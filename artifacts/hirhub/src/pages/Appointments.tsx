@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { store } from '../lib/store';
-import { useListAppointments, useListClients, useListServices } from '@workspace/api-client-react';
+import { useListAppointments, useListClients, useListServices, useListStaff } from '@workspace/api-client-react';
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, eachDayOfInterval, endOfWeek } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
@@ -26,12 +26,19 @@ export const Appointments = () => {
   const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
   const { data: clients = [], isLoading: loadingClients } = useListClients();
   const { data: services = [], isLoading: loadingServices } = useListServices();
+  const { data: staff = [] } = useListStaff();
+
+  const [staffFilter, setStaffFilter] = useState<string | null>(null);
 
   const isLoading = loadingAppts || loadingClients || loadingServices;
 
   const dateString = format(selectedDate, 'yyyy-MM-dd');
 
-  const dailyAppointments = appointments
+  const filteredAppointments = staffFilter
+    ? appointments.filter(a => a.staffId === staffFilter)
+    : appointments;
+
+  const dailyAppointments = filteredAppointments
     .filter(a => a.date === dateString)
     .sort((a, b) => a.time.localeCompare(b.time));
 
@@ -100,6 +107,41 @@ export const Appointments = () => {
           <Plus className="w-4 h-4" /> Nuovo Appuntamento
         </button>
       </div>
+      {/* Staff filter */}
+      {staff.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setStaffFilter(null)}
+            className={cn(
+              'px-3.5 py-1.5 rounded-full text-sm font-medium transition-all border',
+              staffFilter === null
+                ? 'bg-stone-900 text-white border-stone-900'
+                : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+            )}
+          >
+            Tutti
+          </button>
+          {staff.map(member => (
+            <button
+              key={member.id}
+              onClick={() => setStaffFilter(staffFilter === member.id ? null : member.id)}
+              className={cn(
+                'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all border',
+                staffFilter === member.id
+                  ? 'text-white border-transparent'
+                  : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+              )}
+              style={staffFilter === member.id ? { backgroundColor: member.color, borderColor: member.color } : undefined}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: staffFilter === member.id ? 'rgba(255,255,255,0.7)' : member.color }}
+              />
+              {member.name}
+            </button>
+          ))}
+        </div>
+      )}
       {/* View toggle + navigation */}
       <div className="flex flex-col gap-3">
         {/* Toggle */}
@@ -169,6 +211,7 @@ export const Appointments = () => {
                         {appointmentsInHour.map(app => {
                           const client = clients.find(c => c.id === app.clientId);
                           const service = services.find(s => s.id === app.serviceId);
+                          const staffMember = staff.find(m => m.id === app.staffId);
                           return (
                             <div
                               key={app.id}
@@ -192,12 +235,21 @@ export const Appointments = () => {
                                   {app.time}
                                 </span>
                               </div>
-                              <p className={cn(
-                                "text-xs truncate",
-                                app.status === 'prenotato' ? "opacity-70" : "text-stone-500"
-                              )}>
-                                {service?.name}
-                              </p>
+                              <div className="flex items-center gap-1.5">
+                                <p className={cn(
+                                  "text-xs truncate flex-1",
+                                  app.status === 'prenotato' ? "opacity-70" : "text-stone-500"
+                                )}>
+                                  {service?.name}
+                                </p>
+                                {staffMember && (
+                                  <span
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: staffMember.color }}
+                                    title={staffMember.name}
+                                  />
+                                )}
+                              </div>
                             </div>
                           );
                         })}
@@ -233,6 +285,8 @@ export const Appointments = () => {
           appointments={appointments}
           clients={clients}
           services={services}
+          staff={staff}
+          staffFilter={staffFilter}
           onAppointmentClick={(id) => setManageAppId(id)}
           onSlotClick={handleSlotClick}
         />

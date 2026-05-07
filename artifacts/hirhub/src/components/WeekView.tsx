@@ -8,6 +8,7 @@ interface Appointment {
   id: string;
   clientId: string;
   serviceId: string;
+  staffId?: string | null;
   date: string;
   time: string;
   durationMins: number;
@@ -26,11 +27,20 @@ interface Service {
   name: string;
 }
 
+interface StaffMember {
+  id: string;
+  name: string;
+  color: string;
+  role?: string | null;
+}
+
 interface WeekViewProps {
   weekDays: Date[];
   appointments: Appointment[];
   clients: Client[];
   services: Service[];
+  staff?: StaffMember[];
+  staffFilter?: string | null;
   onAppointmentClick: (id: string) => void;
   onSlotClick: (date: string, time: string) => void;
 }
@@ -50,6 +60,8 @@ export const WeekView = ({
   appointments,
   clients,
   services,
+  staff = [],
+  staffFilter = null,
   onAppointmentClick,
   onSlotClick,
 }: WeekViewProps) => {
@@ -57,10 +69,14 @@ export const WeekView = ({
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
 
+  const filteredApps = staffFilter
+    ? appointments.filter(a => a.staffId === staffFilter)
+    : appointments;
+
   const getAppsForSlot = (day: Date, hour: string) => {
     const dateStr = format(day, 'yyyy-MM-dd');
     const hourNum = hour.split(':')[0];
-    return appointments.filter(
+    return filteredApps.filter(
       a => a.date === dateStr && a.time.split(':')[0] === hourNum
     );
   };
@@ -169,7 +185,7 @@ export const WeekView = ({
                                 key={app.id}
                                 onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
                                 className={cn(
-                                  'flex-1 min-w-0 rounded-lg border px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] overflow-hidden flex flex-col justify-center',
+                                  'flex-1 min-w-0 rounded-lg border px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] overflow-hidden flex flex-col justify-center relative',
                                   app.status === 'prenotato'
                                     ? 'text-white'
                                     : (STATUS_CLASSES[app.status] ?? 'bg-white border-stone-200 text-stone-900')
@@ -177,7 +193,10 @@ export const WeekView = ({
                                 style={app.status === 'prenotato' ? {
                                   backgroundColor: 'var(--color-brand-dark)',
                                   borderColor: 'var(--color-brand-dark)',
-                                } : undefined}
+                                } : (() => {
+                                  const sm = staff.find(m => m.id === app.staffId);
+                                  return sm ? { borderLeftColor: sm.color, borderLeftWidth: '3px' } : undefined;
+                                })()}
                               >
                                 <p className="text-[10px] font-semibold leading-tight truncate">
                                   {client?.firstName} {client?.lastName}

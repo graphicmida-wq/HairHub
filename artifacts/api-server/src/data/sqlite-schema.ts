@@ -32,10 +32,18 @@ export const products = sqliteTable("products", {
   notes: text("notes"),
 });
 
+export const staffMembers = sqliteTable("staff_members", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  role: text("role"),
+  color: text("color").notNull().default("#6b7280"),
+});
+
 export const appointments = sqliteTable("appointments", {
   id: text("id").primaryKey(),
   clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   serviceId: text("service_id").notNull().references(() => services.id),
+  staffId: text("staff_id"),
   date: text("date").notNull(),
   time: text("time").notNull(),
   durationMins: integer("duration_mins").notNull(),
@@ -59,6 +67,8 @@ export type Service = typeof services.$inferSelect;
 export type InsertService = typeof services.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
+export type StaffMember = typeof staffMembers.$inferSelect;
+export type InsertStaffMember = typeof staffMembers.$inferInsert;
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
 export type SalonSettings = typeof salonSettings.$inferSelect;

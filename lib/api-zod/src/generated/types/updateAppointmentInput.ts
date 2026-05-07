@@ -10,6 +10,7 @@ import type { AppointmentStatus } from "./appointmentStatus";
 export interface UpdateAppointmentInput {
   clientId?: string;
   serviceId?: string;
+  staffId?: string | null;
   date?: string;
   time?: string;
   durationMins?: number;
