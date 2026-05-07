@@ -1,0 +1,129 @@
+import React, { useState, useEffect } from 'react';
+import { Modal } from './Modal';
+import { store, useStore } from '../lib/store';
+
+export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boolean, onClose: () => void, productId: string | null }) => {
+  const { products } = useStore();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    category: '',
+    brand: '',
+    quantity: 0,
+    minThreshold: 5,
+  });
+
+  useEffect(() => {
+    if (productId) {
+      const p = products.find(prod => prod.id === productId);
+      if (p) {
+        setFormData({
+          name: p.name,
+          category: p.category,
+          brand: p.brand,
+          quantity: p.quantity,
+          minThreshold: p.minThreshold,
+        });
+      }
+    }
+  }, [productId, products]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (productId) {
+      store.updateProduct(productId, formData);
+      onClose();
+    }
+  };
+
+  const handleDelete = () => {
+    if (productId && window.confirm('Sei sicuro di voler eliminare questo prodotto?')) {
+      store.deleteProduct(productId);
+      onClose();
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Modifica Prodotto">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-stone-700">Nome Prodotto</label>
+          <input
+            required
+            type="text"
+            value={formData.name}
+            onChange={e => setFormData(pr => ({...pr, name: e.target.value}))}
+            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-700">Marca</label>
+            <input
+              required
+              type="text"
+              value={formData.brand}
+              onChange={e => setFormData(pr => ({...pr, brand: e.target.value}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-700">Categoria</label>
+            <select
+              required
+              value={formData.category}
+              onChange={e => setFormData(pr => ({...pr, category: e.target.value}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+            >
+              <option value="" disabled>Seleziona</option>
+              <option value="Lavaggio">Lavaggio</option>
+              <option value="Colore">Colore</option>
+              <option value="Finish">Finish</option>
+              <option value="Altro">Altro</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-700">Quantità</label>
+            <input
+              required
+              type="number"
+              min="0"
+              value={formData.quantity}
+              onChange={e => setFormData(pr => ({...pr, quantity: parseInt(e.target.value) || 0}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-700">Soglia Minima</label>
+            <input
+              required
+              type="number"
+              min="0"
+              value={formData.minThreshold}
+              onChange={e => setFormData(pr => ({...pr, minThreshold: parseInt(e.target.value) || 0}))}
+              className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mt-4">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="flex-1 bg-red-50 text-red-600 font-medium py-3 rounded-xl hover:bg-red-100 transition-colors"
+          >
+            Elimina
+          </button>
+          <button type="submit" className="flex-[2] bg-stone-900 text-white font-medium py-3 rounded-xl hover:bg-stone-800 transition-colors">
+            Salva Modifiche
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
