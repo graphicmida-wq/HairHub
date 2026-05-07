@@ -5,19 +5,22 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
 
-  --color-stone-50: #fafaf9;
-  --color-stone-100: #f5f5f4;
-  --color-stone-200: #e7e5e4;
-  --color-stone-800: #292524;
-  --color-stone-900: #1c1917;
+  --color-stone-50: #faf7ee;
+  --color-stone-100: #f0ece0;
+  --color-stone-200: #e8e3d8;
+  --color-stone-800: #3a3748;
+  --color-stone-900: #2d2b38;
 
-  --color-brand-light: #ecebd9;
-  --color-brand-primary: #bdae93;
-  --color-brand-dark: #8b7d6b;
+  --color-brand-light: #f5f0e3;
+  --color-brand-primary: #5c5870;
+  --color-brand-dark: #3a3748;
+  --color-brand-muted: #c8c4d4;
+  --color-brand-gold: #c4aa7e;
 }
 
 body {
-  @apply bg-stone-50 text-stone-900 font-sans antialiased;
+  @apply text-stone-900 font-sans antialiased;
+  background-color: #faf7ee;
 }
 
 .no-scrollbar::-webkit-scrollbar {
