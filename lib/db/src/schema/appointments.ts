@@ -16,6 +16,7 @@ export const appointmentsTable = mysqlTable("appointments", {
   status: mysqlEnum("status", ["prenotato", "completato", "annullato", "no-show"]).notNull().default("prenotato"),
   notes: text("notes"),
   usedProductIds: json("used_product_ids").$type<string[]>(),
+  usedProducts: json("used_products").$type<{ productId: string; quantityUsed: number }[]>(),
 });
 
 export const insertAppointmentSchema = createInsertSchema(appointmentsTable).omit({ id: true });

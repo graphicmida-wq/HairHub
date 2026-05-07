@@ -15,6 +15,36 @@ export const Inventory = () => {
     p.brand.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  function isLowStock(product: typeof products[0]): boolean {
+    if (product.unitSize != null && product.stockGrams != null) {
+      // Low stock based on grams: remaining < minThreshold * unitSize
+      return product.stockGrams < product.minThreshold * product.unitSize;
+    }
+    return product.quantity <= product.minThreshold;
+  }
+
+  function formatStock(product: typeof products[0]): React.ReactNode {
+    if (product.unitSize != null && product.stockGrams != null) {
+      const unit = product.unitType ?? 'g';
+      const low = isLowStock(product);
+      return (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className={cn("text-lg font-medium", low ? "text-red-600" : "text-stone-900")}>
+            {product.stockGrams % 1 === 0 ? product.stockGrams : product.stockGrams.toFixed(1)}{' '}
+            <span className="text-sm font-normal text-stone-400">{unit}</span>
+          </span>
+          <span className="text-xs text-stone-400">{product.quantity} pz</span>
+        </div>
+      );
+    }
+    const low = isLowStock(product);
+    return (
+      <span className={cn("text-lg font-medium", low ? "text-red-600" : "text-stone-900")}>
+        {product.quantity} <span className="text-sm font-normal text-stone-400">pz</span>
+      </span>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
@@ -45,7 +75,7 @@ export const Inventory = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredProducts.map(product => {
-            const isLowStock = product.quantity <= product.minThreshold;
+            const low = isLowStock(product);
             return (
               <div
                 key={product.id}
@@ -54,7 +84,7 @@ export const Inventory = () => {
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                  style={isLowStock
+                  style={low
                     ? { backgroundColor: '#fef2f2', color: '#dc2626' }
                     : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
                 >
@@ -65,10 +95,8 @@ export const Inventory = () => {
                   <p className="text-sm text-stone-500 truncate">{product.brand} &bull; {product.category}</p>
                 </div>
                 <div className="flex flex-col items-end shrink-0">
-                  <span className={cn("text-lg font-medium", isLowStock ? "text-red-600" : "text-stone-900")}>
-                    {product.quantity} <span className="text-sm font-normal text-stone-400">pz</span>
-                  </span>
-                  {isLowStock && (
+                  {formatStock(product)}
+                  {low && (
                     <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-red-600 mt-1 bg-red-50 px-2 py-0.5 rounded-sm">
                       <AlertCircle className="w-3 h-3" /> Scorta scarsa
                     </span>

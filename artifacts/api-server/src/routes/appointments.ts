@@ -5,6 +5,8 @@ import {
   dbCreateAppointment,
   dbUpdateAppointment,
   dbDeleteAppointment,
+  dbGetProduct,
+  dbUpdateProduct,
 } from "../data/db";
 import {
   CreateAppointmentBody,
@@ -77,6 +79,36 @@ router.put("/appointments/:id", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
+
+  const existing = await dbGetAppointment(params.data.id);
+  if (!existing) {
+    res.status(404).json({ message: "Appointment not found" });
+    return;
+  }
+
+  // Deduct stock when completing with usedProducts.
+  // Intentional: deduction fires only on first transition to "completato".
+  // Post-completion edits (e.g. changing usedProducts on an already-completed appointment)
+  // do NOT re-reconcile stock. This avoids double-deduction and keeps the logic simple.
+  const isCompletingNow = body.data.status === "completato" && existing.status !== "completato";
+  if (isCompletingNow && body.data.usedProducts && body.data.usedProducts.length > 0) {
+    // Aggregate quantities by productId to avoid duplicate-entry race conditions
+    const aggregated = new Map<string, number>();
+    for (const { productId, quantityUsed } of body.data.usedProducts) {
+      if (quantityUsed > 0) {
+        aggregated.set(productId, (aggregated.get(productId) ?? 0) + quantityUsed);
+      }
+    }
+    for (const [productId, totalUsed] of aggregated) {
+      const product = await dbGetProduct(productId);
+      if (!product) continue;
+      if (product.stockGrams != null) {
+        const newStock = Math.max(0, Number(product.stockGrams) - totalUsed);
+        await dbUpdateProduct(productId, { stockGrams: newStock });
+      }
+    }
+  }
+
   const updated = await dbUpdateAppointment(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Appointment not found" });

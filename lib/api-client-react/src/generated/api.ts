@@ -20,17 +20,21 @@ import type {
   ApiError,
   Appointment,
   Client,
+  ClientFormula,
   CreateAppointmentInput,
+  CreateClientFormulaInput,
   CreateClientInput,
   CreateProductInput,
   CreateServiceInput,
   CreateStaffMemberInput,
   HealthStatus,
+  ListClientFormulasParams,
   Product,
   SalonSettings,
   Service,
   StaffMember,
   UpdateAppointmentInput,
+  UpdateClientFormulaInput,
   UpdateClientInput,
   UpdateProductInput,
   UpdateServiceInput,
@@ -2116,6 +2120,449 @@ export const useDeleteStaffMember = <
   TContext
 > => {
   return useMutation(getDeleteStaffMemberMutationOptions(options));
+};
+
+/**
+ * @summary List client formulas
+ */
+export const getListClientFormulasUrl = (params?: ListClientFormulasParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/client-formulas?${stringifiedParams}`
+    : `/api/client-formulas`;
+};
+
+export const listClientFormulas = async (
+  params?: ListClientFormulasParams,
+  options?: RequestInit,
+): Promise<ClientFormula[]> => {
+  return customFetch<ClientFormula[]>(getListClientFormulasUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListClientFormulasQueryKey = (
+  params?: ListClientFormulasParams,
+) => {
+  return [`/api/client-formulas`, ...(params ? [params] : [])] as const;
+};
+
+export const getListClientFormulasQueryOptions = <
+  TData = Awaited<ReturnType<typeof listClientFormulas>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListClientFormulasParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listClientFormulas>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListClientFormulasQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listClientFormulas>>
+  > = ({ signal }) => listClientFormulas(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listClientFormulas>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListClientFormulasQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listClientFormulas>>
+>;
+export type ListClientFormulasQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List client formulas
+ */
+
+export function useListClientFormulas<
+  TData = Awaited<ReturnType<typeof listClientFormulas>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListClientFormulasParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listClientFormulas>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListClientFormulasQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new client formula
+ */
+export const getCreateClientFormulaUrl = () => {
+  return `/api/client-formulas`;
+};
+
+export const createClientFormula = async (
+  createClientFormulaInput: CreateClientFormulaInput,
+  options?: RequestInit,
+): Promise<ClientFormula> => {
+  return customFetch<ClientFormula>(getCreateClientFormulaUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createClientFormulaInput),
+  });
+};
+
+export const getCreateClientFormulaMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createClientFormula>>,
+    TError,
+    { data: BodyType<CreateClientFormulaInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createClientFormula>>,
+  TError,
+  { data: BodyType<CreateClientFormulaInput> },
+  TContext
+> => {
+  const mutationKey = ["createClientFormula"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createClientFormula>>,
+    { data: BodyType<CreateClientFormulaInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createClientFormula(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateClientFormulaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createClientFormula>>
+>;
+export type CreateClientFormulaMutationBody =
+  BodyType<CreateClientFormulaInput>;
+export type CreateClientFormulaMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new client formula
+ */
+export const useCreateClientFormula = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createClientFormula>>,
+    TError,
+    { data: BodyType<CreateClientFormulaInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createClientFormula>>,
+  TError,
+  { data: BodyType<CreateClientFormulaInput> },
+  TContext
+> => {
+  return useMutation(getCreateClientFormulaMutationOptions(options));
+};
+
+/**
+ * @summary Get a client formula by ID
+ */
+export const getGetClientFormulaUrl = (id: string) => {
+  return `/api/client-formulas/${id}`;
+};
+
+export const getClientFormula = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ClientFormula> => {
+  return customFetch<ClientFormula>(getGetClientFormulaUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetClientFormulaQueryKey = (id: string) => {
+  return [`/api/client-formulas/${id}`] as const;
+};
+
+export const getGetClientFormulaQueryOptions = <
+  TData = Awaited<ReturnType<typeof getClientFormula>>,
+  TError = ErrorType<ApiError>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getClientFormula>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetClientFormulaQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getClientFormula>>
+  > = ({ signal }) => getClientFormula(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getClientFormula>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetClientFormulaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getClientFormula>>
+>;
+export type GetClientFormulaQueryError = ErrorType<ApiError>;
+
+/**
+ * @summary Get a client formula by ID
+ */
+
+export function useGetClientFormula<
+  TData = Awaited<ReturnType<typeof getClientFormula>>,
+  TError = ErrorType<ApiError>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getClientFormula>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetClientFormulaQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a client formula
+ */
+export const getUpdateClientFormulaUrl = (id: string) => {
+  return `/api/client-formulas/${id}`;
+};
+
+export const updateClientFormula = async (
+  id: string,
+  updateClientFormulaInput: UpdateClientFormulaInput,
+  options?: RequestInit,
+): Promise<ClientFormula> => {
+  return customFetch<ClientFormula>(getUpdateClientFormulaUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateClientFormulaInput),
+  });
+};
+
+export const getUpdateClientFormulaMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateClientFormula>>,
+    TError,
+    { id: string; data: BodyType<UpdateClientFormulaInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateClientFormula>>,
+  TError,
+  { id: string; data: BodyType<UpdateClientFormulaInput> },
+  TContext
+> => {
+  const mutationKey = ["updateClientFormula"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateClientFormula>>,
+    { id: string; data: BodyType<UpdateClientFormulaInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateClientFormula(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateClientFormulaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateClientFormula>>
+>;
+export type UpdateClientFormulaMutationBody =
+  BodyType<UpdateClientFormulaInput>;
+export type UpdateClientFormulaMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Update a client formula
+ */
+export const useUpdateClientFormula = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateClientFormula>>,
+    TError,
+    { id: string; data: BodyType<UpdateClientFormulaInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateClientFormula>>,
+  TError,
+  { id: string; data: BodyType<UpdateClientFormulaInput> },
+  TContext
+> => {
+  return useMutation(getUpdateClientFormulaMutationOptions(options));
+};
+
+/**
+ * @summary Delete a client formula
+ */
+export const getDeleteClientFormulaUrl = (id: string) => {
+  return `/api/client-formulas/${id}`;
+};
+
+export const deleteClientFormula = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteClientFormulaUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteClientFormulaMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteClientFormula>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteClientFormula>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteClientFormula"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteClientFormula>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteClientFormula(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteClientFormulaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteClientFormula>>
+>;
+
+export type DeleteClientFormulaMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a client formula
+ */
+export const useDeleteClientFormula = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteClientFormula>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteClientFormula>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteClientFormulaMutationOptions(options));
 };
 
 /**

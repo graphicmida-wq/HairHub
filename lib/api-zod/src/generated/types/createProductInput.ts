@@ -5,13 +5,20 @@
  * HirHub salon management API
  * OpenAPI spec version: 0.2.0
  */
+import type { CreateProductInputUnitType } from "./createProductInputUnitType";
 
 export interface CreateProductInput {
   name: string;
   category: string;
   brand: string;
+  /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;
   supplier?: string | null;
   notes?: string | null;
+  /** Size in g or ml per unit/package */
+  unitSize?: number | null;
+  unitType?: CreateProductInputUnitType;
+  /** Total stock in g or ml (auto-computed as quantity * unitSize if not provided) */
+  stockGrams?: number | null;
 }

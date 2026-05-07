@@ -7,6 +7,21 @@ import { toast } from './Toast';
 
 const LABEL = "text-sm font-medium text-stone-700";
 const INPUT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full text-sm";
+const SELECT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full text-sm";
+
+type UnitType = 'g' | 'ml';
+
+interface FormData {
+  name: string;
+  category: string;
+  brand: string;
+  quantity: number;
+  minThreshold: number;
+  trackByWeight: boolean;
+  unitSize: number;
+  unitType: UnitType;
+  stockGrams: number;
+}
 
 export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boolean, onClose: () => void, productId: string | null }) => {
   const queryClient = useQueryClient();
@@ -41,13 +56,23 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     },
   });
 
-  const [formData, setFormData] = useState({ name: '', category: '', brand: '', quantity: 0, minThreshold: 5 });
+  const [formData, setFormData] = useState<FormData>({
+    name: '', category: '', brand: '', quantity: 0, minThreshold: 5,
+    trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
+  });
 
   useEffect(() => {
     if (product) {
       setFormData({
-        name: product.name, category: product.category,
-        brand: product.brand, quantity: product.quantity, minThreshold: product.minThreshold,
+        name: product.name,
+        category: product.category,
+        brand: product.brand,
+        quantity: product.quantity,
+        minThreshold: product.minThreshold,
+        trackByWeight: product.unitSize != null,
+        unitSize: product.unitSize ?? 100,
+        unitType: (product.unitType as UnitType) ?? 'ml',
+        stockGrams: product.stockGrams ?? 0,
       });
     }
   }, [product]);
@@ -55,7 +80,23 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!productId) return;
-    updateProduct({ id: productId, data: formData });
+    const payload: Parameters<typeof updateProduct>[0]['data'] = {
+      name: formData.name,
+      category: formData.category,
+      brand: formData.brand,
+      quantity: formData.quantity,
+      minThreshold: formData.minThreshold,
+    };
+    if (formData.trackByWeight) {
+      payload.unitSize = formData.unitSize;
+      payload.unitType = formData.unitType;
+      payload.stockGrams = formData.stockGrams;
+    } else {
+      payload.unitSize = null;
+      payload.unitType = null;
+      payload.stockGrams = null;
+    }
+    updateProduct({ id: productId, data: payload });
   };
 
   const handleDelete = () => {
@@ -90,7 +131,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label className={LABEL}>Quantità</label>
+            <label className={LABEL}>Confezioni (pz)</label>
             <input required type="number" min="0" value={formData.quantity}
               onChange={e => setFormData(pr => ({ ...pr, quantity: parseInt(e.target.value) || 0 }))}
               className={INPUT} />
@@ -102,7 +143,50 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
               className={INPUT} />
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4">
+
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            type="checkbox"
+            id="editTrackByWeight"
+            checked={formData.trackByWeight}
+            onChange={e => setFormData(pr => ({ ...pr, trackByWeight: e.target.checked }))}
+            className="w-4 h-4 rounded border-stone-300 accent-stone-800"
+          />
+          <label htmlFor="editTrackByWeight" className="text-sm text-stone-700 cursor-pointer">
+            Traccia stock in grammi / ml
+          </label>
+        </div>
+
+        {formData.trackByWeight && (
+          <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className={LABEL}>Dimensione confezione</label>
+                <input type="number" min="0" step="0.1" value={formData.unitSize}
+                  onChange={e => setFormData(pr => ({ ...pr, unitSize: parseFloat(e.target.value) || 0 }))}
+                  className={INPUT} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={LABEL}>Unità di misura</label>
+                <select value={formData.unitType}
+                  onChange={e => setFormData(pr => ({ ...pr, unitType: e.target.value as UnitType }))}
+                  className={SELECT}>
+                  <option value="ml">ml (millilitri)</option>
+                  <option value="g">g (grammi)</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={LABEL}>Stock attuale ({formData.unitType})</label>
+              <input type="number" min="0" step="0.1" value={formData.stockGrams}
+                onChange={e => setFormData(pr => ({ ...pr, stockGrams: parseFloat(e.target.value) || 0 }))}
+                className={INPUT} />
+              <p className="text-xs text-stone-400">Modifica direttamente per rettifiche manuali</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 mt-2">
           <button type="button" onClick={handleDelete} disabled={isDeleting}
             className="flex-1 bg-red-50 text-red-600 font-medium py-3 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-60">
             {isDeleting ? '...' : 'Elimina'}

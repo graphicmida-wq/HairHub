@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { AppointmentStatus } from "./appointmentStatus";
+import type { UsedProductEntry } from "./usedProductEntry";
 
 export interface Appointment {
   id: string;
@@ -19,5 +20,7 @@ export interface Appointment {
   durationMins: number;
   status: AppointmentStatus;
   notes?: string | null;
+  /** Deprecated: use usedProducts instead */
   usedProductIds?: string[] | null;
+  usedProducts?: UsedProductEntry[] | null;
 }

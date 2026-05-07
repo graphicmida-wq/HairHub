@@ -5,6 +5,7 @@
  * HirHub salon management API
  * OpenAPI spec version: 0.2.0
  */
+import type { UpdateProductInputUnitType } from "./updateProductInputUnitType";
 
 export interface UpdateProductInput {
   name?: string;
@@ -14,4 +15,7 @@ export interface UpdateProductInput {
   minThreshold?: number;
   supplier?: string | null;
   notes?: string | null;
+  unitSize?: number | null;
+  unitType?: UpdateProductInputUnitType;
+  stockGrams?: number | null;
 }

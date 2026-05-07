@@ -6,6 +6,7 @@ import productsRouter from "./products";
 import staffRouter from "./staff";
 import appointmentsRouter from "./appointments";
 import settingsRouter from "./settings";
+import clientFormulasRouter from "./client-formulas";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(productsRouter);
 router.use(staffRouter);
 router.use(appointmentsRouter);
 router.use(settingsRouter);
+router.use(clientFormulasRouter);
 
 export default router;

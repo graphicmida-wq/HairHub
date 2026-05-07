@@ -5,14 +5,22 @@
  * HirHub salon management API
  * OpenAPI spec version: 0.2.0
  */
+import type { ProductUnitType } from "./productUnitType";
 
 export interface Product {
   id: string;
   name: string;
   category: string;
   brand: string;
+  /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;
   supplier?: string | null;
   notes?: string | null;
+  /** Size in g or ml per unit/package */
+  unitSize?: number | null;
+  /** Unit of measurement for weight/volume tracking */
+  unitType?: ProductUnitType;
+  /** Total remaining stock in g or ml (quantity * unitSize, decremented on use) */
+  stockGrams?: number | null;
 }

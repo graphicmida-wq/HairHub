@@ -180,10 +180,26 @@ export const ListProductsResponseItem = zod.object({
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
-  quantity: zod.number(),
+  quantity: zod
+    .number()
+    .describe("Number of physical units (bottles\/packages)"),
   minThreshold: zod.number(),
   supplier: zod.string().nullish(),
   notes: zod.string().nullish(),
+  unitSize: zod
+    .number()
+    .nullish()
+    .describe("Size in g or ml per unit\/package"),
+  unitType: zod
+    .enum(["g", "ml"])
+    .nullish()
+    .describe("Unit of measurement for weight\/volume tracking"),
+  stockGrams: zod
+    .number()
+    .nullish()
+    .describe(
+      "Total remaining stock in g or ml (quantity \* unitSize, decremented on use)",
+    ),
 });
 export const ListProductsResponse = zod.array(ListProductsResponseItem);
 
@@ -194,10 +210,23 @@ export const CreateProductBody = zod.object({
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
-  quantity: zod.number(),
+  quantity: zod
+    .number()
+    .describe("Number of physical units (bottles\/packages)"),
   minThreshold: zod.number(),
   supplier: zod.string().nullish(),
   notes: zod.string().nullish(),
+  unitSize: zod
+    .number()
+    .nullish()
+    .describe("Size in g or ml per unit\/package"),
+  unitType: zod.enum(["g", "ml"]).nullish(),
+  stockGrams: zod
+    .number()
+    .nullish()
+    .describe(
+      "Total stock in g or ml (auto-computed as quantity \* unitSize if not provided)",
+    ),
 });
 
 /**
@@ -212,10 +241,26 @@ export const GetProductResponse = zod.object({
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
-  quantity: zod.number(),
+  quantity: zod
+    .number()
+    .describe("Number of physical units (bottles\/packages)"),
   minThreshold: zod.number(),
   supplier: zod.string().nullish(),
   notes: zod.string().nullish(),
+  unitSize: zod
+    .number()
+    .nullish()
+    .describe("Size in g or ml per unit\/package"),
+  unitType: zod
+    .enum(["g", "ml"])
+    .nullish()
+    .describe("Unit of measurement for weight\/volume tracking"),
+  stockGrams: zod
+    .number()
+    .nullish()
+    .describe(
+      "Total remaining stock in g or ml (quantity \* unitSize, decremented on use)",
+    ),
 });
 
 /**
@@ -233,6 +278,9 @@ export const UpdateProductBody = zod.object({
   minThreshold: zod.number().optional(),
   supplier: zod.string().nullish(),
   notes: zod.string().nullish(),
+  unitSize: zod.number().nullish(),
+  unitType: zod.enum(["g", "ml"]).nullish(),
+  stockGrams: zod.number().nullish(),
 });
 
 export const UpdateProductResponse = zod.object({
@@ -240,10 +288,26 @@ export const UpdateProductResponse = zod.object({
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
-  quantity: zod.number(),
+  quantity: zod
+    .number()
+    .describe("Number of physical units (bottles\/packages)"),
   minThreshold: zod.number(),
   supplier: zod.string().nullish(),
   notes: zod.string().nullish(),
+  unitSize: zod
+    .number()
+    .nullish()
+    .describe("Size in g or ml per unit\/package"),
+  unitType: zod
+    .enum(["g", "ml"])
+    .nullish()
+    .describe("Unit of measurement for weight\/volume tracking"),
+  stockGrams: zod
+    .number()
+    .nullish()
+    .describe(
+      "Total remaining stock in g or ml (quantity \* unitSize, decremented on use)",
+    ),
 });
 
 /**
@@ -256,6 +320,8 @@ export const DeleteProductParams = zod.object({
 /**
  * @summary List all appointments
  */
+export const listAppointmentsResponseUsedProductsItemQuantityUsedMin = 0;
+
 export const ListAppointmentsResponseItem = zod.object({
   id: zod.string(),
   clientId: zod.string(),
@@ -266,13 +332,29 @@ export const ListAppointmentsResponseItem = zod.object({
   durationMins: zod.number(),
   status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
-  usedProductIds: zod.array(zod.string()).nullish(),
+  usedProductIds: zod
+    .array(zod.string())
+    .nullish()
+    .describe("Deprecated: use usedProducts instead"),
+  usedProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantityUsed: zod
+          .number()
+          .min(listAppointmentsResponseUsedProductsItemQuantityUsedMin)
+          .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
 });
 export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 
 /**
  * @summary Create a new appointment
  */
+export const createAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
+
 export const CreateAppointmentBody = zod.object({
   clientId: zod.string(),
   serviceId: zod.string(),
@@ -283,6 +365,17 @@ export const CreateAppointmentBody = zod.object({
   status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
   usedProductIds: zod.array(zod.string()).nullish(),
+  usedProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantityUsed: zod
+          .number()
+          .min(createAppointmentBodyUsedProductsItemQuantityUsedMin)
+          .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
 });
 
 /**
@@ -291,6 +384,8 @@ export const CreateAppointmentBody = zod.object({
 export const GetAppointmentParams = zod.object({
   id: zod.coerce.string(),
 });
+
+export const getAppointmentResponseUsedProductsItemQuantityUsedMin = 0;
 
 export const GetAppointmentResponse = zod.object({
   id: zod.string(),
@@ -302,7 +397,21 @@ export const GetAppointmentResponse = zod.object({
   durationMins: zod.number(),
   status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
-  usedProductIds: zod.array(zod.string()).nullish(),
+  usedProductIds: zod
+    .array(zod.string())
+    .nullish()
+    .describe("Deprecated: use usedProducts instead"),
+  usedProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantityUsed: zod
+          .number()
+          .min(getAppointmentResponseUsedProductsItemQuantityUsedMin)
+          .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
 });
 
 /**
@@ -311,6 +420,8 @@ export const GetAppointmentResponse = zod.object({
 export const UpdateAppointmentParams = zod.object({
   id: zod.coerce.string(),
 });
+
+export const updateAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 
 export const UpdateAppointmentBody = zod.object({
   clientId: zod.string().optional(),
@@ -323,8 +434,24 @@ export const UpdateAppointmentBody = zod.object({
     .enum(["prenotato", "completato", "annullato", "no-show"])
     .optional(),
   notes: zod.string().nullish(),
-  usedProductIds: zod.array(zod.string()).nullish(),
+  usedProductIds: zod
+    .array(zod.string())
+    .nullish()
+    .describe("Deprecated: use usedProducts instead"),
+  usedProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantityUsed: zod
+          .number()
+          .min(updateAppointmentBodyUsedProductsItemQuantityUsedMin)
+          .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
 });
+
+export const updateAppointmentResponseUsedProductsItemQuantityUsedMin = 0;
 
 export const UpdateAppointmentResponse = zod.object({
   id: zod.string(),
@@ -336,7 +463,21 @@ export const UpdateAppointmentResponse = zod.object({
   durationMins: zod.number(),
   status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
-  usedProductIds: zod.array(zod.string()).nullish(),
+  usedProductIds: zod
+    .array(zod.string())
+    .nullish()
+    .describe("Deprecated: use usedProducts instead"),
+  usedProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantityUsed: zod
+          .number()
+          .min(updateAppointmentResponseUsedProductsItemQuantityUsedMin)
+          .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
 });
 
 /**
@@ -390,6 +531,140 @@ export const UpdateStaffMemberResponse = zod.object({
  * @summary Delete a staff member
  */
 export const DeleteStaffMemberParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary List client formulas
+ */
+export const ListClientFormulasQueryParams = zod.object({
+  clientId: zod.coerce.string().optional(),
+});
+
+export const listClientFormulasResponseProductsItemQuantityMin = 0;
+
+export const ListClientFormulasResponseItem = zod.object({
+  id: zod.string(),
+  clientId: zod.string(),
+  name: zod.string(),
+  serviceId: zod.string().nullish(),
+  products: zod.array(
+    zod.object({
+      productId: zod.string(),
+      quantity: zod
+        .number()
+        .min(listClientFormulasResponseProductsItemQuantityMin)
+        .describe("Amount in g or ml"),
+    }),
+  ),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+export const ListClientFormulasResponse = zod.array(
+  ListClientFormulasResponseItem,
+);
+
+/**
+ * @summary Create a new client formula
+ */
+export const createClientFormulaBodyProductsItemQuantityMin = 0;
+
+export const CreateClientFormulaBody = zod.object({
+  clientId: zod.string(),
+  name: zod.string(),
+  serviceId: zod.string().nullish(),
+  products: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod
+          .number()
+          .min(createClientFormulaBodyProductsItemQuantityMin)
+          .describe("Amount in g or ml"),
+      }),
+    )
+    .min(1),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Get a client formula by ID
+ */
+export const GetClientFormulaParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const getClientFormulaResponseProductsItemQuantityMin = 0;
+
+export const GetClientFormulaResponse = zod.object({
+  id: zod.string(),
+  clientId: zod.string(),
+  name: zod.string(),
+  serviceId: zod.string().nullish(),
+  products: zod.array(
+    zod.object({
+      productId: zod.string(),
+      quantity: zod
+        .number()
+        .min(getClientFormulaResponseProductsItemQuantityMin)
+        .describe("Amount in g or ml"),
+    }),
+  ),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update a client formula
+ */
+export const UpdateClientFormulaParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const updateClientFormulaBodyProductsItemQuantityMin = 0;
+
+export const UpdateClientFormulaBody = zod.object({
+  name: zod.string().optional(),
+  serviceId: zod.string().nullish(),
+  products: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod
+          .number()
+          .min(updateClientFormulaBodyProductsItemQuantityMin)
+          .describe("Amount in g or ml"),
+      }),
+    )
+    .min(1)
+    .optional(),
+  notes: zod.string().nullish(),
+});
+
+export const updateClientFormulaResponseProductsItemQuantityMin = 0;
+
+export const UpdateClientFormulaResponse = zod.object({
+  id: zod.string(),
+  clientId: zod.string(),
+  name: zod.string(),
+  serviceId: zod.string().nullish(),
+  products: zod.array(
+    zod.object({
+      productId: zod.string(),
+      quantity: zod
+        .number()
+        .min(updateClientFormulaResponseProductsItemQuantityMin)
+        .describe("Amount in g or ml"),
+    }),
+  ),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Delete a client formula
+ */
+export const DeleteClientFormulaParams = zod.object({
   id: zod.coerce.string(),
 });
 

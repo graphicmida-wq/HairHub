@@ -30,6 +30,9 @@ export const products = sqliteTable("products", {
   minThreshold: integer("min_threshold").notNull().default(5),
   supplier: text("supplier"),
   notes: text("notes"),
+  unitSize: real("unit_size"),
+  unitType: text("unit_type", { enum: ["g", "ml"] }),
+  stockGrams: real("stock_grams"),
 });
 
 export const staffMembers = sqliteTable("staff_members", {
@@ -50,6 +53,17 @@ export const appointments = sqliteTable("appointments", {
   status: text("status", { enum: ["prenotato", "completato", "annullato", "no-show"] }).notNull().default("prenotato"),
   notes: text("notes"),
   usedProductIds: text("used_product_ids"),
+  usedProducts: text("used_products"),
+});
+
+export const clientFormulas = sqliteTable("client_formulas", {
+  id: text("id").primaryKey(),
+  clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  serviceId: text("service_id"),
+  products: text("products").notNull(),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull(),
 });
 
 export const salonSettings = sqliteTable("salon_settings", {
@@ -71,4 +85,6 @@ export type StaffMember = typeof staffMembers.$inferSelect;
 export type InsertStaffMember = typeof staffMembers.$inferInsert;
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
+export type ClientFormula = typeof clientFormulas.$inferSelect;
+export type InsertClientFormula = typeof clientFormulas.$inferInsert;
 export type SalonSettings = typeof salonSettings.$inferSelect;

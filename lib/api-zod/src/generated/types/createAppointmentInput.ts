@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { AppointmentStatus } from "./appointmentStatus";
+import type { UsedProductEntry } from "./usedProductEntry";
 
 export interface CreateAppointmentInput {
   clientId: string;
@@ -17,4 +18,5 @@ export interface CreateAppointmentInput {
   status: AppointmentStatus;
   notes?: string | null;
   usedProductIds?: string[] | null;
+  usedProducts?: UsedProductEntry[] | null;
 }

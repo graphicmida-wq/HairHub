@@ -72,26 +72,69 @@ export interface UpdateServiceInput {
   notes?: string | null;
 }
 
+/**
+ * Unit of measurement for weight/volume tracking
+ */
+export type ProductUnitType =
+  | (typeof ProductUnitType)[keyof typeof ProductUnitType]
+  | null;
+
+export const ProductUnitType = {
+  g: "g",
+  ml: "ml",
+} as const;
+
 export interface Product {
   id: string;
   name: string;
   category: string;
   brand: string;
+  /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;
   supplier?: string | null;
   notes?: string | null;
+  /** Size in g or ml per unit/package */
+  unitSize?: number | null;
+  /** Unit of measurement for weight/volume tracking */
+  unitType?: ProductUnitType;
+  /** Total remaining stock in g or ml (quantity * unitSize, decremented on use) */
+  stockGrams?: number | null;
 }
+
+export type CreateProductInputUnitType =
+  | (typeof CreateProductInputUnitType)[keyof typeof CreateProductInputUnitType]
+  | null;
+
+export const CreateProductInputUnitType = {
+  g: "g",
+  ml: "ml",
+} as const;
 
 export interface CreateProductInput {
   name: string;
   category: string;
   brand: string;
+  /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;
   supplier?: string | null;
   notes?: string | null;
+  /** Size in g or ml per unit/package */
+  unitSize?: number | null;
+  unitType?: CreateProductInputUnitType;
+  /** Total stock in g or ml (auto-computed as quantity * unitSize if not provided) */
+  stockGrams?: number | null;
 }
+
+export type UpdateProductInputUnitType =
+  | (typeof UpdateProductInputUnitType)[keyof typeof UpdateProductInputUnitType]
+  | null;
+
+export const UpdateProductInputUnitType = {
+  g: "g",
+  ml: "ml",
+} as const;
 
 export interface UpdateProductInput {
   name?: string;
@@ -101,6 +144,9 @@ export interface UpdateProductInput {
   minThreshold?: number;
   supplier?: string | null;
   notes?: string | null;
+  unitSize?: number | null;
+  unitType?: UpdateProductInputUnitType;
+  stockGrams?: number | null;
 }
 
 export type AppointmentStatus =
@@ -133,6 +179,15 @@ export interface UpdateStaffMemberInput {
   color?: string;
 }
 
+export interface UsedProductEntry {
+  productId: string;
+  /**
+   * Amount used in g or ml
+   * @minimum 0
+   */
+  quantityUsed: number;
+}
+
 export interface Appointment {
   id: string;
   clientId: string;
@@ -145,7 +200,9 @@ export interface Appointment {
   durationMins: number;
   status: AppointmentStatus;
   notes?: string | null;
+  /** Deprecated: use usedProducts instead */
   usedProductIds?: string[] | null;
+  usedProducts?: UsedProductEntry[] | null;
 }
 
 export interface CreateAppointmentInput {
@@ -158,6 +215,7 @@ export interface CreateAppointmentInput {
   status: AppointmentStatus;
   notes?: string | null;
   usedProductIds?: string[] | null;
+  usedProducts?: UsedProductEntry[] | null;
 }
 
 export interface UpdateAppointmentInput {
@@ -169,7 +227,45 @@ export interface UpdateAppointmentInput {
   durationMins?: number;
   status?: AppointmentStatus;
   notes?: string | null;
+  /** Deprecated: use usedProducts instead */
   usedProductIds?: string[] | null;
+  usedProducts?: UsedProductEntry[] | null;
+}
+
+export interface ClientFormulaProduct {
+  productId: string;
+  /**
+   * Amount in g or ml
+   * @minimum 0
+   */
+  quantity: number;
+}
+
+export interface ClientFormula {
+  id: string;
+  clientId: string;
+  name: string;
+  serviceId?: string | null;
+  products: ClientFormulaProduct[];
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface CreateClientFormulaInput {
+  clientId: string;
+  name: string;
+  serviceId?: string | null;
+  /** @minItems 1 */
+  products: ClientFormulaProduct[];
+  notes?: string | null;
+}
+
+export interface UpdateClientFormulaInput {
+  name?: string;
+  serviceId?: string | null;
+  /** @minItems 1 */
+  products?: ClientFormulaProduct[];
+  notes?: string | null;
 }
 
 export interface SalonSettings {
@@ -180,3 +276,7 @@ export interface SalonSettings {
   /** Hex color string for the brand palette primary color, e.g. #5c5870 */
   brandColor?: string | null;
 }
+
+export type ListClientFormulasParams = {
+  clientId?: string;
+};
