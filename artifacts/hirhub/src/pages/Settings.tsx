@@ -9,6 +9,7 @@ import {
   paletteFromCustomColor,
   applyBrandPalette,
   loadBrandPalette,
+  mixWithWhite,
   type BrandPalette,
 } from '../lib/brand-color';
 
@@ -80,88 +81,75 @@ const inputClass =
   'w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300 placeholder:text-stone-400 transition';
 
 function BrandPreview({ palette }: { palette: BrandPalette }) {
+  const iconBg = mixWithWhite(palette.primary, 0.82);
   return (
-    <div
-      className="rounded-2xl border overflow-hidden"
-      style={{ borderColor: palette.muted, backgroundColor: palette.light }}
-    >
+    <div className="rounded-2xl border border-stone-100 overflow-hidden bg-[#f8f8f7]">
       <div
-        className="px-4 py-2.5 flex items-center justify-between"
-        style={{ backgroundColor: palette.primary }}
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ backgroundColor: palette.dark }}
       >
         <div className="flex items-center gap-2">
-          <Scissors className="w-4 h-4 text-white opacity-90" />
-          <span className="text-white text-sm font-semibold tracking-wide">HirHub</span>
+          <span style={{ color: palette.muted, fontSize: '0.85rem', lineHeight: 1 }}>♥</span>
+          <span className="text-white text-sm font-semibold" style={{ fontFamily: '"Playfair Display", serif' }}>
+            Capelli &amp; Vanità
+          </span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span
-            className="w-2 h-2 rounded-full opacity-60"
-            style={{ backgroundColor: palette.muted }}
-          />
-          <span
-            className="w-2 h-2 rounded-full opacity-60"
-            style={{ backgroundColor: palette.muted }}
-          />
+        <div className="flex flex-col items-start gap-0.5 ml-4">
+          {['Dashboard', 'Agenda', 'Clienti'].map(item => (
+            <span key={item} className="text-[9px] font-medium" style={{ color: palette.muted }}>
+              {item}
+            </span>
+          ))}
         </div>
       </div>
 
       <div className="p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">Oggi</p>
-            <p className="text-sm font-semibold text-stone-800 mt-0.5">3 appuntamenti</p>
-          </div>
+          <h3 className="text-base font-semibold text-stone-800" style={{ fontFamily: '"Playfair Display", serif' }}>
+            Agenda
+          </h3>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white shadow-sm transition-opacity"
-            style={{ backgroundColor: palette.primary }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white"
+            style={{ backgroundColor: palette.dark }}
           >
             <Calendar className="w-3 h-3" />
             Nuovo
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          <span
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-            style={{ backgroundColor: palette.muted, color: palette.dark }}
-          >
-            <Star className="w-3 h-3" />
-            Taglio
-          </span>
-          <span
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-            style={{ backgroundColor: palette.muted, color: palette.dark }}
-          >
-            Colore
-          </span>
-          <span
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-            style={{ backgroundColor: palette.muted, color: palette.dark }}
-          >
-            Piega
-          </span>
+        <div
+          className="rounded-xl p-3 flex flex-col gap-1 border text-white"
+          style={{ backgroundColor: palette.dark, borderColor: palette.dark }}
+        >
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-semibold">Giulia Bianchi</span>
+            <span className="text-[9px] opacity-70 font-mono">10:00</span>
+          </div>
+          <span className="text-[10px] opacity-70">Colore Base</span>
         </div>
 
         <div
-          className="rounded-xl px-3 py-2.5 flex items-center gap-2 border"
+          className="rounded-xl p-3 flex flex-col gap-1 border"
           style={{ backgroundColor: palette.light, borderColor: palette.muted }}
         >
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-semibold" style={{ color: palette.dark }}>Marco Rossi</span>
+            <span className="text-[9px] font-mono opacity-60" style={{ color: palette.dark }}>11:15</span>
+          </div>
+          <span className="text-[10px] opacity-60" style={{ color: palette.dark }}>Taglio Uomo</span>
+        </div>
+
+        <div className="flex items-center gap-2 bg-white rounded-xl p-2.5 border border-stone-100">
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-white text-[10px] font-bold"
-            style={{ backgroundColor: palette.primary }}
+            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
+            style={{ backgroundColor: iconBg, color: palette.primary }}
           >
-            MR
+            EC
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-semibold text-stone-800 truncate">Maria Rossi</span>
-            <span className="text-[10px] text-stone-400">10:30 · Taglio & Colore</span>
+            <span className="text-xs font-semibold text-stone-800 truncate">Elena Conti</span>
+            <span className="text-[10px] text-stone-400">333 123 4567</span>
           </div>
-          <span
-            className="ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: palette.muted, color: palette.dark }}
-          >
-            Confermato
-          </span>
         </div>
       </div>
     </div>

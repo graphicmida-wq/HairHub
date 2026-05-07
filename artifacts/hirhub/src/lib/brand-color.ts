@@ -98,7 +98,7 @@ function adjustBrightness(hex: string, factor: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
-function mixWithWhite(hex: string, ratio: number): string {
+export function mixWithWhite(hex: string, ratio: number): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return hex;
   const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
@@ -125,8 +125,11 @@ export function applyBrandPalette(palette: BrandPalette) {
   root.style.setProperty('--color-brand-dark', palette.dark);
   root.style.setProperty('--color-brand-muted', palette.muted);
   root.style.setProperty('--color-brand-light', palette.light);
-  root.style.setProperty('--color-brand-gold', palette.muted);
-  root.style.setProperty('--color-brand-gold-bg', palette.light);
+  const iconBg = mixWithWhite(palette.primary, 0.82);
+  root.style.setProperty('--color-brand-icon-bg', iconBg);
+  root.style.setProperty('--color-brand-icon-color', palette.primary);
+  root.style.setProperty('--color-brand-gold', palette.primary);
+  root.style.setProperty('--color-brand-gold-bg', iconBg);
 }
 
 export function saveBrandPalette(palette: BrandPalette) {

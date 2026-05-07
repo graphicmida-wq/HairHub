@@ -41,7 +41,6 @@ const HOURS = Array.from({ length: 11 }, (_, i) =>
 
 const STATUS_CLASSES: Record<string, string> = {
   completato: 'bg-stone-50 border-stone-200 text-stone-400',
-  prenotato: 'bg-stone-900 border-stone-900 text-white',
   confermato: 'bg-brand-light border-brand-dark/20 text-brand-dark',
   annullato: 'bg-red-50 border-red-200 text-red-400 line-through',
   'no-show': 'bg-red-50 border-red-200 text-red-400',
@@ -171,9 +170,18 @@ export const WeekView = ({
                             onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
                             className={cn(
                               'rounded-lg border px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] mb-0.5 overflow-hidden',
-                              STATUS_CLASSES[app.status] ?? 'bg-white border-stone-200 text-stone-900'
+                              app.status === 'prenotato'
+                                ? 'text-white'
+                                : (STATUS_CLASSES[app.status] ?? 'bg-white border-stone-200 text-stone-900')
                             )}
-                            style={{ minHeight: '52px', maxHeight: '66px' }}
+                            style={{
+                              minHeight: '52px',
+                              maxHeight: '66px',
+                              ...(app.status === 'prenotato' ? {
+                                backgroundColor: 'var(--color-brand-dark)',
+                                borderColor: 'var(--color-brand-dark)',
+                              } : {}),
+                            }}
                           >
                             <p className="text-[10px] font-semibold leading-tight truncate">
                               {client?.firstName} {client?.lastName}

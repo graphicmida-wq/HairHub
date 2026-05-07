@@ -172,9 +172,13 @@ export const Appointments = () => {
                         className={cn(
                           "p-3 rounded-xl border flex flex-col gap-1 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md",
                           appointmentInHour.status === 'completato' ? "bg-stone-50 border-stone-200 text-stone-500" :
-                          appointmentInHour.status === 'prenotato' ? "bg-stone-900 border-stone-900 text-white" :
+                          appointmentInHour.status === 'prenotato' ? "text-white" :
                           "bg-white border-stone-200 text-stone-900"
                         )}
+                        style={appointmentInHour.status === 'prenotato' ? {
+                          backgroundColor: 'var(--color-brand-dark)',
+                          borderColor: 'var(--color-brand-dark)',
+                        } : undefined}
                       >
                         <div className="flex justify-between items-start gap-2">
                           <p className="font-medium text-sm truncate">
@@ -186,7 +190,7 @@ export const Appointments = () => {
                         </div>
                         <p className={cn(
                           "text-sm truncate",
-                          appointmentInHour.status === 'prenotato' ? "text-stone-300" : "text-stone-500"
+                          appointmentInHour.status === 'prenotato' ? "opacity-70" : "text-stone-500"
                         )}>
                           {service?.name}
                         </p>

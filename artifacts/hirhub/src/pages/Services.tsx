@@ -66,7 +66,7 @@ export const Services = () => {
                     onClick={() => setEditServiceId(service.id)}
                     className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 cursor-pointer hover:border-brand-dark/30 hover:shadow-md transition-all active:scale-[0.98]"
                   >
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-brand-gold-bg)', color: 'var(--color-brand-gold)' }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}>
                       <Scissors className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">

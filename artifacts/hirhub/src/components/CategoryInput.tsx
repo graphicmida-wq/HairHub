@@ -128,7 +128,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
         <span className="truncate">{displayValue}</span>
         <ChevronDown
           className="w-4 h-4 shrink-0 ml-2 transition-transform"
-          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: '#9B98A8' }}
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: 'var(--color-brand-muted)' }}
         />
       </button>
 
@@ -202,7 +202,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
               type="button"
               onClick={() => setAddingNew(true)}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-sm border-t border-stone-100 transition-colors hover:bg-stone-50"
-              style={{ color: '#5C5870' }}
+              style={{ color: 'var(--color-brand-primary)' }}
             >
               <Plus className="w-3.5 h-3.5 shrink-0" />
               Nuova categoria...

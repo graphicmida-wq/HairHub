@@ -56,7 +56,7 @@ export const Inventory = () => {
                   className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                   style={isLowStock
                     ? { backgroundColor: '#fef2f2', color: '#dc2626' }
-                    : { backgroundColor: 'var(--color-brand-gold-bg)', color: 'var(--color-brand-gold)' }}
+                    : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
                 >
                   <Box className="w-6 h-6" />
                 </div>

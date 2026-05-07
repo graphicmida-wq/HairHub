@@ -15,10 +15,10 @@ import { cn } from '../lib/utils';
 const CARD_BORDER = '#E8E3D8';
 const CARD_SHADOW = '0 2px 12px rgba(92,88,112,0.04)';
 const ACCENT = 'var(--color-brand-dark)';
-const ACCENT_LIGHT = 'var(--color-brand-gold-bg)';
-const TEXT_HEADING = '#3A3748';
+const ACCENT_LIGHT = 'var(--color-brand-icon-bg)';
+const TEXT_HEADING = 'var(--color-brand-dark)';
 const TEXT_BODY = '#6B6880';
-const TEXT_MUTED = '#9B98A8';
+const TEXT_MUTED = 'var(--color-brand-muted)';
 
 const KpiCard = ({
   icon,
@@ -88,7 +88,7 @@ export const Dashboard = () => {
           <Link
             to="/agenda"
             className="px-5 py-2.5 rounded-full border bg-white font-medium text-sm flex items-center gap-2 transition-colors hover:bg-stone-50"
-            style={{ borderColor: CARD_BORDER, color: '#5C5870', boxShadow: '0 1px 4px rgba(92,88,112,0.06)' }}
+            style={{ borderColor: CARD_BORDER, color: 'var(--color-brand-primary)', boxShadow: '0 1px 4px rgba(92,88,112,0.06)' }}
           >
             <Calendar className="w-4 h-4" />
             Vedi Agenda
@@ -115,19 +115,19 @@ export const Dashboard = () => {
         <>
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiCard
-              icon={<TrendingUp className="w-5 h-5" style={{ color: 'var(--color-brand-gold)' }} />}
+              icon={<TrendingUp className="w-5 h-5" style={{ color: 'var(--color-brand-icon-color)' }} />}
               label="Fatturato"
               value={`€${fatturato.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
               sub={growthBadge}
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: 'var(--color-brand-gold)' }} />}
+              icon={<CalendarDays className="w-5 h-5" style={{ color: 'var(--color-brand-icon-color)' }} />}
               label="Appuntamenti"
               value={String(thisMonthCount)}
               sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : 'var(--color-brand-gold)' }} />}
+              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : 'var(--color-brand-icon-color)' }} />}
               label="No-show"
               value={`${noShowRate}%`}
               sub={<span className="text-xs" style={{ color: noShowRate > 10 ? '#dc2626' : TEXT_BODY }}>
@@ -135,7 +135,7 @@ export const Dashboard = () => {
               </span>}
             />
             <KpiCard
-              icon={<UserPlus className="w-5 h-5" style={{ color: 'var(--color-brand-gold)' }} />}
+              icon={<UserPlus className="w-5 h-5" style={{ color: 'var(--color-brand-icon-color)' }} />}
               label="Nuovi Clienti"
               value={String(newClientsThisMonth)}
               sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
@@ -176,7 +176,7 @@ export const Dashboard = () => {
                 <Link
                   to="/agenda"
                   className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                  style={{ color: '#5C5870' }}
+                  style={{ color: 'var(--color-brand-primary)' }}
                 >
                   Vedi tutti <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -229,7 +229,7 @@ export const Dashboard = () => {
                                 </div>
                                 <div
                                   className="w-7 h-7 rounded-full border flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                                  style={{ borderColor: CARD_BORDER, color: '#5C5870' }}
+                                  style={{ borderColor: CARD_BORDER, color: 'var(--color-brand-primary)' }}
                                 >
                                   <ChevronRight className="w-3.5 h-3.5" />
                                 </div>
@@ -254,7 +254,7 @@ export const Dashboard = () => {
                   <Link
                     to="/servizi"
                     className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                    style={{ color: '#5C5870' }}
+                    style={{ color: 'var(--color-brand-primary)' }}
                   >
                     Vedi tutti <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -300,7 +300,7 @@ export const Dashboard = () => {
                     <Link
                       to="/magazzino"
                       className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                      style={{ color: '#5C5870' }}
+                      style={{ color: 'var(--color-brand-primary)' }}
                     >
                       Vedi tutti <ArrowRight className="w-4 h-4" />
                     </Link>

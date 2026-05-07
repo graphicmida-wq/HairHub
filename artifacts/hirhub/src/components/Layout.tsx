@@ -16,7 +16,7 @@ const SIDEBAR_BG = 'var(--color-brand-dark)';
 const SIDEBAR_BORDER = 'rgba(245,240,227,0.06)';
 const NAV_ACTIVE_BG = 'rgba(245,240,227,0.15)';
 const NAV_ACTIVE_TEXT = '#F5F0E3';
-const NAV_INACTIVE_TEXT = '#C8C4D4';
+const NAV_INACTIVE_TEXT = 'var(--color-brand-muted)';
 const NAV_HOVER_BG = 'rgba(245,240,227,0.06)';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -54,7 +54,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               {salonName}
             </h1>
           </div>
-          <p className="text-[#C8C4D4] text-[10px] uppercase tracking-[0.2em] ml-[28px]">
+          <p className="text-[10px] uppercase tracking-[0.2em] ml-[28px]" style={{ color: 'var(--color-brand-muted)' }}>
             Gestione Salone
           </p>
         </div>
@@ -122,7 +122,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             className="px-3 pt-4"
             style={{ borderTop: `1px solid ${SIDEBAR_BORDER}` }}
           >
-            <p className="text-[#C8C4D4] text-sm capitalize">{today}</p>
+            <p className="text-sm capitalize" style={{ color: 'var(--color-brand-muted)' }}>{today}</p>
           </div>
         </div>
       </aside>
@@ -143,7 +143,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           <Link
             to="/impostazioni"
             className="p-2 -mr-2 rounded-full transition-colors"
-            style={{ color: '#C8C4D4' }}
+            style={{ color: 'var(--color-brand-muted)' }}
             onClick={() => setIsFabOpen(false)}
           >
             <Settings className="w-5 h-5" />
@@ -228,11 +228,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               >
                 <item.icon
                   className="w-5 h-5 transition-colors"
-                  style={{ color: isActive ? '#F5F0E3' : '#9B98A8' }}
+                  style={{ color: isActive ? '#F5F0E3' : 'var(--color-brand-muted)' }}
                 />
                 <span
                   className="text-[10px] font-medium transition-colors"
-                  style={{ color: isActive ? '#F5F0E3' : '#9B98A8' }}
+                  style={{ color: isActive ? '#F5F0E3' : 'var(--color-brand-muted)' }}
                 >
                   {item.label}
                 </span>
