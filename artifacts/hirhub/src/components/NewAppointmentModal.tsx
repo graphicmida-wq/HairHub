@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { useCreateAppointment, useListClients, useListServices, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppointmentStatus } from '@workspace/api-client-react';
 import { toast } from './Toast';
 
-export const NewAppointmentModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  defaultDate?: string;
+  defaultTime?: string;
+}
+
+export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime }: Props) => {
   const queryClient = useQueryClient();
   const { data: clients = [] } = useListClients();
   const { data: services = [] } = useListServices();
@@ -24,21 +31,23 @@ export const NewAppointmentModal = ({ isOpen, onClose }: { isOpen: boolean, onCl
     },
   });
 
-  const [formData, setFormData] = useState<{
-    clientId: string;
-    serviceId: string;
-    date: string;
-    time: string;
-    durationMins: number;
-    status: typeof AppointmentStatus[keyof typeof AppointmentStatus];
-  }>({
+  const makeDefault = () => ({
     clientId: '',
     serviceId: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '10:00',
+    date: defaultDate ?? new Date().toISOString().split('T')[0],
+    time: defaultTime ?? '10:00',
     durationMins: 30,
-    status: AppointmentStatus.prenotato,
+    status: AppointmentStatus.prenotato as typeof AppointmentStatus[keyof typeof AppointmentStatus],
   });
+
+  const [formData, setFormData] = useState(makeDefault);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(makeDefault());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, defaultDate, defaultTime]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
