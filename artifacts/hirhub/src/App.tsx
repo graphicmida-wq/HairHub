@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Clients } from './pages/Clients';
 import { Appointments } from './pages/Appointments';
 import { Inventory } from './pages/Inventory';
+import { Toaster } from './components/Toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/magazzino" element={<Inventory />} />
           </Routes>
         </Layout>
+        <Toaster />
       </BrowserRouter>
     </QueryClientProvider>
   );

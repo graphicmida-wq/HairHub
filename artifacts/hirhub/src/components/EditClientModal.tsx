@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { useListClients, useUpdateClient, useDeleteClient, getListClientsQueryKey, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from './Toast';
 
 export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean, onClose: () => void, clientId: string | null }) => {
   const queryClient = useQueryClient();
@@ -12,7 +13,12 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
+        toast.show('Cliente aggiornato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });
@@ -22,7 +28,12 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        toast.show('Cliente eliminato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante l\'eliminazione', 'error');
       },
     },
   });

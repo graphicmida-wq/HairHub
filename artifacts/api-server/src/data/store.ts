@@ -129,6 +129,9 @@ class DataStore {
   getServices(): Service[] {
     return this.services;
   }
+  getService(id: string): Service | undefined {
+    return this.services.find((s) => s.id === id);
+  }
   createService(data: Omit<Service, "id">): Service {
     const service = { ...data, id: uid() };
     this.services = [service, ...this.services];
@@ -150,6 +153,9 @@ class DataStore {
   getProducts(): Product[] {
     return this.products;
   }
+  getProduct(id: string): Product | undefined {
+    return this.products.find((p) => p.id === id);
+  }
   createProduct(data: Omit<Product, "id">): Product {
     const product = { ...data, id: uid() };
     this.products = [product, ...this.products];
@@ -170,6 +176,9 @@ class DataStore {
   // ── Appointments ──────────────────────────────────────────────────────────
   getAppointments(): Appointment[] {
     return this.appointments;
+  }
+  getAppointment(id: string): Appointment | undefined {
+    return this.appointments.find((a) => a.id === id);
   }
   createAppointment(data: Omit<Appointment, "id">): Appointment {
     const appointment = { ...data, id: uid() };

@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { useCreateAppointment, useListClients, useListServices, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppointmentStatus } from '@workspace/api-client-react';
+import { toast } from './Toast';
 
 export const NewAppointmentModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const queryClient = useQueryClient();
@@ -13,12 +14,24 @@ export const NewAppointmentModal = ({ isOpen, onClose }: { isOpen: boolean, onCl
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        toast.show('Appuntamento aggiunto');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    clientId: string;
+    serviceId: string;
+    date: string;
+    time: string;
+    durationMins: number;
+    status: typeof AppointmentStatus[keyof typeof AppointmentStatus];
+  }>({
     clientId: '',
     serviceId: '',
     date: new Date().toISOString().split('T')[0],

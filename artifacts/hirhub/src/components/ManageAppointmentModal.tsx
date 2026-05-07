@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { useListAppointments, useListClients, useListServices, useListProducts, useDeleteAppointment, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Calendar, Text, CheckCircle2, Edit2, Trash2, Box } from 'lucide-react';
+import { toast } from './Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -29,7 +30,12 @@ export const ManageAppointmentModal = ({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        toast.show('Appuntamento eliminato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? "Errore durante l'eliminazione", 'error');
       },
     },
   });

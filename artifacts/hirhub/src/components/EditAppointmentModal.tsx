@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { useListAppointments, useListClients, useListServices, useUpdateAppointment, useDeleteAppointment, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from './Toast';
 
 export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpen: boolean, onClose: () => void, appointmentId: string | null }) => {
   const queryClient = useQueryClient();
@@ -14,7 +15,12 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        toast.show('Appuntamento aggiornato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });
@@ -23,12 +29,17 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        toast.show('Appuntamento eliminato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante l\'eliminazione', 'error');
       },
     },
   });
 
-  const [formData, setFormData] = useState({ clientId: '', serviceId: '', date: '', time: '', durationMins: 30, status: 'prenotato' });
+  const [formData, setFormData] = useState<{ clientId: string; serviceId: string; date: string; time: string; durationMins: number; status: import('@workspace/api-client-react').AppointmentStatus }>({ clientId: '', serviceId: '', date: '', time: '', durationMins: 30, status: 'prenotato' as import('@workspace/api-client-react').AppointmentStatus });
 
   useEffect(() => {
     if (appointment) {
@@ -87,7 +98,7 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Stato</label>
-          <select value={formData.status} onChange={e => setFormData(p => ({...p, status: e.target.value}))}
+          <select value={formData.status} onChange={e => setFormData(p => ({...p, status: e.target.value as import('@workspace/api-client-react').AppointmentStatus}))}
             className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full">
             <option value="prenotato">Prenotato</option>
             <option value="confermato">Confermato</option>

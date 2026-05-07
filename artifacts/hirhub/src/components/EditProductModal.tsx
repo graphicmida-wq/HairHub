@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { useListProducts, useUpdateProduct, useDeleteProduct, getListProductsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from './Toast';
 
 export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boolean, onClose: () => void, productId: string | null }) => {
   const queryClient = useQueryClient();
@@ -12,7 +13,12 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast.show('Prodotto aggiornato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });
@@ -21,7 +27,12 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast.show('Prodotto eliminato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? "Errore durante l'eliminazione", 'error');
       },
     },
   });

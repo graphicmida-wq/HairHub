@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { store } from '../lib/store';
 import { useListClients } from '@workspace/api-client-react';
-import { Search, UserPlus, Phone, SearchX, Loader2 } from 'lucide-react';
+import { Search, UserPlus, Phone, SearchX, Loader2, AlertCircle } from 'lucide-react';
 import { ClientDetailsModal } from '../components/ClientDetailsModal';
 import { EditClientModal } from '../components/EditClientModal';
 
 export const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: clients = [], isLoading } = useListClients();
+  const { data: clients = [], isLoading, isError } = useListClients();
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [editClientId, setEditClientId] = useState<string | null>(null);
 
@@ -39,6 +39,11 @@ export const Clients = () => {
       <div className="flex flex-col gap-3">
         {isLoading ? (
           <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
+        ) : isError ? (
+          <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
+            <AlertCircle className="w-8 h-8 opacity-70" />
+            <p className="text-sm">Errore nel caricamento dei clienti.</p>
+          </div>
         ) : filteredClients.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-stone-400">
             <SearchX className="w-12 h-12 mb-3 opacity-50" />

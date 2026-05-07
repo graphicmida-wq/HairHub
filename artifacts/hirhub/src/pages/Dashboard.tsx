@@ -5,7 +5,7 @@ import { Clock, AlertCircle, Plus, Users, ArrowRight, Loader2 } from 'lucide-rea
 import { Link } from 'react-router-dom';
 
 export const Dashboard = () => {
-  const { data: appointments = [], isLoading: loadingApps } = useListAppointments();
+  const { data: appointments = [], isLoading: loadingApps, isError: errorApps } = useListAppointments();
   const { data: clients = [] } = useListClients();
   const { data: products = [] } = useListProducts();
   const { data: services = [] } = useListServices();
@@ -77,6 +77,11 @@ export const Dashboard = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden divide-y divide-stone-100">
           {loadingApps ? (
             <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-stone-400" /></div>
+          ) : errorApps ? (
+            <div className="p-6 text-center text-red-500 text-sm flex items-center justify-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Errore nel caricamento degli appuntamenti.
+            </div>
           ) : todaysAppointments.length === 0 ? (
             <div className="p-6 text-center text-stone-500 text-sm">Nessun appuntamento previsto per oggi.</div>
           ) : (

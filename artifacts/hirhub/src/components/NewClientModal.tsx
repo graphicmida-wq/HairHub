@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { useCreateClient, getListClientsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from './Toast';
 
 export const NewClientModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const queryClient = useQueryClient();
@@ -9,8 +10,13 @@ export const NewClientModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: 
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
+        toast.show('Cliente aggiunto con successo');
         onClose();
         setFormData({ firstName: '', lastName: '', phone: '', email: '', dob: '', notes: '', allergies: '' });
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });

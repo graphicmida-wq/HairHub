@@ -8,7 +8,7 @@ import { EditProductModal } from '../components/EditProductModal';
 export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editProductId, setEditProductId] = useState<string | null>(null);
-  const { data: products = [], isLoading } = useListProducts();
+  const { data: products = [], isLoading, isError } = useListProducts();
 
   const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,6 +38,11 @@ export const Inventory = () => {
       <div className="flex flex-col gap-3">
         {isLoading ? (
           <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
+        ) : isError ? (
+          <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
+            <AlertCircle className="w-8 h-8 opacity-70" />
+            <p className="text-sm">Errore nel caricamento del magazzino.</p>
+          </div>
         ) : (
           filteredProducts.map(product => {
             const isLowStock = product.quantity <= product.minThreshold;

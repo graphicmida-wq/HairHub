@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { useCreateProduct, getListProductsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from './Toast';
 
 export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const queryClient = useQueryClient();
@@ -9,7 +10,12 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast.show('Prodotto aggiunto');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });

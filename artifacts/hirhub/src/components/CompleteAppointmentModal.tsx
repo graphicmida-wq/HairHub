@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { useListAppointments, useListClients, useListServices, useListProducts, useUpdateAppointment, useUpdateProduct, getListAppointmentsQueryKey, getListProductsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, Box, CheckCircle2 } from 'lucide-react';
+import { toast } from './Toast';
 import { format } from 'date-fns';
 
 export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpen: boolean, onClose: () => void, appointmentId: string | null }) => {
@@ -17,7 +18,12 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast.show('Appuntamento completato');
         onClose();
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.show(msg ?? 'Errore durante il completamento', 'error');
       },
     },
   });
