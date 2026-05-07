@@ -14,7 +14,7 @@ import { logger } from "../lib/logger";
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
-export type ApptStatus = "prenotato" | "confermato" | "completato" | "annullato" | "no-show";
+export type ApptStatus = "prenotato" | "completato" | "annullato" | "no-show";
 
 function uid() {
   return randomBytes(6).toString("hex");
@@ -126,7 +126,7 @@ function seedSqliteIfEmpty(db: SqliteDb) {
     { id: uid(), name: "Maschera Idratante", category: "Finish", brand: "Loreal", quantity: 2, minThreshold: 4, supplier: null, notes: null },
   ]).run();
   db.insert(sqliteAppts).values([
-    { id: uid(), clientId: c1.id, serviceId: s3.id, date: today, time: "10:00", durationMins: 90, status: "confermato" as const, notes: null, usedProductIds: null },
+    { id: uid(), clientId: c1.id, serviceId: s3.id, date: today, time: "10:00", durationMins: 90, status: "prenotato" as const, notes: null, usedProductIds: null },
     { id: uid(), clientId: c2.id, serviceId: s4.id, date: today, time: "11:15", durationMins: 30, status: "prenotato" as const, notes: null, usedProductIds: null },
     { id: uid(), clientId: c3.id, serviceId: s1.id, date: today, time: "14:00", durationMins: 45, status: "prenotato" as const, notes: null, usedProductIds: null },
   ]).run();
@@ -188,7 +188,7 @@ async function mysqlSeedIfEmpty() {
     { id: uid(), name: "Maschera Idratante", category: "Finish", brand: "Loreal", quantity: 2, minThreshold: 4, supplier: null, notes: null },
   ]);
   await db.insert(appointmentsTable).values([
-    { id: uid(), clientId: c1id, serviceId: s3id, date: today, time: "10:00", durationMins: 90, status: "confermato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c1id, serviceId: s3id, date: today, time: "10:00", durationMins: 90, status: "prenotato", notes: null, usedProductIds: null },
     { id: uid(), clientId: c2id, serviceId: s4id, date: today, time: "11:15", durationMins: 30, status: "prenotato", notes: null, usedProductIds: null },
     { id: uid(), clientId: c3id, serviceId: s1id, date: today, time: "14:00", durationMins: 45, status: "prenotato", notes: null, usedProductIds: null },
   ]);

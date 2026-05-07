@@ -41,7 +41,6 @@ const HOURS = Array.from({ length: 11 }, (_, i) =>
 
 const STATUS_CLASSES: Record<string, string> = {
   completato: 'bg-stone-50 border-stone-200 text-stone-400',
-  confermato: 'bg-brand-light border-brand-dark/20 text-brand-dark',
   annullato: 'bg-red-50 border-red-200 text-red-400 line-through',
   'no-show': 'bg-red-50 border-red-200 text-red-400',
 };

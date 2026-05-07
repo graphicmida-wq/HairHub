@@ -1,4 +1,4 @@
-export type AppointmentStatus = 'prenotato' | 'confermato' | 'completato' | 'annullato' | 'no-show';
+export type AppointmentStatus = 'prenotato' | 'completato' | 'annullato' | 'no-show';
 
 export interface Client {
   id: string;

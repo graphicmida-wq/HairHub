@@ -39,7 +39,7 @@ export const appointments = sqliteTable("appointments", {
   date: text("date").notNull(),
   time: text("time").notNull(),
   durationMins: integer("duration_mins").notNull(),
-  status: text("status", { enum: ["prenotato", "confermato", "completato", "annullato", "no-show"] }).notNull().default("prenotato"),
+  status: text("status", { enum: ["prenotato", "completato", "annullato", "no-show"] }).notNull().default("prenotato"),
   notes: text("notes"),
   usedProductIds: text("used_product_ids"),
 });

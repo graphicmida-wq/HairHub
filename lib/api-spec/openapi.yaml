@@ -654,7 +654,6 @@ components:
       type: string
       enum:
         - prenotato
-        - confermato
         - completato
         - annullato
         - no-show

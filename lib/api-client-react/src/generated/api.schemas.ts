@@ -108,7 +108,6 @@ export type AppointmentStatus =
 
 export const AppointmentStatus = {
   prenotato: "prenotato",
-  confermato: "confermato",
   completato: "completato",
   annullato: "annullato",
   "no-show": "no-show",

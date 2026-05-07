@@ -263,13 +263,7 @@ export const ListAppointmentsResponseItem = zod.object({
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
-  status: zod.enum([
-    "prenotato",
-    "confermato",
-    "completato",
-    "annullato",
-    "no-show",
-  ]),
+  status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
   usedProductIds: zod.array(zod.string()).nullish(),
 });
@@ -284,13 +278,7 @@ export const CreateAppointmentBody = zod.object({
   date: zod.string(),
   time: zod.string(),
   durationMins: zod.number(),
-  status: zod.enum([
-    "prenotato",
-    "confermato",
-    "completato",
-    "annullato",
-    "no-show",
-  ]),
+  status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
   usedProductIds: zod.array(zod.string()).nullish(),
 });
@@ -309,13 +297,7 @@ export const GetAppointmentResponse = zod.object({
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
-  status: zod.enum([
-    "prenotato",
-    "confermato",
-    "completato",
-    "annullato",
-    "no-show",
-  ]),
+  status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
   usedProductIds: zod.array(zod.string()).nullish(),
 });
@@ -334,7 +316,7 @@ export const UpdateAppointmentBody = zod.object({
   time: zod.string().optional(),
   durationMins: zod.number().optional(),
   status: zod
-    .enum(["prenotato", "confermato", "completato", "annullato", "no-show"])
+    .enum(["prenotato", "completato", "annullato", "no-show"])
     .optional(),
   notes: zod.string().nullish(),
   usedProductIds: zod.array(zod.string()).nullish(),
@@ -347,13 +329,7 @@ export const UpdateAppointmentResponse = zod.object({
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
   durationMins: zod.number(),
-  status: zod.enum([
-    "prenotato",
-    "confermato",
-    "completato",
-    "annullato",
-    "no-show",
-  ]),
+  status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
   notes: zod.string().nullish(),
   usedProductIds: zod.array(zod.string()).nullish(),
 });

@@ -70,7 +70,6 @@ export const ManageAppointmentModal = ({
           <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-sm ${
             appointment.status === 'completato' ? 'bg-green-100 text-green-700' :
             appointment.status === 'annullato' || appointment.status === 'no-show' ? 'bg-red-100 text-red-700' :
-            appointment.status === 'confermato' ? 'bg-blue-100 text-blue-700' :
             'bg-yellow-100 text-yellow-700'
           }`}>
             {appointment.status}

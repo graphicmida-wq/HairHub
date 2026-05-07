@@ -93,8 +93,9 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
           <select value={formData.status} onChange={e => setFormData(p => ({...p, status: e.target.value as typeof AppointmentStatus[keyof typeof AppointmentStatus]}))}
             className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full">
             <option value="prenotato">Prenotato</option>
-            <option value="confermato">Confermato</option>
             <option value="completato">Completato</option>
+            <option value="annullato">Annullato</option>
+            <option value="no-show">No Show</option>
           </select>
         </div>
         <button type="submit" disabled={isPending} className="btn-brand mt-4 text-white font-medium py-3 rounded-xl disabled:opacity-60">

@@ -101,7 +101,6 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
           <select value={formData.status} onChange={e => setFormData(p => ({...p, status: e.target.value as import('@workspace/api-client-react').AppointmentStatus}))}
             className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full">
             <option value="prenotato">Prenotato</option>
-            <option value="confermato">Confermato</option>
             <option value="completato">Completato</option>
             <option value="annullato">Annullato</option>
             <option value="no-show">No Show</option>
