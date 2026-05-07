@@ -125,6 +125,8 @@ export function applyBrandPalette(palette: BrandPalette) {
   root.style.setProperty('--color-brand-dark', palette.dark);
   root.style.setProperty('--color-brand-muted', palette.muted);
   root.style.setProperty('--color-brand-light', palette.light);
+  root.style.setProperty('--color-brand-gold', palette.muted);
+  root.style.setProperty('--color-brand-gold-bg', palette.light);
 }
 
 export function saveBrandPalette(palette: BrandPalette) {

@@ -97,7 +97,7 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
             <option value="completato">Completato</option>
           </select>
         </div>
-        <button type="submit" disabled={isPending} className="mt-4 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-60" style={{ backgroundColor: '#3A3748' }}>
+        <button type="submit" disabled={isPending} className="mt-4 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-60" style={{ backgroundColor: 'var(--color-brand-dark)' }}>
           {isPending ? 'Salvataggio...' : 'Salva Appuntamento'}
         </button>
       </form>

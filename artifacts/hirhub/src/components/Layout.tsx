@@ -12,7 +12,7 @@ import { NewServiceModal } from './NewServiceModal';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
-const SIDEBAR_BG = '#3A3748';
+const SIDEBAR_BG = 'var(--color-brand-dark)';
 const SIDEBAR_BORDER = 'rgba(245,240,227,0.06)';
 const NAV_ACTIVE_BG = 'rgba(245,240,227,0.15)';
 const NAV_ACTIVE_TEXT = '#F5F0E3';
@@ -46,7 +46,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       >
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <span style={{ color: '#C4AA7E', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
+            <span style={{ color: 'var(--color-brand-gold)', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
             <h1
               className="text-[#F5F0E3] text-xl font-semibold tracking-wide leading-tight"
               style={{ fontFamily: '"Playfair Display", serif' }}
@@ -132,7 +132,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           style={{ backgroundColor: SIDEBAR_BG }}
         >
           <div className="flex items-center gap-2">
-            <span style={{ color: '#C4AA7E' }}>♥</span>
+            <span style={{ color: 'var(--color-brand-gold)' }}>♥</span>
             <h1
               className="text-[#F5F0E3] text-xl font-semibold"
               style={{ fontFamily: '"Playfair Display", serif' }}
@@ -200,7 +200,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <button
           onClick={() => setIsFabOpen(!isFabOpen)}
           className="w-14 h-14 text-white rounded-full flex items-center justify-center shadow-xl transition-transform active:scale-95 focus:outline-none focus:ring-4"
-          style={{ backgroundColor: '#3A3748', focusRingColor: 'rgba(92,88,112,0.3)' } as React.CSSProperties}
+          style={{ backgroundColor: 'var(--color-brand-dark)', focusRingColor: 'rgba(92,88,112,0.3)' } as React.CSSProperties}
         >
           <motion.div animate={{ rotate: isFabOpen ? 45 : 0 }}>
             <Plus className="w-6 h-6" />

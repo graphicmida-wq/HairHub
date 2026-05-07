@@ -20,7 +20,7 @@ export const Clients = () => {
     <div className="flex flex-col gap-6 page-enter h-full">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif text-stone-900">Clienti</h1>
-        <button onClick={() => store.openModal('isNewClientOpen')} className="hidden md:flex items-center gap-2 bg-[#3A3748] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#5C5870] transition-colors">
+        <button onClick={() => store.openModal('isNewClientOpen')} className="hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--color-brand-dark)' }}>
           <UserPlus className="w-4 h-4" /> Nuovo Cliente
         </button>
       </div>
@@ -56,7 +56,7 @@ export const Clients = () => {
               onClick={() => setDetailClientId(client.id)}
               className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer hover:border-brand-dark/30 hover:shadow-md"
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center font-serif text-lg shrink-0" style={{ backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center font-serif text-lg shrink-0" style={{ backgroundColor: 'var(--color-brand-gold-bg)', color: 'var(--color-brand-gold)' }}>
                 {client.firstName.charAt(0)}{client.lastName.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">

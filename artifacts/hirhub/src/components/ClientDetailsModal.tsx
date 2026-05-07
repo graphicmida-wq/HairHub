@@ -25,7 +25,7 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
 
         <div className="flex items-start justify-between">
           <div className="flex gap-4 items-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-2xl shrink-0" style={{ backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-2xl shrink-0" style={{ backgroundColor: 'var(--color-brand-gold-bg)', color: 'var(--color-brand-gold)' }}>
               {client.firstName.charAt(0)}{client.lastName.charAt(0)}
             </div>
             <div>

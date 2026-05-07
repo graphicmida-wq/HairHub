@@ -109,7 +109,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
           </button>
           <button type="submit" disabled={isUpdating}
             className="flex-[2] text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-60"
-            style={{ backgroundColor: '#3A3748' }}>
+            style={{ backgroundColor: 'var(--color-brand-dark)' }}>
             {isUpdating ? 'Salvataggio...' : 'Salva Modifiche'}
           </button>
         </div>

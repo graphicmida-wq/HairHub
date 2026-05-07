@@ -19,7 +19,7 @@ export const Inventory = () => {
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif text-stone-900">Magazzino</h1>
-        <button onClick={() => store.openModal('isNewProductOpen')} className="hidden md:flex items-center gap-2 bg-[#3A3748] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#5C5870] transition-colors">
+        <button onClick={() => store.openModal('isNewProductOpen')} className="hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--color-brand-dark)' }}>
           <Plus className="w-4 h-4" /> Nuovo Prodotto
         </button>
       </div>
@@ -56,7 +56,7 @@ export const Inventory = () => {
                   className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                   style={isLowStock
                     ? { backgroundColor: '#fef2f2', color: '#dc2626' }
-                    : { backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}
+                    : { backgroundColor: 'var(--color-brand-gold-bg)', color: 'var(--color-brand-gold)' }}
                 >
                   <Box className="w-6 h-6" />
                 </div>

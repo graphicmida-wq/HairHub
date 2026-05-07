@@ -123,7 +123,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
         type="button"
         onClick={() => { setIsOpen(o => !o); setAddingNew(false); setNewCategory(''); }}
         className="w-full flex items-center justify-between bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors text-left"
-        style={{ borderColor: isOpen ? '#3A3748' : undefined, color: hasValue ? '#1c1917' : '#9ca3af' }}
+        style={{ borderColor: isOpen ? 'var(--color-brand-dark)' : undefined, color: hasValue ? '#1c1917' : '#9ca3af' }}
       >
         <span className="truncate">{displayValue}</span>
         <ChevronDown
@@ -150,7 +150,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
             >
               <Check
                 className="w-3.5 h-3.5 mr-2.5 shrink-0 transition-opacity"
-                style={{ color: '#3A3748', opacity: value === cat ? 1 : 0 }}
+                style={{ color: 'var(--color-brand-dark)', opacity: value === cat ? 1 : 0 }}
               />
               <span className="flex-1 text-sm text-stone-800 truncate">{cat}</span>
               {!isBuiltin(cat) && (
@@ -186,7 +186,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
                 onClick={confirmNew}
                 disabled={!newCategory.trim()}
                 className="p-1.5 rounded-lg text-white transition-colors disabled:opacity-40"
-                style={{ backgroundColor: '#3A3748' }}
+                style={{ backgroundColor: 'var(--color-brand-dark)' }}
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>

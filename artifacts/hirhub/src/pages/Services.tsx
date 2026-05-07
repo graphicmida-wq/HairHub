@@ -22,7 +22,7 @@ export const Services = () => {
         <button
           onClick={() => store.openModal('isNewServiceOpen')}
           className="hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
-          style={{ backgroundColor: '#3A3748' }}
+          style={{ backgroundColor: 'var(--color-brand-dark)' }}
         >
           <Plus className="w-4 h-4" /> Nuovo Servizio
         </button>
@@ -48,7 +48,7 @@ export const Services = () => {
           </div>
           <button
             onClick={() => store.openModal('isNewServiceOpen')}
-            className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: '#3A3748' }}
+            className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--color-brand-dark)' }}
           >
             <Plus className="w-4 h-4" /> Nuovo Servizio
           </button>
@@ -67,7 +67,7 @@ export const Services = () => {
                     onClick={() => setEditServiceId(service.id)}
                     className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 cursor-pointer hover:border-brand-dark/30 hover:shadow-md transition-all active:scale-[0.98]"
                   >
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-brand-gold-bg)', color: 'var(--color-brand-gold)' }}>
                       <Scissors className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
