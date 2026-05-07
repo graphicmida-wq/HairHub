@@ -196,7 +196,7 @@ export const Dashboard = () => {
                     const dateLabel = format(new Date(dateStr + 'T12:00:00'), 'EEEE d MMM', { locale: it });
                     return (
                       <div key={dateStr}>
-                        <div className="px-4 py-2" style={{ backgroundColor: '#F5F0E3', borderBottom: `1px solid ${CARD_BORDER}` }}>
+                        <div className="px-4 py-2" style={{ backgroundColor: '#f3f3f2', borderBottom: `1px solid ${CARD_BORDER}` }}>
                           <p className="text-[10px] font-semibold uppercase tracking-widest capitalize" style={{ color: TEXT_MUTED }}>
                             {dateLabel}
                           </p>
@@ -210,7 +210,7 @@ export const Dashboard = () => {
                                 key={app.id}
                                 className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
                                 style={{ borderBottom: `1px solid transparent` }}
-                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FAF7EE')}
+                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
                                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                               >
                                 <div

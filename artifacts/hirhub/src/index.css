@@ -5,8 +5,8 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
 
-  /* Warm parchment scale for backgrounds/borders */
-  --color-stone-50:  #faf7ee;
+  /* Neutral grey scale for backgrounds/borders */
+  --color-stone-50:  #f8f8f7;
   --color-stone-100: #f0ece0;
   --color-stone-200: #e8e3d8;
 
@@ -15,7 +15,7 @@
   --color-stone-900: #1c1917;
 
   /* Brand palette — Pergamena Scura */
-  --color-brand-light:   #f5f0e3;
+  --color-brand-light:   #f3f3f2;
   --color-brand-primary: #5c5870;
   --color-brand-dark:    #3a3748;
   --color-brand-muted:   #c8c4d4;
@@ -24,7 +24,7 @@
 
 body {
   @apply text-stone-900 font-sans antialiased;
-  background-color: #faf7ee;
+  background-color: #f8f8f7;
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
