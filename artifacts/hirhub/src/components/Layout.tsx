@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Home, Package2, Menu, Plus, Scissors } from 'lucide-react';
+import { Calendar, Users, Home, Package2, Plus, Scissors, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { store, useModalStore } from '../lib/store';
+import { useGetSettings } from '@workspace/api-client-react';
 import { NewClientModal } from './NewClientModal';
 import { NewAppointmentModal } from './NewAppointmentModal';
 import { NewProductModal } from './NewProductModal';
@@ -13,6 +14,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isFabOpen, setIsFabOpen] = React.useState(false);
   const modalState = useModalStore();
+  const { data: settings } = useGetSettings();
+
+  const salonName = settings?.salonName ?? "L'Atelier";
 
   const navItems = [
     { icon: Home, label: 'Dashboard', path: '/' },
@@ -22,11 +26,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { icon: Package2, label: 'Magazzino', path: '/magazzino' },
   ];
 
+  const isSettingsActive = location.pathname === '/impostazioni';
+
   return (
     <div className="flex h-[100dvh] bg-stone-50 w-full overflow-hidden">
       <aside className="hidden md:flex w-64 bg-white border-r border-stone-200 flex-col shrink-0">
         <div className="p-6 border-b border-stone-100 flex items-center h-[73px]">
-          <h1 className="font-serif italic font-semibold text-2xl text-stone-800">L'Atelier</h1>
+          <h1 className="font-serif italic font-semibold text-2xl text-stone-800">{salonName}</h1>
         </div>
         <nav className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
           {navItems.map((item) => {
@@ -46,14 +52,30 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             );
           })}
         </nav>
+        <div className="p-4 border-t border-stone-100">
+          <Link
+            to="/impostazioni"
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+              isSettingsActive ? "bg-stone-50 text-brand-dark font-medium" : "text-stone-500 hover:bg-stone-50"
+            )}
+          >
+            <Settings className="w-5 h-5" />
+            <span>Impostazioni</span>
+          </Link>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <header className="md:hidden bg-white px-6 h-[73px] flex items-center justify-between border-b border-stone-100 shadow-sm shrink-0">
-          <h1 className="font-serif italic font-semibold text-2xl text-stone-800">L'Atelier</h1>
-          <button className="p-2 -mr-2 bg-stone-50 rounded-full text-stone-600 hover:text-stone-900 transition-colors">
-            <Menu className="w-5 h-5" />
-          </button>
+          <h1 className="font-serif italic font-semibold text-2xl text-stone-800">{salonName}</h1>
+          <Link
+            to="/impostazioni"
+            className="p-2 -mr-2 bg-stone-50 rounded-full text-stone-600 hover:text-stone-900 transition-colors"
+            onClick={() => setIsFabOpen(false)}
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
         </header>
 
         <main className="flex-1 overflow-y-auto pb-24 md:pb-8 scroll-smooth no-scrollbar p-6">
