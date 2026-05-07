@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { useCreateService, getListServicesQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
+import { CategoryInput } from './CategoryInput';
 
 export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const queryClient = useQueryClient();
@@ -54,13 +55,11 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Categoria</label>
-          <input
+          <CategoryInput
             required
-            type="text"
-            placeholder="Es. Taglio, Colore, Trattamento"
+            source="services"
             value={formData.category}
-            onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
-            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+            onChange={v => setFormData(p => ({ ...p, category: v }))}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">

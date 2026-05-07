@@ -1,30 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useListProducts } from '@workspace/api-client-react';
+import { useListProducts, useListServices } from '@workspace/api-client-react';
 import { Plus, X, ChevronDown, Check } from 'lucide-react';
 
-const BUILTIN_CATEGORIES = ['Lavaggio', 'Colore', 'Finish', 'Trattamento', 'Styling', 'Altro'];
-const LS_KEY = 'hirhub_suppressed_categories';
+const PRODUCT_BUILTINS = ['Lavaggio', 'Colore', 'Finish', 'Trattamento', 'Styling', 'Altro'];
+const SERVICE_BUILTINS = ['Colore', 'Piega', 'Taglio', 'Trattamento', 'Styling', 'Altro'];
 
-const loadSuppressed = (): string[] => {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? '[]'); } catch { return []; }
+const LS_PRODUCTS = 'hirhub_suppressed_categories';
+const LS_SERVICES = 'hirhub_suppressed_service_categories';
+
+const loadSuppressed = (key: string): string[] => {
+  try { return JSON.parse(localStorage.getItem(key) ?? '[]'); } catch { return []; }
 };
-const saveSuppressed = (list: string[]) => {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch { /* noop */ }
+const saveSuppressed = (key: string, list: string[]) => {
+  try { localStorage.setItem(key, JSON.stringify(list)); } catch { /* noop */ }
 };
 
 interface CategoryInputProps {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  source?: 'products' | 'services';
 }
 
-export const CategoryInput = ({ value, onChange, required }: CategoryInputProps) => {
+export const CategoryInput = ({ value, onChange, required, source = 'products' }: CategoryInputProps) => {
   const { data: products = [] } = useListProducts();
+  const { data: services = [] } = useListServices();
+
+  const builtins = source === 'services' ? SERVICE_BUILTINS : PRODUCT_BUILTINS;
+  const lsKey   = source === 'services' ? LS_SERVICES : LS_PRODUCTS;
+
   const [isOpen, setIsOpen] = useState(false);
   const [addingNew, setAddingNew] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [sessionCategories, setSessionCategories] = useState<string[]>([]);
-  const [suppressed, setSuppressed] = useState<string[]>(loadSuppressed);
+  const [suppressed, setSuppressed] = useState<string[]>(() => loadSuppressed(lsKey));
   const containerRef = useRef<HTMLDivElement>(null);
   const newInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,29 +54,31 @@ export const CategoryInput = ({ value, onChange, required }: CategoryInputProps)
     if (addingNew && newInputRef.current) newInputRef.current.focus();
   }, [addingNew]);
 
-  const existingFromProducts = Array.from(
-    new Set(products.map(p => p.category).filter(Boolean))
+  const existingFromData = Array.from(
+    new Set(
+      source === 'services'
+        ? services.map(s => s.category).filter(Boolean)
+        : products.map(p => p.category).filter(Boolean)
+    )
   );
 
   const allCategories = Array.from(
-    new Set([...BUILTIN_CATEGORIES, ...existingFromProducts, ...sessionCategories])
+    new Set([...builtins, ...existingFromData, ...sessionCategories])
   )
     .filter(cat => !suppressed.includes(cat))
     .sort((a, b) => a.localeCompare(b, 'it'));
 
-  const isBuiltin = (cat: string) => BUILTIN_CATEGORIES.includes(cat);
+  const isBuiltin = (cat: string) => builtins.includes(cat);
 
   const handleDelete = (cat: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isBuiltin(cat)) return;
     if (sessionCategories.includes(cat)) {
-      // session-only: just remove from local state, no localStorage
       setSessionCategories(prev => prev.filter(c => c !== cat));
     } else {
-      // product-derived: persist suppression to localStorage (deduplicated)
       const next = Array.from(new Set([...suppressed, cat]));
       setSuppressed(next);
-      saveSuppressed(next);
+      saveSuppressed(lsKey, next);
     }
     if (value === cat) onChange('');
   };
@@ -82,11 +93,10 @@ export const CategoryInput = ({ value, onChange, required }: CategoryInputProps)
   const confirmNew = () => {
     const trimmed = newCategory.trim();
     if (!trimmed) return;
-    // un-suppress if previously suppressed
     if (suppressed.includes(trimmed)) {
       const next = suppressed.filter(s => s !== trimmed);
       setSuppressed(next);
-      saveSuppressed(next);
+      saveSuppressed(lsKey, next);
     }
     if (!allCategories.includes(trimmed) && !sessionCategories.includes(trimmed)) {
       setSessionCategories(prev => [...prev, trimmed]);
@@ -102,16 +112,17 @@ export const CategoryInput = ({ value, onChange, required }: CategoryInputProps)
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Hidden input to preserve native required/form validation */}
+      {/* Hidden input for native required/form validation */}
       <input
         type="text"
         required={required}
         value={value}
-        onChange={() => {/* controlled by dropdown */}}
+        onChange={() => { /* controlled by dropdown */ }}
         tabIndex={-1}
         aria-hidden="true"
         style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
       />
+
       {/* Trigger */}
       <button
         type="button"
@@ -160,7 +171,7 @@ export const CategoryInput = ({ value, onChange, required }: CategoryInputProps)
             </div>
           ))}
 
-          {/* Add new row */}
+          {/* Add new inline */}
           {addingNew ? (
             <div className="flex items-center gap-2 px-3 py-2 border-t border-stone-100">
               <input

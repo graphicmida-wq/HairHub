@@ -7,6 +7,7 @@ import {
   getListServicesQueryKey,
   getListAppointmentsQueryKey,
 } from '@workspace/api-client-react';
+import { CategoryInput } from './CategoryInput';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
 
@@ -103,12 +104,11 @@ export const EditServiceModal = ({
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-stone-700">Categoria</label>
-          <input
+          <CategoryInput
             required
-            type="text"
+            source="services"
             value={formData.category}
-            onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
-            className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full"
+            onChange={v => setFormData(p => ({ ...p, category: v }))}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
