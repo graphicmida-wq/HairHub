@@ -148,12 +148,10 @@ export const Appointments = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-2 relative pb-20">
           <div className="flex flex-col">
             {hours.map((hour) => {
-              const appointmentInHour = dailyAppointments.find(a => a.time.startsWith(hour.split(':')[0]));
-              let client, service;
-              if (appointmentInHour) {
-                client = clients.find(c => c.id === appointmentInHour.clientId);
-                service = services.find(s => s.id === appointmentInHour.serviceId);
-              }
+              const hourNum = hour.split(':')[0];
+              const appointmentsInHour = dailyAppointments.filter(
+                a => a.time.split(':')[0] === hourNum
+              );
 
               return (
                 <div key={hour} className="flex gap-4 min-h-[80px] group relative">
@@ -166,34 +164,50 @@ export const Appointments = () => {
                   </div>
 
                   <div className="flex-1 pt-2 pb-4 pr-2 min-w-0">
-                    {appointmentInHour ? (
-                      <div
-                        onClick={() => setManageAppId(appointmentInHour.id)}
-                        className={cn(
-                          "p-3 rounded-xl border flex flex-col gap-1 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md",
-                          appointmentInHour.status === 'completato' ? "bg-stone-50 border-stone-200 text-stone-500" :
-                          appointmentInHour.status === 'prenotato' ? "text-white" :
-                          "bg-white border-stone-200 text-stone-900"
-                        )}
-                        style={appointmentInHour.status === 'prenotato' ? {
-                          backgroundColor: 'var(--color-brand-dark)',
-                          borderColor: 'var(--color-brand-dark)',
-                        } : undefined}
-                      >
-                        <div className="flex justify-between items-start gap-2">
-                          <p className="font-medium text-sm truncate">
-                            {client?.firstName} {client?.lastName}
-                          </p>
-                          <span className="text-[10px] uppercase opacity-70 tracking-wide font-mono shrink-0">
-                            {appointmentInHour.time}
-                          </span>
-                        </div>
-                        <p className={cn(
-                          "text-sm truncate",
-                          appointmentInHour.status === 'prenotato' ? "opacity-70" : "text-stone-500"
-                        )}>
-                          {service?.name}
-                        </p>
+                    {appointmentsInHour.length > 0 ? (
+                      <div className="flex gap-2">
+                        {appointmentsInHour.map(app => {
+                          const client = clients.find(c => c.id === app.clientId);
+                          const service = services.find(s => s.id === app.serviceId);
+                          return (
+                            <div
+                              key={app.id}
+                              onClick={() => setManageAppId(app.id)}
+                              className={cn(
+                                "flex-1 min-w-0 p-3 rounded-xl border flex flex-col gap-1 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md",
+                                app.status === 'completato' ? "bg-stone-50 border-stone-200 text-stone-500" :
+                                app.status === 'prenotato' ? "text-white" :
+                                "bg-white border-stone-200 text-stone-900"
+                              )}
+                              style={app.status === 'prenotato' ? {
+                                backgroundColor: 'var(--color-brand-dark)',
+                                borderColor: 'var(--color-brand-dark)',
+                              } : undefined}
+                            >
+                              <div className="flex justify-between items-start gap-1">
+                                <p className="font-medium text-sm truncate">
+                                  {client?.firstName} {client?.lastName}
+                                </p>
+                                <span className="text-[10px] uppercase opacity-70 tracking-wide font-mono shrink-0">
+                                  {app.time}
+                                </span>
+                              </div>
+                              <p className={cn(
+                                "text-xs truncate",
+                                app.status === 'prenotato' ? "opacity-70" : "text-stone-500"
+                              )}>
+                                {service?.name}
+                              </p>
+                            </div>
+                          );
+                        })}
+                        <button
+                          onClick={() => handleSlotClick(dateString, hour)}
+                          className="shrink-0 w-8 h-full flex items-center justify-center text-stone-300 hover:text-stone-500 hover:bg-stone-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+                          title="Aggiungi appuntamento"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
                       </div>
                     ) : (
                       <div className="h-full border-t border-dashed border-stone-100 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

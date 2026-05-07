@@ -149,51 +149,50 @@ export const WeekView = ({
                   return (
                     <div
                       key={hour}
-                      onClick={() => slotApps.length === 0 && onSlotClick(dateStr, hour)}
                       className={cn(
                         'h-[72px] border-b border-stone-50 p-1 relative group',
                         slotApps.length === 0 && 'cursor-pointer hover:bg-stone-50/60 transition-colors'
                       )}
+                      onClick={() => slotApps.length === 0 && onSlotClick(dateStr, hour)}
                     >
-                      {slotApps.length === 0 && (
+                      {slotApps.length === 0 ? (
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Plus className="w-3 h-3 text-stone-300" />
                         </div>
+                      ) : (
+                        <div className="flex gap-0.5 h-full">
+                          {slotApps.map(app => {
+                            const client = clients.find(c => c.id === app.clientId);
+                            const service = services.find(s => s.id === app.serviceId);
+                            return (
+                              <div
+                                key={app.id}
+                                onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
+                                className={cn(
+                                  'flex-1 min-w-0 rounded-lg border px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] overflow-hidden flex flex-col justify-center',
+                                  app.status === 'prenotato'
+                                    ? 'text-white'
+                                    : (STATUS_CLASSES[app.status] ?? 'bg-white border-stone-200 text-stone-900')
+                                )}
+                                style={app.status === 'prenotato' ? {
+                                  backgroundColor: 'var(--color-brand-dark)',
+                                  borderColor: 'var(--color-brand-dark)',
+                                } : undefined}
+                              >
+                                <p className="text-[10px] font-semibold leading-tight truncate">
+                                  {client?.firstName} {client?.lastName}
+                                </p>
+                                <p className={cn(
+                                  'text-[9px] leading-tight truncate mt-0.5',
+                                  app.status === 'prenotato' ? 'opacity-70' : 'opacity-60'
+                                )}>
+                                  {app.time} · {service?.name}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
-                      {slotApps.map(app => {
-                        const client = clients.find(c => c.id === app.clientId);
-                        const service = services.find(s => s.id === app.serviceId);
-                        return (
-                          <div
-                            key={app.id}
-                            onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
-                            className={cn(
-                              'rounded-lg border px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] mb-0.5 overflow-hidden',
-                              app.status === 'prenotato'
-                                ? 'text-white'
-                                : (STATUS_CLASSES[app.status] ?? 'bg-white border-stone-200 text-stone-900')
-                            )}
-                            style={{
-                              minHeight: '52px',
-                              maxHeight: '66px',
-                              ...(app.status === 'prenotato' ? {
-                                backgroundColor: 'var(--color-brand-dark)',
-                                borderColor: 'var(--color-brand-dark)',
-                              } : {}),
-                            }}
-                          >
-                            <p className="text-[10px] font-semibold leading-tight truncate">
-                              {client?.firstName} {client?.lastName}
-                            </p>
-                            <p className={cn(
-                              'text-[9px] leading-tight truncate mt-0.5',
-                              app.status === 'prenotato' ? 'opacity-70' : 'opacity-60'
-                            )}>
-                              {app.time} · {service?.name}
-                            </p>
-                          </div>
-                        );
-                      })}
                     </div>
                   );
                 })}
