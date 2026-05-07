@@ -79,7 +79,7 @@ export const ManageAppointmentModal = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-stone-50 p-3 rounded-xl border border-stone-100 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-stone-500 shrink-0">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}>
               <Calendar className="w-5 h-5" />
             </div>
             <div>
@@ -88,7 +88,7 @@ export const ManageAppointmentModal = ({
             </div>
           </div>
           <div className="bg-stone-50 p-3 rounded-xl border border-stone-100 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-stone-500 shrink-0">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}>
               <Clock className="w-5 h-5" />
             </div>
             <div>

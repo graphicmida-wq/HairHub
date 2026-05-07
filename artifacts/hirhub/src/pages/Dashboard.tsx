@@ -15,7 +15,7 @@ import { cn } from '../lib/utils';
 const CARD_BORDER = '#E8E3D8';
 const CARD_SHADOW = '0 2px 12px rgba(92,88,112,0.04)';
 const ACCENT = '#3A3748';
-const ACCENT_LIGHT = '#F5F0E3';
+const ACCENT_LIGHT = 'rgba(196,170,126,0.18)';
 const TEXT_HEADING = '#3A3748';
 const TEXT_BODY = '#6B6880';
 const TEXT_MUTED = '#9B98A8';
@@ -36,7 +36,7 @@ const KpiCard = ({
     style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
   >
     <div
-      className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0 bg-[#b8a785]"
+      className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0"
       style={{ backgroundColor: ACCENT_LIGHT }}
     >
       {icon}
@@ -116,19 +116,19 @@ export const Dashboard = () => {
         <>
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiCard
-              icon={<TrendingUp className="w-5 h-5" style={{ color: ACCENT }} />}
+              icon={<TrendingUp className="w-5 h-5" style={{ color: '#C4AA7E' }} />}
               label="Fatturato"
               value={`€${fatturato.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
               sub={growthBadge}
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: ACCENT }} />}
+              icon={<CalendarDays className="w-5 h-5" style={{ color: '#C4AA7E' }} />}
               label="Appuntamenti"
               value={String(thisMonthCount)}
               sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : ACCENT }} />}
+              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : '#C4AA7E' }} />}
               label="No-show"
               value={`${noShowRate}%`}
               sub={<span className="text-xs" style={{ color: noShowRate > 10 ? '#dc2626' : TEXT_BODY }}>
@@ -136,7 +136,7 @@ export const Dashboard = () => {
               </span>}
             />
             <KpiCard
-              icon={<UserPlus className="w-5 h-5" style={{ color: ACCENT }} />}
+              icon={<UserPlus className="w-5 h-5" style={{ color: '#C4AA7E' }} />}
               label="Nuovi Clienti"
               value={String(newClientsThisMonth)}
               sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}

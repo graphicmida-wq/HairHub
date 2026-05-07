@@ -52,10 +52,12 @@ export const Inventory = () => {
                 onClick={() => setEditProductId(product.id)}
                 className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 cursor-pointer hover:border-brand-dark/30 hover:shadow-md transition-all active:scale-[0.98]"
               >
-                <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
-                  isLowStock ? "bg-red-50 text-red-600" : "bg-stone-50 text-stone-600"
-                )}>
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                  style={isLowStock
+                    ? { backgroundColor: '#fef2f2', color: '#dc2626' }
+                    : { backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}
+                >
                   <Box className="w-6 h-6" />
                 </div>
                 <div className="flex-1 min-w-0">

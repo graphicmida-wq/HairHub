@@ -56,7 +56,7 @@ export const Clients = () => {
               onClick={() => setDetailClientId(client.id)}
               className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer hover:border-brand-dark/30 hover:shadow-md"
             >
-              <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-serif text-lg shrink-0">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center font-serif text-lg shrink-0" style={{ backgroundColor: 'rgba(196,170,126,0.18)', color: '#C4AA7E' }}>
                 {client.firstName.charAt(0)}{client.lastName.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
