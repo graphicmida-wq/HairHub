@@ -158,7 +158,7 @@ export const EditServiceModal = ({
           <button
             type="submit"
             disabled={isUpdating}
-            className="flex-[2] bg-stone-900 text-white font-medium py-3 rounded-xl hover:bg-stone-800 transition-colors disabled:opacity-60"
+            className="flex-[2] text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-60" style={{ backgroundColor: '#3A3748' }}
           >
             {isUpdating ? 'Salvataggio...' : 'Salva Modifiche'}
           </button>

@@ -104,7 +104,7 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
         <button
           type="submit"
           disabled={isPending}
-          className="mt-4 bg-stone-900 text-white font-medium py-3 rounded-xl hover:bg-stone-800 transition-colors disabled:opacity-60"
+          className="mt-4 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-60" style={{ backgroundColor: '#3A3748' }}
         >
           {isPending ? 'Salvataggio...' : 'Salva Servizio'}
         </button>

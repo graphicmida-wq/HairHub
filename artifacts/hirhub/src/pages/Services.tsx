@@ -21,7 +21,8 @@ export const Services = () => {
         <h1 className="text-3xl font-serif text-stone-900">Servizi</h1>
         <button
           onClick={() => store.openModal('isNewServiceOpen')}
-          className="hidden md:flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors"
+          className="hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
+          style={{ backgroundColor: '#3A3748' }}
         >
           <Plus className="w-4 h-4" /> Nuovo Servizio
         </button>
@@ -47,7 +48,7 @@ export const Services = () => {
           </div>
           <button
             onClick={() => store.openModal('isNewServiceOpen')}
-            className="flex items-center gap-2 bg-stone-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors"
+            className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: '#3A3748' }}
           >
             <Plus className="w-4 h-4" /> Nuovo Servizio
           </button>
