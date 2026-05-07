@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useListServices } from '@workspace/api-client-react';
 import { Scissors, Plus, Clock, Euro, AlertCircle, Loader2 } from 'lucide-react';
-import { NewServiceModal } from '../components/NewServiceModal';
+import { store } from '../lib/store';
 import { EditServiceModal } from '../components/EditServiceModal';
 
 export const Services = () => {
   const { data: services = [], isLoading, isError } = useListServices();
-  const [isNewOpen, setIsNewOpen] = useState(false);
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
 
   const byCategory = services.reduce<Record<string, typeof services>>((acc, s) => {
@@ -21,7 +20,7 @@ export const Services = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif text-stone-900">Servizi</h1>
         <button
-          onClick={() => setIsNewOpen(true)}
+          onClick={() => store.openModal('isNewServiceOpen')}
           className="hidden md:flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors"
         >
           <Plus className="w-4 h-4" /> Nuovo Servizio
@@ -47,7 +46,7 @@ export const Services = () => {
             <p className="text-sm mt-1">Aggiungi il primo servizio del tuo listino</p>
           </div>
           <button
-            onClick={() => setIsNewOpen(true)}
+            onClick={() => store.openModal('isNewServiceOpen')}
             className="flex items-center gap-2 bg-stone-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors"
           >
             <Plus className="w-4 h-4" /> Nuovo Servizio
@@ -91,7 +90,6 @@ export const Services = () => {
         </div>
       )}
 
-      <NewServiceModal isOpen={isNewOpen} onClose={() => setIsNewOpen(false)} />
       <EditServiceModal
         isOpen={!!editServiceId}
         onClose={() => setEditServiceId(null)}

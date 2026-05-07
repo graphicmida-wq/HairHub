@@ -7,6 +7,7 @@ import { store, useModalStore } from '../lib/store';
 import { NewClientModal } from './NewClientModal';
 import { NewAppointmentModal } from './NewAppointmentModal';
 import { NewProductModal } from './NewProductModal';
+import { NewServiceModal } from './NewServiceModal';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -78,6 +79,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 Nuovo Prodotto
               </button>
               <button
+                onClick={() => { setIsFabOpen(false); store.openModal('isNewServiceOpen'); }}
+                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border border-stone-100 text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                Nuovo Servizio
+              </button>
+              <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewAppointmentOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border border-stone-100 text-stone-700 hover:bg-stone-50 transition-colors"
               >
@@ -106,6 +113,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <NewClientModal isOpen={modalState.isNewClientOpen} onClose={() => store.closeModal('isNewClientOpen')} />
       <NewAppointmentModal isOpen={modalState.isNewAppointmentOpen} onClose={() => store.closeModal('isNewAppointmentOpen')} />
       <NewProductModal isOpen={modalState.isNewProductOpen} onClose={() => store.closeModal('isNewProductOpen')} />
+      <NewServiceModal isOpen={modalState.isNewServiceOpen} onClose={() => store.closeModal('isNewServiceOpen')} />
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 pb-safe z-30 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center h-[72px]">
