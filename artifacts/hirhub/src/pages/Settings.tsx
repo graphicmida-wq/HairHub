@@ -3,11 +3,11 @@ import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from '@work
 import { useQueryClient } from '@tanstack/react-query';
 import { Save, Loader2, CheckCircle2, Palette } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { toast } from '../components/Toast';
 import {
   BRAND_PRESETS,
   paletteFromCustomColor,
   applyBrandPalette,
-  saveBrandPalette,
   loadBrandPalette,
   type BrandPalette,
 } from '../lib/brand-color';
@@ -103,14 +103,12 @@ export const Settings = () => {
       setAddress(apiSettings.address ?? '');
       setPhone(apiSettings.phone ?? '');
       setEmail(apiSettings.email ?? '');
-      // Sync brand color from server if present
+      // Sync brand color UI state from server (CSS/LS handled by BrandColorSync in App.tsx)
       if (apiSettings.brandColor) {
         const preset = BRAND_PRESETS.find(p => p.primary.toLowerCase() === apiSettings.brandColor!.toLowerCase());
         const palette = preset ?? paletteFromCustomColor(apiSettings.brandColor);
         setActivePalette(palette);
         setCustomColor(palette.primary);
-        applyBrandPalette(palette);
-        saveBrandPalette(palette);
       }
     } else if (!isLoading) {
       const fallback = loadInfoFallback();
@@ -170,7 +168,6 @@ export const Settings = () => {
   }, []);
 
   const handleSaveColor = () => {
-    saveBrandPalette(activePalette);
     const payload = {
       salonName: salonName || 'L\'Atelier',
       address: address || null,
@@ -189,8 +186,7 @@ export const Settings = () => {
         },
         onError: () => {
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
-          setColorSaved(true);
-          setTimeout(() => setColorSaved(false), 2500);
+          toast.show('Errore durante il salvataggio del colore', 'error');
         },
       }
     );
