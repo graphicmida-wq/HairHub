@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Palette } from 'lucide-react';
 import { cn } from '../lib/utils';
+import {
+  BRAND_PRESETS,
+  paletteFromCustomColor,
+  applyBrandPalette,
+  saveBrandPalette,
+  loadBrandPalette,
+  type BrandPalette,
+} from '../lib/brand-color';
 
 const DAYS = [
   { key: 'monday', label: 'Lunedì' },
@@ -85,6 +93,10 @@ export const Settings = () => {
   const [hours, setHours] = useState<WorkingHours>(DEFAULT_HOURS);
   const [hoursSaved, setHoursSaved] = useState(false);
 
+  const [activePalette, setActivePalette] = useState<BrandPalette>(() => loadBrandPalette());
+  const [customColor, setCustomColor] = useState<string>(() => loadBrandPalette().primary);
+  const [colorSaved, setColorSaved] = useState(false);
+
   useEffect(() => {
     if (apiSettings) {
       setSalonName(apiSettings.salonName ?? '');
@@ -134,6 +146,30 @@ export const Settings = () => {
   const updateDay = (day: DayKey, patch: Partial<DaySchedule>) => {
     setHours(prev => ({ ...prev, [day]: { ...prev[day], ...patch } }));
   };
+
+  const handleSelectPreset = useCallback((preset: BrandPalette) => {
+    setActivePalette(preset);
+    setCustomColor(preset.primary);
+    applyBrandPalette(preset);
+  }, []);
+
+  const handleCustomColorChange = useCallback((hex: string) => {
+    setCustomColor(hex);
+    const palette = paletteFromCustomColor(hex);
+    setActivePalette(palette);
+    applyBrandPalette(palette);
+  }, []);
+
+  const handleSaveColor = () => {
+    saveBrandPalette(activePalette);
+    setColorSaved(true);
+    setTimeout(() => setColorSaved(false), 2500);
+  };
+
+  const isPresetActive = (preset: BrandPalette) =>
+    activePalette.key === preset.key;
+
+  const isCustomActive = activePalette.key === 'custom';
 
   return (
     <div className="flex flex-col gap-8 page-enter">
@@ -231,6 +267,110 @@ export const Settings = () => {
                       <Save className="w-4 h-4" />
                     )}
                     Salva informazioni
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Brand color card */}
+            <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-stone-100">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-stone-400" />
+                  <h2 className="text-base font-semibold text-stone-900">Colore Brand</h2>
+                </div>
+                <p className="text-sm text-stone-500 mt-0.5">
+                  Scegli il colore principale dell'interfaccia. La modifica è visibile subito.
+                </p>
+              </div>
+
+              <div className="p-6 flex flex-col gap-5">
+                <div>
+                  <label className="block text-xs font-medium text-stone-600 mb-3 uppercase tracking-wide">
+                    Palette predefinite
+                  </label>
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    {BRAND_PRESETS.map(preset => (
+                      <button
+                        key={preset.key}
+                        type="button"
+                        onClick={() => handleSelectPreset(preset)}
+                        title={preset.label}
+                        className={cn(
+                          'flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all',
+                          isPresetActive(preset)
+                            ? 'border-stone-900 shadow-sm'
+                            : 'border-transparent hover:border-stone-200'
+                        )}
+                      >
+                        <span
+                          className="w-8 h-8 rounded-full shadow-sm block"
+                          style={{ backgroundColor: preset.primary }}
+                        />
+                        <span className="text-[10px] text-stone-500 leading-tight text-center">
+                          {preset.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-stone-100 pt-5">
+                  <label className="block text-xs font-medium text-stone-600 mb-3 uppercase tracking-wide">
+                    Colore personalizzato
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <input
+                        type="color"
+                        value={customColor}
+                        onChange={e => handleCustomColorChange(e.target.value)}
+                        className="w-10 h-10 rounded-xl border border-stone-200 cursor-pointer p-0.5 bg-white"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm text-stone-700 font-medium">
+                        {isCustomActive ? 'Personalizzato' : (activePalette.label)}
+                      </span>
+                      <span className="text-xs text-stone-400 font-mono">{activePalette.primary}</span>
+                    </div>
+                    <div className="flex items-center gap-2 ml-2">
+                      <span
+                        className="w-5 h-5 rounded-full shadow-sm"
+                        style={{ backgroundColor: activePalette.primary }}
+                      />
+                      <span
+                        className="w-5 h-5 rounded-full shadow-sm"
+                        style={{ backgroundColor: activePalette.dark }}
+                      />
+                      <span
+                        className="w-5 h-5 rounded-full shadow-sm"
+                        style={{ backgroundColor: activePalette.muted }}
+                      />
+                      <span
+                        className="w-5 h-5 rounded-full shadow-sm border border-stone-100"
+                        style={{ backgroundColor: activePalette.light }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+                  {colorSaved ? (
+                    <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                      <CheckCircle2 className="w-4 h-4" /> Salvato
+                    </span>
+                  ) : (
+                    <span className="text-xs text-stone-400">
+                      Le modifiche sono visibili subito ma vanno salvate per essere mantenute.
+                    </span>
+                  )}
+                  <button
+                    onClick={handleSaveColor}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    Salva colore
                   </button>
                 </div>
               </div>
