@@ -27,9 +27,20 @@ app.use(
 );
 
 const corsOriginEnv = process.env["CORS_ORIGIN"];
-const corsOrigin: cors.CorsOptions["origin"] = corsOriginEnv
-  ? corsOriginEnv.split(",").map((o) => o.trim())
-  : true;
+const isProduction = process.env["NODE_ENV"] === "production";
+
+let corsOrigin: cors.CorsOptions["origin"];
+if (corsOriginEnv) {
+  corsOrigin = corsOriginEnv.split(",").map((o) => o.trim());
+} else if (isProduction) {
+  logger.warn(
+    "CORS_ORIGIN is not set in production; cross-origin requests will be blocked. " +
+    "Set CORS_ORIGIN to the frontend domain (e.g. https://tuodominio.it)."
+  );
+  corsOrigin = false;
+} else {
+  corsOrigin = true;
+}
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
