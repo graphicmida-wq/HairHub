@@ -165,7 +165,7 @@ export const Appointments = () => {
 
                   <div className="flex-1 pt-2 pb-4 pr-2 min-w-0">
                     {appointmentsInHour.length > 0 ? (
-                      <div className="flex gap-2">
+                      <div className="relative flex gap-2 pr-7">
                         {appointmentsInHour.map(app => {
                           const client = clients.find(c => c.id === app.clientId);
                           const service = services.find(s => s.id === app.serviceId);
@@ -203,10 +203,10 @@ export const Appointments = () => {
                         })}
                         <button
                           onClick={() => handleSlotClick(dateString, hour)}
-                          className="shrink-0 w-8 h-full flex items-center justify-center text-stone-300 hover:text-stone-500 hover:bg-stone-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-all opacity-0 group-hover:opacity-100"
                           title="Aggiungi appuntamento"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ) : (
