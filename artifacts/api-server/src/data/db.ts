@@ -98,9 +98,12 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       salon_name TEXT NOT NULL DEFAULT 'L''Atelier',
       address TEXT,
       phone TEXT,
-      email TEXT
+      email TEXT,
+      brand_color TEXT
     );
   `);
+  // Migration: add brand_color to existing databases (no-op if already present)
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT"); } catch { /* already exists */ }
 }
 
 function seedSqliteIfEmpty(db: SqliteDb) {

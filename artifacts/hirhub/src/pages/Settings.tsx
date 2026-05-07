@@ -103,6 +103,15 @@ export const Settings = () => {
       setAddress(apiSettings.address ?? '');
       setPhone(apiSettings.phone ?? '');
       setEmail(apiSettings.email ?? '');
+      // Sync brand color from server if present
+      if (apiSettings.brandColor) {
+        const preset = BRAND_PRESETS.find(p => p.primary.toLowerCase() === apiSettings.brandColor!.toLowerCase());
+        const palette = preset ?? paletteFromCustomColor(apiSettings.brandColor);
+        setActivePalette(palette);
+        setCustomColor(palette.primary);
+        applyBrandPalette(palette);
+        saveBrandPalette(palette);
+      }
     } else if (!isLoading) {
       const fallback = loadInfoFallback();
       if (fallback) {
@@ -162,8 +171,29 @@ export const Settings = () => {
 
   const handleSaveColor = () => {
     saveBrandPalette(activePalette);
-    setColorSaved(true);
-    setTimeout(() => setColorSaved(false), 2500);
+    const payload = {
+      salonName: salonName || 'L\'Atelier',
+      address: address || null,
+      phone: phone || null,
+      email: email || null,
+      brandColor: activePalette.primary,
+    };
+    queryClient.setQueryData(getGetSettingsQueryKey(), payload);
+    updateSettings.mutate(
+      { data: payload },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
+          setColorSaved(true);
+          setTimeout(() => setColorSaved(false), 2500);
+        },
+        onError: () => {
+          queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
+          setColorSaved(true);
+          setTimeout(() => setColorSaved(false), 2500);
+        },
+      }
+    );
   };
 
   const isPresetActive = (preset: BrandPalette) =>

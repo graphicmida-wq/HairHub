@@ -50,6 +50,7 @@ export const salonSettings = sqliteTable("salon_settings", {
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
+  brandColor: text("brand_color"),
 });
 
 export type Client = typeof clients.$inferSelect;

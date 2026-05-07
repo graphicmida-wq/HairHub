@@ -373,6 +373,12 @@ export const GetSettingsResponse = zod.object({
   address: zod.string().nullish(),
   phone: zod.string().nullish(),
   email: zod.string().nullish(),
+  brandColor: zod
+    .string()
+    .nullish()
+    .describe(
+      "Hex color string for the brand palette primary color, e.g. #5c5870",
+    ),
 });
 
 /**
@@ -383,6 +389,12 @@ export const UpdateSettingsBody = zod.object({
   address: zod.string().nullish(),
   phone: zod.string().nullish(),
   email: zod.string().nullish(),
+  brandColor: zod
+    .string()
+    .nullish()
+    .describe(
+      "Hex color string for the brand palette primary color, e.g. #5c5870",
+    ),
 });
 
 export const UpdateSettingsResponse = zod.object({
@@ -390,4 +402,10 @@ export const UpdateSettingsResponse = zod.object({
   address: zod.string().nullish(),
   phone: zod.string().nullish(),
   email: zod.string().nullish(),
+  brandColor: zod
+    .string()
+    .nullish()
+    .describe(
+      "Hex color string for the brand palette primary color, e.g. #5c5870",
+    ),
 });

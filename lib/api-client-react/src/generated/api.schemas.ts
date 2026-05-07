@@ -155,4 +155,6 @@ export interface SalonSettings {
   address?: string | null;
   phone?: string | null;
   email?: string | null;
+  /** Hex color string for the brand palette primary color, e.g. #5c5870 */
+  brandColor?: string | null;
 }

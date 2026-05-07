@@ -764,5 +764,9 @@ components:
         email:
           type: string
           nullable: true
+        brandColor:
+          type: string
+          nullable: true
+          description: "Hex color string for the brand palette primary color, e.g. #5c5870"
       required:
         - salonName
