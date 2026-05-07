@@ -16,7 +16,7 @@ export const Inventory = () => {
   );
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif text-stone-900">Magazzino</h1>
         <button onClick={() => store.openModal('isNewProductOpen')} className="hidden md:flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors">

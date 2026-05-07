@@ -19,7 +19,7 @@ export const Dashboard = () => {
   const lowStockProducts = products.filter(p => p.quantity <= p.minThreshold);
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="flex flex-col gap-8 page-enter">
 
       <section>
         <span className="text-stone-500 text-sm font-medium tracking-wide uppercase">Bentornato</span>
