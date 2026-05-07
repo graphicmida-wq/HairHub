@@ -1,5 +1,11 @@
 import { Router, type IRouter } from "express";
-import { dataStore } from "../data/store";
+import {
+  dbGetAppointments,
+  dbGetAppointment,
+  dbCreateAppointment,
+  dbUpdateAppointment,
+  dbDeleteAppointment,
+} from "../data/db";
 import {
   CreateAppointmentBody,
   UpdateAppointmentBody,
@@ -10,7 +16,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/appointments", (_req, res) => {
-  res.json(dataStore.getAppointments());
+  res.json(dbGetAppointments());
 });
 
 router.post("/appointments", (req, res) => {
@@ -19,12 +25,12 @@ router.post("/appointments", (req, res) => {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const appointment = dataStore.createAppointment(result.data);
+  const appointment = dbCreateAppointment(result.data);
   res.status(201).json(appointment);
 });
 
 router.get("/appointments/:id", (req, res) => {
-  const appointment = dataStore.getAppointment(req.params.id);
+  const appointment = dbGetAppointment(req.params.id);
   if (!appointment) {
     res.status(404).json({ message: "Appointment not found" });
     return;
@@ -43,7 +49,7 @@ router.put("/appointments/:id", (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dataStore.updateAppointment(params.data.id, body.data);
+  const updated = dbUpdateAppointment(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Appointment not found" });
     return;
@@ -57,7 +63,12 @@ router.delete("/appointments/:id", (req, res) => {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  dataStore.deleteAppointment(params.data.id);
+  const existing = dbGetAppointment(params.data.id);
+  if (!existing) {
+    res.status(404).json({ message: "Appointment not found" });
+    return;
+  }
+  dbDeleteAppointment(params.data.id);
   res.status(204).send();
 });
 

@@ -1,5 +1,11 @@
 import { Router, type IRouter } from "express";
-import { dataStore } from "../data/store";
+import {
+  dbGetProducts,
+  dbGetProduct,
+  dbCreateProduct,
+  dbUpdateProduct,
+  dbDeleteProduct,
+} from "../data/db";
 import {
   CreateProductBody,
   UpdateProductBody,
@@ -10,7 +16,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/products", (_req, res) => {
-  res.json(dataStore.getProducts());
+  res.json(dbGetProducts());
 });
 
 router.post("/products", (req, res) => {
@@ -19,12 +25,12 @@ router.post("/products", (req, res) => {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const product = dataStore.createProduct(result.data);
+  const product = dbCreateProduct(result.data);
   res.status(201).json(product);
 });
 
 router.get("/products/:id", (req, res) => {
-  const product = dataStore.getProduct(req.params.id);
+  const product = dbGetProduct(req.params.id);
   if (!product) {
     res.status(404).json({ message: "Product not found" });
     return;
@@ -43,7 +49,7 @@ router.put("/products/:id", (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dataStore.updateProduct(params.data.id, body.data);
+  const updated = dbUpdateProduct(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Product not found" });
     return;
@@ -57,7 +63,12 @@ router.delete("/products/:id", (req, res) => {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  dataStore.deleteProduct(params.data.id);
+  const existing = dbGetProduct(params.data.id);
+  if (!existing) {
+    res.status(404).json({ message: "Product not found" });
+    return;
+  }
+  dbDeleteProduct(params.data.id);
   res.status(204).send();
 });
 

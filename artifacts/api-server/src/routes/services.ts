@@ -1,5 +1,11 @@
 import { Router, type IRouter } from "express";
-import { dataStore } from "../data/store";
+import {
+  dbGetServices,
+  dbGetService,
+  dbCreateService,
+  dbUpdateService,
+  dbDeleteService,
+} from "../data/db";
 import {
   CreateServiceBody,
   UpdateServiceBody,
@@ -10,7 +16,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/services", (_req, res) => {
-  res.json(dataStore.getServices());
+  res.json(dbGetServices());
 });
 
 router.post("/services", (req, res) => {
@@ -19,12 +25,12 @@ router.post("/services", (req, res) => {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const service = dataStore.createService(result.data);
+  const service = dbCreateService(result.data);
   res.status(201).json(service);
 });
 
 router.get("/services/:id", (req, res) => {
-  const service = dataStore.getService(req.params.id);
+  const service = dbGetService(req.params.id);
   if (!service) {
     res.status(404).json({ message: "Service not found" });
     return;
@@ -43,7 +49,7 @@ router.put("/services/:id", (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dataStore.updateService(params.data.id, body.data);
+  const updated = dbUpdateService(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Service not found" });
     return;
@@ -57,7 +63,12 @@ router.delete("/services/:id", (req, res) => {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  dataStore.deleteService(params.data.id);
+  const existing = dbGetService(params.data.id);
+  if (!existing) {
+    res.status(404).json({ message: "Service not found" });
+    return;
+  }
+  dbDeleteService(params.data.id);
   res.status(204).send();
 });
 

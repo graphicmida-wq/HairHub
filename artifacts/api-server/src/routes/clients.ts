@@ -1,5 +1,11 @@
 import { Router, type IRouter } from "express";
-import { dataStore } from "../data/store";
+import {
+  dbGetClients,
+  dbGetClient,
+  dbCreateClient,
+  dbUpdateClient,
+  dbDeleteClient,
+} from "../data/db";
 import {
   CreateClientBody,
   UpdateClientBody,
@@ -11,7 +17,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/clients", (_req, res) => {
-  res.json(dataStore.getClients());
+  res.json(dbGetClients());
 });
 
 router.post("/clients", (req, res) => {
@@ -20,7 +26,7 @@ router.post("/clients", (req, res) => {
     res.status(400).json({ message: result.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const client = dataStore.createClient(result.data);
+  const client = dbCreateClient(result.data);
   res.status(201).json(client);
 });
 
@@ -30,7 +36,7 @@ router.get("/clients/:id", (req, res) => {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  const client = dataStore.getClient(params.data.id);
+  const client = dbGetClient(params.data.id);
   if (!client) {
     res.status(404).json({ message: "Client not found" });
     return;
@@ -49,7 +55,7 @@ router.put("/clients/:id", (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = dataStore.updateClient(params.data.id, body.data);
+  const updated = dbUpdateClient(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Client not found" });
     return;
@@ -63,7 +69,12 @@ router.delete("/clients/:id", (req, res) => {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  dataStore.deleteClient(params.data.id);
+  const existing = dbGetClient(params.data.id);
+  if (!existing) {
+    res.status(404).json({ message: "Client not found" });
+    return;
+  }
+  dbDeleteClient(params.data.id);
   res.status(204).send();
 });
 
