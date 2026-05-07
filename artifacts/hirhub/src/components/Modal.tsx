@@ -21,7 +21,7 @@ export const Modal = ({ isOpen, onClose, title, children, className }: ModalProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/50 z-50"
           />
           <motion.div
             initial={{ opacity: 0, y: 100, scale: 0.95 }}

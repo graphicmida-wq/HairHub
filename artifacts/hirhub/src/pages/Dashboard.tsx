@@ -32,7 +32,7 @@ const KpiCard = ({
   sub?: React.ReactNode;
 }) => (
   <div
-    className="bg-white rounded-2xl p-5 flex flex-col relative overflow-hidden"
+    className="rounded-2xl p-5 flex flex-col relative overflow-hidden bg-[#ffffff91]"
     style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
   >
     <div
