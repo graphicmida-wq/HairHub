@@ -123,7 +123,7 @@ export const ManageAppointmentModal = ({
           {appointment.status !== 'completato' && (
             <button
               onClick={() => { onClose(); onComplete(appointment.id); }}
-              className="w-full bg-green-600 text-white font-medium py-3.5 rounded-xl hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              className="w-full text-white font-medium py-3.5 rounded-xl hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-sm bg-[#538c67]"
             >
               <CheckCircle2 className="w-5 h-5" /> Segna come Completato
             </button>
