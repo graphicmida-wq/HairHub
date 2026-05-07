@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Home, Package2, Menu, Plus } from 'lucide-react';
+import { Calendar, Users, Home, Package2, Menu, Plus, Scissors } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { store, useModalStore } from '../lib/store';
@@ -17,6 +17,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { icon: Home, label: 'Dashboard', path: '/' },
     { icon: Calendar, label: 'Agenda', path: '/agenda' },
     { icon: Users, label: 'Clienti', path: '/clienti' },
+    { icon: Scissors, label: 'Servizi', path: '/servizi' },
     { icon: Package2, label: 'Magazzino', path: '/magazzino' },
   ];
 

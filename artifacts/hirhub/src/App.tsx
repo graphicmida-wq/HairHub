@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Clients } from './pages/Clients';
 import { Appointments } from './pages/Appointments';
 import { Inventory } from './pages/Inventory';
+import { Services } from './pages/Services';
 import { Toaster } from './components/Toast';
 
 const queryClient = new QueryClient({
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/agenda" element={<Appointments />} />
             <Route path="/clienti" element={<Clients />} />
+            <Route path="/servizi" element={<Services />} />
             <Route path="/magazzino" element={<Inventory />} />
           </Routes>
         </Layout>
