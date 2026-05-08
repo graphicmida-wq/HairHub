@@ -4,7 +4,7 @@ import { useListAppointments, useListClients, useListServices, useListStaff } fr
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, eachDayOfInterval, endOfWeek } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
-import { cn, hexAlpha } from '../lib/utils';
+import { cn, hexAlpha, computeCalendarLayout } from '../lib/utils';
 import { ManageAppointmentModal } from '../components/ManageAppointmentModal';
 import { EditAppointmentModal } from '../components/EditAppointmentModal';
 import { CompleteAppointmentModal } from '../components/CompleteAppointmentModal';
@@ -12,6 +12,10 @@ import { WeekView } from '../components/WeekView';
 import { NewAppointmentModal } from '../components/NewAppointmentModal';
 
 type View = 'day' | 'week';
+
+const HOURS = Array.from({ length: 11 }, (_, i) => `${(i + 9).toString().padStart(2, '0')}:00`);
+const START_HOUR = 9;
+const HOUR_H = 72;
 
 export const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -35,7 +39,6 @@ export const Appointments = () => {
   const allResourceCols: ResourceColumn[] = [...resourceColumns, { id: null, name: 'Non assegnato', color: '#94a3b8' }];
 
   const isLoading = loadingAppts || loadingClients || loadingServices;
-
   const dateString = format(selectedDate, 'yyyy-MM-dd');
 
   const filteredAppointments = staffFilter
@@ -45,8 +48,6 @@ export const Appointments = () => {
   const dailyAppointments = filteredAppointments
     .filter(a => a.date === dateString)
     .sort((a, b) => a.time.localeCompare(b.time));
-
-  const hours = Array.from({ length: 11 }, (_, i) => `${(i + 9).toString().padStart(2, '0')}:00`);
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -62,7 +63,6 @@ export const Appointments = () => {
     if (view === 'day') setSelectedDate(d => subDays(d, 1));
     else setSelectedDate(d => subWeeks(d, 1));
   };
-
   const goForward = () => {
     if (view === 'day') setSelectedDate(d => addDays(d, 1));
     else setSelectedDate(d => addWeeks(d, 1));
@@ -103,6 +103,8 @@ export const Appointments = () => {
     );
   }
 
+  const totalH = HOURS.length * HOUR_H;
+
   return (
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
@@ -111,16 +113,14 @@ export const Appointments = () => {
           <Plus className="w-4 h-4" /> Nuovo Appuntamento
         </button>
       </div>
+
       {/* Staff filter */}
       {staff.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setStaffFilter(null)}
-            className={cn(
-              'px-3.5 py-1.5 rounded-full text-sm font-medium transition-all border',
-              staffFilter === null
-                ? 'bg-stone-900 text-white border-stone-900'
-                : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+            className={cn('px-3.5 py-1.5 rounded-full text-sm font-medium transition-all border',
+              staffFilter === null ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
             )}
           >
             Tutti
@@ -129,16 +129,12 @@ export const Appointments = () => {
             <button
               key={member.id}
               onClick={() => setStaffFilter(staffFilter === member.id ? null : member.id)}
-              className={cn(
-                'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all border',
-                staffFilter === member.id
-                  ? 'text-white border-transparent'
-                  : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+              className={cn('flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all border',
+                staffFilter === member.id ? 'text-white border-transparent' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
               )}
               style={staffFilter === member.id ? { backgroundColor: member.color, borderColor: member.color } : undefined}
             >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
+              <span className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: staffFilter === member.id ? 'rgba(255,255,255,0.7)' : member.color }}
               />
               {member.name}
@@ -146,14 +142,13 @@ export const Appointments = () => {
           ))}
         </div>
       )}
+
       {/* View toggle + navigation */}
       <div className="flex flex-col gap-3">
-        {/* Toggle */}
         <div className="flex rounded-xl p-1 self-center text-left bg-[#f5f5f400]">
           <button
             onClick={() => setView('day')}
-            className={cn(
-              'px-5 py-1.5 rounded-lg text-sm font-medium transition-all',
+            className={cn('px-5 py-1.5 rounded-lg text-sm font-medium transition-all',
               view === 'day' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
             )}
           >
@@ -161,38 +156,28 @@ export const Appointments = () => {
           </button>
           <button
             onClick={() => setView('week')}
-            className={cn(
-              'px-5 py-1.5 rounded-lg text-sm font-medium transition-all',
+            className={cn('px-5 py-1.5 rounded-lg text-sm font-medium transition-all',
               view === 'week' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
             )}
           >
             Settimana
           </button>
         </div>
-
-        {/* Navigation */}
         <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl shadow-sm border border-stone-100">
-          <button
-            onClick={goBack}
-            className="p-2 text-stone-400 hover:text-stone-900 active:bg-stone-50 rounded-full transition-colors"
-          >
+          <button onClick={goBack} className="p-2 text-stone-400 hover:text-stone-900 active:bg-stone-50 rounded-full transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <div className="text-center">
-            {navTitle}
-          </div>
-          <button
-            onClick={goForward}
-            className="p-2 text-stone-400 hover:text-stone-900 active:bg-stone-50 rounded-full transition-colors"
-          >
+          <div className="text-center">{navTitle}</div>
+          <button onClick={goForward} className="p-2 text-stone-400 hover:text-stone-900 active:bg-stone-50 rounded-full transition-colors">
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
+
       {/* Day view — resource mode (multiple staff, no filter) */}
       {view === 'day' && staff.length > 0 && staffFilter === null && (
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden relative">
-          {/* Column headers */}
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+          {/* Sticky column headers */}
           <div className="flex border-b border-stone-100 sticky top-0 bg-white z-10">
             <div className="w-14 shrink-0" />
             <div className="flex flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
@@ -207,177 +192,165 @@ export const Appointments = () => {
               ))}
             </div>
           </div>
-          {/* Body */}
-          <div className="flex flex-col pb-20">
-            {hours.map((hour) => {
-              const hourNum = hour.split(':')[0];
-              const appsInHour = dailyAppointments.filter(a => a.time.split(':')[0] === hourNum);
-              return (
-                <div key={hour} className="flex border-b border-stone-50 last:border-0 min-h-[72px] group relative">
-                  <div className="w-14 text-right pt-2 shrink-0 pr-2">
-                    <span className="text-xs font-medium text-stone-400">{hour}</span>
-                  </div>
-                  <div className="flex flex-1 overflow-x-auto">
-                    {allResourceCols.map(col => {
-                      const colApps = appsInHour.filter(a =>
-                        col.id === null ? (!a.staffId) : a.staffId === col.id
-                      );
+
+          {/* Body — absolute positioning per column */}
+          <div className="flex pb-4" style={{ minHeight: totalH }}>
+            {/* Time gutter */}
+            <div className="w-14 shrink-0 relative" style={{ height: totalH }}>
+              {HOURS.map((hour, i) => (
+                <div key={hour} className="absolute right-2" style={{ top: i * HOUR_H + 8 }}>
+                  <span className="text-xs font-medium text-stone-400">{hour}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Staff columns */}
+            <div className="flex flex-1 overflow-x-auto">
+              {allResourceCols.map(col => {
+                const colApps = dailyAppointments.filter(a =>
+                  col.id === null ? !a.staffId : a.staffId === col.id
+                );
+                const layout = computeCalendarLayout(colApps, START_HOUR, HOUR_H, 22);
+                return (
+                  <div
+                    key={col.id ?? '__none__'}
+                    className="flex-1 min-w-[110px] border-l border-stone-100 first:border-l-0 relative"
+                    style={{ height: totalH }}
+                  >
+                    {/* Hour grid lines (click to add) */}
+                    {HOURS.map((hour, i) => (
+                      <div
+                        key={hour}
+                        className="absolute left-0 right-0 border-b border-stone-50 hover:bg-stone-50/60 transition-colors cursor-pointer"
+                        style={{ top: i * HOUR_H, height: HOUR_H }}
+                        onClick={() => handleSlotClick(dateString, hour)}
+                      />
+                    ))}
+                    {/* Appointments */}
+                    {layout.map(({ item: app, top, height, leftPct, widthPct }) => {
+                      const client = clients.find(c => c.id === app.clientId);
+                      const service = services.find(s => s.id === app.serviceId);
+                      const isCancelled = app.status === 'annullato';
+                      const isNoShow = app.status === 'no-show';
+                      const isCompleted = app.status === 'completato';
+                      const sc = col.color;
                       return (
                         <div
-                          key={col.id ?? '__none__'}
-                          className="flex-1 min-w-[110px] p-1 border-l border-stone-100 first:border-l-0 relative"
-                        >
-                          {colApps.map(app => {
-                            const client = clients.find(c => c.id === app.clientId);
-                            const service = services.find(s => s.id === app.serviceId);
-                            const isCancelled = app.status === 'annullato';
-                            const isNoShow = app.status === 'no-show';
-                            const isCompleted = app.status === 'completato';
-                            const sc = col.color;
-                            return (
-                              <div
-                                key={app.id}
-                                onClick={() => setManageAppId(app.id)}
-                                className={cn(
-                                  "p-2 rounded-xl border border-stone-200 flex flex-col gap-0.5 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] mb-1",
-                                  isCompleted ? "bg-stone-50 text-stone-400" : "text-stone-800",
-                                  (isCancelled || isNoShow) && "text-stone-400",
-                                )}
-                                style={{
-                                  borderLeftColor: sc,
-                                  borderLeftWidth: '4px',
-                                  ...(!isCompleted && {
-                                    backgroundColor: (isCancelled || isNoShow)
-                                      ? hexAlpha(sc, 0.06)
-                                      : hexAlpha(sc, 0.14),
-                                  }),
-                                }}
-                              >
-                                <p className={cn("font-medium text-xs truncate", isCancelled && "line-through")}>
-                                  {client?.firstName} {client?.lastName}
-                                </p>
-                                <p className="text-[10px] truncate opacity-60">
-                                  {app.time} · {service?.name}
-                                </p>
-                              </div>
-                            );
-                          })}
-                          {colApps.length === 0 && (
-                            <button
-                              onClick={() => handleSlotClick(dateString, hour)}
-                              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Plus className="w-3.5 h-3.5 text-stone-300" />
-                            </button>
+                          key={app.id}
+                          onClick={() => setManageAppId(app.id)}
+                          className={cn(
+                            'absolute rounded-xl border border-stone-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex flex-col',
+                            isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
+                            (isCancelled || isNoShow) && 'text-stone-400',
                           )}
+                          style={{
+                            top: top + 2,
+                            height: height - 4,
+                            left: `calc(${leftPct * 100}% + 2px)`,
+                            width: `calc(${widthPct * 100}% - 4px)`,
+                            borderLeftColor: sc,
+                            borderLeftWidth: '4px',
+                            padding: '4px 6px',
+                            zIndex: 1,
+                            ...(!isCompleted && {
+                              backgroundColor: (isCancelled || isNoShow) ? hexAlpha(sc, 0.06) : hexAlpha(sc, 0.14),
+                            }),
+                          }}
+                        >
+                          <p className={cn('font-medium text-xs truncate', isCancelled && 'line-through')}>
+                            {client?.firstName} {client?.lastName}
+                          </p>
+                          <p className="text-[10px] truncate opacity-60">{app.time} · {service?.name}</p>
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
+
       {/* Day view — single column (no staff configured, or filter active) */}
       {view === 'day' && (staff.length === 0 || staffFilter !== null) && (
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-2 relative pb-20">
-          <div className="flex flex-col">
-            {hours.map((hour) => {
-              const hourNum = hour.split(':')[0];
-              const appointmentsInHour = dailyAppointments.filter(
-                a => a.time.split(':')[0] === hourNum
-              );
-
-              return (
-                <div key={hour} className="flex gap-4 min-h-[80px] group relative">
-                  <div className="w-14 text-right pt-2 shrink-0">
-                    <span className="text-xs font-medium text-stone-400">{hour}</span>
-                  </div>
-
-                  <div className="w-px bg-stone-100 relative top-4 shrink-0">
-                    <div className="w-2 h-2 rounded-full absolute -left-[3px] -top-1 bg-stone-200"></div>
-                  </div>
-
-                  <div className="flex-1 pt-2 pb-4 pr-2 min-w-0">
-                    {appointmentsInHour.length > 0 ? (
-                      <div className="relative flex gap-2 pr-7">
-                        {appointmentsInHour.map(app => {
-                          const client = clients.find(c => c.id === app.clientId);
-                          const service = services.find(s => s.id === app.serviceId);
-                          const staffMember = staff.find(m => m.id === app.staffId);
-                          const isCancelled = app.status === 'annullato';
-                          const isNoShow = app.status === 'no-show';
-                          const isCompleted = app.status === 'completato';
-                          const sc = staffMember?.color ?? '#94a3b8';
-                          return (
-                            <div
-                              key={app.id}
-                              onClick={() => setManageAppId(app.id)}
-                              className={cn(
-                                "flex-1 min-w-0 p-3 rounded-xl border border-stone-200 flex flex-col gap-1 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md",
-                                isCompleted ? "bg-stone-50 text-stone-400" : "text-stone-800",
-                                (isCancelled || isNoShow) && "text-stone-400",
-                              )}
-                              style={{
-                                borderLeftColor: sc,
-                                borderLeftWidth: '4px',
-                                ...(!isCompleted && {
-                                  backgroundColor: (isCancelled || isNoShow)
-                                    ? hexAlpha(sc, 0.06)
-                                    : hexAlpha(sc, 0.14),
-                                }),
-                              }}
-                            >
-                              <div className="flex justify-between items-start gap-1">
-                                <p className={cn("font-medium text-sm truncate", isCancelled && "line-through")}>
-                                  {client?.firstName} {client?.lastName}
-                                </p>
-                                <span className="text-[10px] uppercase opacity-60 tracking-wide font-mono shrink-0">
-                                  {app.time}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-xs truncate flex-1 opacity-60">
-                                  {service?.name}
-                                </p>
-                                {staffMember && (
-                                  <span
-                                    className="w-2 h-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: sc }}
-                                    title={staffMember.name}
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        <button
-                          onClick={() => handleSlotClick(dateString, hour)}
-                          className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                          title="Aggiungi appuntamento"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="h-full border-t border-dashed border-stone-100 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <button
-                          onClick={() => handleSlotClick(dateString, hour)}
-                          className="text-xs text-brand-dark flex items-center gap-1 font-medium bg-stone-50 px-3 py-1.5 rounded-full hover:bg-brand-light transition-colors"
-                        >
-                          <Plus className="w-3 h-3" /> Aggiungi
-                        </button>
-                      </div>
-                    )}
-                  </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+          <div className="flex" style={{ height: totalH }}>
+            {/* Time gutter */}
+            <div className="w-14 shrink-0 relative">
+              {HOURS.map((hour, i) => (
+                <div key={hour} className="absolute right-2" style={{ top: i * HOUR_H + 8 }}>
+                  <span className="text-xs font-medium text-stone-400">{hour}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* Appointment column */}
+            <div className="flex-1 relative pr-2">
+              {/* Hour grid lines (click to add) */}
+              {HOURS.map((hour, i) => (
+                <div
+                  key={hour}
+                  className="absolute left-0 right-0 border-b border-stone-100 hover:bg-stone-50/40 transition-colors cursor-pointer"
+                  style={{ top: i * HOUR_H, height: HOUR_H }}
+                  onClick={() => handleSlotClick(dateString, hour)}
+                />
+              ))}
+
+              {/* Appointments */}
+              {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 22).map(
+                ({ item: app, top, height, leftPct, widthPct }) => {
+                  const client = clients.find(c => c.id === app.clientId);
+                  const service = services.find(s => s.id === app.serviceId);
+                  const staffMember = staff.find(m => m.id === app.staffId);
+                  const isCancelled = app.status === 'annullato';
+                  const isNoShow = app.status === 'no-show';
+                  const isCompleted = app.status === 'completato';
+                  const sc = staffMember?.color ?? '#94a3b8';
+                  return (
+                    <div
+                      key={app.id}
+                      onClick={() => setManageAppId(app.id)}
+                      className={cn(
+                        'absolute rounded-xl border border-stone-200 flex flex-col cursor-pointer hover:shadow-md transition-shadow overflow-hidden',
+                        isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
+                        (isCancelled || isNoShow) && 'text-stone-400',
+                      )}
+                      style={{
+                        top: top + 2,
+                        height: height - 4,
+                        left: `calc(${leftPct * 100}% + 4px)`,
+                        width: `calc(${widthPct * 100}% - 8px)`,
+                        borderLeftColor: sc,
+                        borderLeftWidth: '4px',
+                        padding: '6px 8px',
+                        zIndex: 1,
+                        ...(!isCompleted && {
+                          backgroundColor: (isCancelled || isNoShow) ? hexAlpha(sc, 0.06) : hexAlpha(sc, 0.14),
+                        }),
+                      }}
+                    >
+                      <div className="flex justify-between items-start gap-1">
+                        <p className={cn('font-medium text-sm truncate', isCancelled && 'line-through')}>
+                          {client?.firstName} {client?.lastName}
+                        </p>
+                        <span className="text-[10px] uppercase opacity-60 tracking-wide font-mono shrink-0">{app.time}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="text-xs truncate flex-1 opacity-60">{service?.name}</p>
+                        {staffMember && (
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sc }} title={staffMember.name} />
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
           </div>
         </div>
       )}
+
       {/* Week view */}
       {view === 'week' && (
         <WeekView
@@ -391,6 +364,7 @@ export const Appointments = () => {
           onSlotClick={handleSlotClick}
         />
       )}
+
       <ManageAppointmentModal
         isOpen={!!manageAppId}
         onClose={() => setManageAppId(null)}
@@ -408,7 +382,6 @@ export const Appointments = () => {
         onClose={() => setCompleteAppId(null)}
         appointmentId={completeAppId}
       />
-      {/* Local modal for slot-click prefill (day and week view) */}
       <NewAppointmentModal
         isOpen={isSlotModalOpen}
         onClose={() => setIsSlotModalOpen(false)}
