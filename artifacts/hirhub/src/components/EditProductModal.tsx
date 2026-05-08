@@ -81,7 +81,13 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
 
   const handleQuantityChange = (val: number) => {
     setStockGramsManual(false);
-    setFormData(pr => ({ ...pr, quantity: val, stockGrams: pr.trackByWeight ? val * pr.unitSize : pr.stockGrams }));
+    setFormData(pr => ({
+      ...pr,
+      quantity: val,
+      stockGrams: pr.trackByWeight
+        ? Math.max(0, pr.stockGrams + (val - pr.quantity) * pr.unitSize)
+        : pr.stockGrams,
+    }));
   };
 
   const handleUnitSizeChange = (val: number) => {
@@ -207,8 +213,8 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
                 className={INPUT} />
               <p className="text-xs text-stone-400">
                 {stockGramsManual
-                  ? 'Valore personalizzato — modificare le confezioni per ricalcolare'
-                  : `Auto-calcolato: ${formData.quantity} × ${formData.unitSize} ${formData.unitType}`}
+                  ? 'Valore personalizzato — cambiare le confezioni aggiunge/sottrae una confezione al totale'
+                  : `Aggiungere/togliere confezioni aggiusta lo stock di ±${formData.unitSize} ${formData.unitType} alla volta`}
               </p>
             </div>
           </div>
