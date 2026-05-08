@@ -6,6 +6,7 @@ import { Clock, Calendar, Text, CheckCircle2, Edit2, Trash2, Box } from 'lucide-
 import { toast } from './Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { addMinsToTime } from '../lib/utils';
 
 export const ManageAppointmentModal = ({
   isOpen,
@@ -91,8 +92,11 @@ export const ManageAppointmentModal = ({
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xs uppercase font-semibold text-stone-400 block tracking-wider">Ora</span>
-              <span className="font-medium text-stone-900">{appointment.time} ({appointment.durationMins}m)</span>
+              <span className="text-xs uppercase font-semibold text-stone-400 block tracking-wider">Orario</span>
+              <span className="font-semibold text-stone-900 text-lg leading-tight">
+                {appointment.time} → {addMinsToTime(appointment.time, appointment.durationMins)}
+              </span>
+              <span className="text-xs text-stone-400 block">{appointment.durationMins} min</span>
             </div>
           </div>
         </div>

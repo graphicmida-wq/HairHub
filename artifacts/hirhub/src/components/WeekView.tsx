@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Plus } from 'lucide-react';
-import { cn, hexAlpha, computeCalendarLayout } from '../lib/utils';
+import { cn, hexAlpha, computeCalendarLayout, addMinsToTime } from '../lib/utils';
 
 interface Appointment {
   id: string;
@@ -170,11 +170,14 @@ export const WeekView = ({
                           }),
                         }}
                       >
-                        <p className={cn('text-[10px] font-semibold leading-tight truncate', isCancelled && 'line-through')}>
+                        <p className="text-[9px] font-bold leading-none tracking-wide opacity-80">
+                          {app.time} → {addMinsToTime(app.time, app.durationMins)}
+                        </p>
+                        <p className={cn('text-[10px] font-semibold leading-tight truncate mt-0.5', isCancelled && 'line-through')}>
                           {client?.firstName} {client?.lastName}
                         </p>
-                        <p className="text-[9px] leading-tight truncate mt-0.5 opacity-60">
-                          {app.time} · {service?.name}
+                        <p className="text-[9px] leading-tight truncate opacity-50">
+                          {service?.name}
                         </p>
                       </div>
                     );

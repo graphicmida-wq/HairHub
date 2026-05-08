@@ -4,7 +4,7 @@ import { useListAppointments, useListClients, useListServices, useListStaff } fr
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, eachDayOfInterval, endOfWeek } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
-import { cn, hexAlpha, computeCalendarLayout } from '../lib/utils';
+import { cn, hexAlpha, computeCalendarLayout, addMinsToTime } from '../lib/utils';
 import { ManageAppointmentModal } from '../components/ManageAppointmentModal';
 import { EditAppointmentModal } from '../components/EditAppointmentModal';
 import { CompleteAppointmentModal } from '../components/CompleteAppointmentModal';
@@ -257,10 +257,13 @@ export const Appointments = () => {
                             }),
                           }}
                         >
-                          <p className={cn('font-medium text-xs truncate', isCancelled && 'line-through')}>
+                          <p className="text-[10px] font-bold leading-none opacity-80">
+                            {app.time} → {addMinsToTime(app.time, app.durationMins)}
+                          </p>
+                          <p className={cn('font-medium text-xs truncate mt-0.5', isCancelled && 'line-through')}>
                             {client?.firstName} {client?.lastName}
                           </p>
-                          <p className="text-[10px] truncate opacity-60">{app.time} · {service?.name}</p>
+                          <p className="text-[10px] truncate opacity-50">{service?.name}</p>
                         </div>
                       );
                     })}
@@ -330,18 +333,18 @@ export const Appointments = () => {
                         }),
                       }}
                     >
-                      <div className="flex justify-between items-start gap-1">
-                        <p className={cn('font-medium text-sm truncate', isCancelled && 'line-through')}>
-                          {client?.firstName} {client?.lastName}
-                        </p>
-                        <span className="text-[10px] uppercase opacity-60 tracking-wide font-mono shrink-0">{app.time}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="text-xs truncate flex-1 opacity-60">{service?.name}</p>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-bold opacity-80 shrink-0">
+                          {app.time} → {addMinsToTime(app.time, app.durationMins)}
+                        </span>
                         {staffMember && (
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sc }} title={staffMember.name} />
                         )}
                       </div>
+                      <p className={cn('font-medium text-sm truncate mt-0.5', isCancelled && 'line-through')}>
+                        {client?.firstName} {client?.lastName}
+                      </p>
+                      <p className="text-xs truncate opacity-50">{service?.name}</p>
                     </div>
                   );
                 }
