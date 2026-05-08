@@ -22,11 +22,12 @@ interface FormData {
   trackByWeight: boolean;
   unitSize: number;
   unitType: UnitType;
+  stockGrams: number;
 }
 
 const emptyForm: FormData = {
   name: '', category: '', brand: '', quantity: 0, minThreshold: 5,
-  trackByWeight: false, unitSize: 100, unitType: 'ml',
+  trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
 };
 
 export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
@@ -38,6 +39,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
         toast.show('Prodotto aggiunto');
         onClose();
         setFormData(emptyForm);
+        setStockGramsManual(false);
       },
       onError: (err: unknown) => {
         const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -47,10 +49,29 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
   });
 
   const [formData, setFormData] = useState<FormData>(emptyForm);
+  const [stockGramsManual, setStockGramsManual] = useState(false);
 
-  const computedStockGrams = formData.trackByWeight
-    ? formData.quantity * formData.unitSize
-    : null;
+  const handleQuantityChange = (val: number) => {
+    setFormData(p => {
+      const newStock = !stockGramsManual && p.trackByWeight ? val * p.unitSize : p.stockGrams;
+      return { ...p, quantity: val, stockGrams: newStock };
+    });
+  };
+
+  const handleUnitSizeChange = (val: number) => {
+    setFormData(p => {
+      const newStock = !stockGramsManual ? p.quantity * val : p.stockGrams;
+      return { ...p, unitSize: val, stockGrams: newStock };
+    });
+  };
+
+  const handleTrackByWeightChange = (checked: boolean) => {
+    setFormData(p => {
+      const newStock = checked ? p.quantity * p.unitSize : 0;
+      return { ...p, trackByWeight: checked, stockGrams: newStock };
+    });
+    setStockGramsManual(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +87,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
     if (formData.trackByWeight) {
       payload.unitSize = formData.unitSize;
       payload.unitType = formData.unitType;
-      payload.stockGrams = computedStockGrams;
+      payload.stockGrams = formData.stockGrams;
     }
     createProduct({ data: payload });
   };
@@ -100,7 +121,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Confezioni (pz)</label>
             <input required type="number" min="0" value={formData.quantity}
-              onChange={e => setFormData(p => ({ ...p, quantity: parseInt(e.target.value) || 0 }))}
+              onChange={e => handleQuantityChange(parseInt(e.target.value) || 0)}
               className={INPUT} />
           </div>
           <div className="flex flex-col gap-1">
@@ -116,7 +137,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
             type="checkbox"
             id="trackByWeight"
             checked={formData.trackByWeight}
-            onChange={e => setFormData(p => ({ ...p, trackByWeight: e.target.checked }))}
+            onChange={e => handleTrackByWeightChange(e.target.checked)}
             className="w-4 h-4 rounded border-stone-300 accent-stone-800"
           />
           <label htmlFor="trackByWeight" className="text-sm text-stone-700 cursor-pointer">
@@ -130,7 +151,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
               <div className="flex flex-col gap-1">
                 <label className={LABEL}>Dimensione confezione</label>
                 <input type="number" min="0" step="0.1" value={formData.unitSize}
-                  onChange={e => setFormData(p => ({ ...p, unitSize: parseFloat(e.target.value) || 0 }))}
+                  onChange={e => handleUnitSizeChange(parseFloat(e.target.value) || 0)}
                   className={INPUT} />
               </div>
               <div className="flex flex-col gap-1">
@@ -143,11 +164,21 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
                 </select>
               </div>
             </div>
-            {computedStockGrams !== null && (
-              <p className="text-xs text-stone-500">
-                Stock totale calcolato: <span className="font-semibold text-stone-700">{computedStockGrams} {formData.unitType}</span>
+            <div className="flex flex-col gap-1">
+              <label className={LABEL}>Stock attuale ({formData.unitType})</label>
+              <input type="number" min="0" step="0.1" value={formData.stockGrams}
+                onChange={e => {
+                  const val = parseFloat(e.target.value) || 0;
+                  setStockGramsManual(true);
+                  setFormData(p => ({ ...p, stockGrams: val }));
+                }}
+                className={INPUT} />
+              <p className="text-xs text-stone-400">
+                {stockGramsManual
+                  ? 'Valore personalizzato — modificare le confezioni per ricalcolare'
+                  : `Auto-calcolato: ${formData.quantity} × ${formData.unitSize} ${formData.unitType}`}
               </p>
-            )}
+            </div>
           </div>
         )}
 

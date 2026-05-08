@@ -104,7 +104,11 @@ router.put("/appointments/:id", async (req, res) => {
       if (!product) continue;
       if (product.stockGrams != null) {
         const newStock = Math.max(0, Number(product.stockGrams) - totalUsed);
-        await dbUpdateProduct(productId, { stockGrams: newStock });
+        const patch: Parameters<typeof dbUpdateProduct>[1] = { stockGrams: newStock };
+        if (product.unitSize != null && Number(product.unitSize) > 0) {
+          patch.quantity = Math.max(0, Math.floor(newStock / Number(product.unitSize)));
+        }
+        await dbUpdateProduct(productId, patch);
       }
     }
   }

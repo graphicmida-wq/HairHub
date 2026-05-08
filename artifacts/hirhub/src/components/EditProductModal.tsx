@@ -60,6 +60,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     name: '', category: '', brand: '', quantity: 0, minThreshold: 5,
     trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
   });
+  const [stockGramsManual, setStockGramsManual] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -74,8 +75,32 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
         unitType: (product.unitType as UnitType) ?? 'ml',
         stockGrams: product.stockGrams ?? 0,
       });
+      setStockGramsManual(false);
     }
   }, [product]);
+
+  const handleQuantityChange = (val: number) => {
+    setFormData(pr => {
+      const newQty = val;
+      const newStock = !stockGramsManual && pr.trackByWeight ? newQty * pr.unitSize : pr.stockGrams;
+      return { ...pr, quantity: newQty, stockGrams: newStock };
+    });
+  };
+
+  const handleUnitSizeChange = (val: number) => {
+    setFormData(pr => {
+      const newStock = !stockGramsManual ? pr.quantity * val : pr.stockGrams;
+      return { ...pr, unitSize: val, stockGrams: newStock };
+    });
+  };
+
+  const handleTrackByWeightChange = (checked: boolean) => {
+    setFormData(pr => {
+      const newStock = checked ? pr.quantity * pr.unitSize : 0;
+      return { ...pr, trackByWeight: checked, stockGrams: newStock };
+    });
+    setStockGramsManual(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +158,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Confezioni (pz)</label>
             <input required type="number" min="0" value={formData.quantity}
-              onChange={e => setFormData(pr => ({ ...pr, quantity: parseInt(e.target.value) || 0 }))}
+              onChange={e => handleQuantityChange(parseInt(e.target.value) || 0)}
               className={INPUT} />
           </div>
           <div className="flex flex-col gap-1">
@@ -149,7 +174,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
             type="checkbox"
             id="editTrackByWeight"
             checked={formData.trackByWeight}
-            onChange={e => setFormData(pr => ({ ...pr, trackByWeight: e.target.checked }))}
+            onChange={e => handleTrackByWeightChange(e.target.checked)}
             className="w-4 h-4 rounded border-stone-300 accent-stone-800"
           />
           <label htmlFor="editTrackByWeight" className="text-sm text-stone-700 cursor-pointer">
@@ -163,7 +188,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
               <div className="flex flex-col gap-1">
                 <label className={LABEL}>Dimensione confezione</label>
                 <input type="number" min="0" step="0.1" value={formData.unitSize}
-                  onChange={e => setFormData(pr => ({ ...pr, unitSize: parseFloat(e.target.value) || 0 }))}
+                  onChange={e => handleUnitSizeChange(parseFloat(e.target.value) || 0)}
                   className={INPUT} />
               </div>
               <div className="flex flex-col gap-1">
@@ -179,9 +204,17 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
             <div className="flex flex-col gap-1">
               <label className={LABEL}>Stock attuale ({formData.unitType})</label>
               <input type="number" min="0" step="0.1" value={formData.stockGrams}
-                onChange={e => setFormData(pr => ({ ...pr, stockGrams: parseFloat(e.target.value) || 0 }))}
+                onChange={e => {
+                  const val = parseFloat(e.target.value) || 0;
+                  setStockGramsManual(true);
+                  setFormData(pr => ({ ...pr, stockGrams: val }));
+                }}
                 className={INPUT} />
-              <p className="text-xs text-stone-400">Modifica direttamente per rettifiche manuali</p>
+              <p className="text-xs text-stone-400">
+                {stockGramsManual
+                  ? 'Valore personalizzato — modificare le confezioni per ricalcolare'
+                  : `Auto-calcolato: ${formData.quantity} × ${formData.unitSize} ${formData.unitType}`}
+              </p>
             </div>
           </div>
         )}
