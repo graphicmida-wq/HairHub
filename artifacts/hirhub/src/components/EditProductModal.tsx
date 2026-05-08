@@ -80,18 +80,13 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
   }, [product]);
 
   const handleQuantityChange = (val: number) => {
-    setFormData(pr => {
-      const newQty = val;
-      const newStock = !stockGramsManual && pr.trackByWeight ? newQty * pr.unitSize : pr.stockGrams;
-      return { ...pr, quantity: newQty, stockGrams: newStock };
-    });
+    setStockGramsManual(false);
+    setFormData(pr => ({ ...pr, quantity: val, stockGrams: pr.trackByWeight ? val * pr.unitSize : pr.stockGrams }));
   };
 
   const handleUnitSizeChange = (val: number) => {
-    setFormData(pr => {
-      const newStock = !stockGramsManual ? pr.quantity * val : pr.stockGrams;
-      return { ...pr, unitSize: val, stockGrams: newStock };
-    });
+    setStockGramsManual(false);
+    setFormData(pr => ({ ...pr, unitSize: val, stockGrams: pr.quantity * val }));
   };
 
   const handleTrackByWeightChange = (checked: boolean) => {

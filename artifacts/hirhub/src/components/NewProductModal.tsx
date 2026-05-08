@@ -52,17 +52,13 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
   const [stockGramsManual, setStockGramsManual] = useState(false);
 
   const handleQuantityChange = (val: number) => {
-    setFormData(p => {
-      const newStock = !stockGramsManual && p.trackByWeight ? val * p.unitSize : p.stockGrams;
-      return { ...p, quantity: val, stockGrams: newStock };
-    });
+    setStockGramsManual(false);
+    setFormData(p => ({ ...p, quantity: val, stockGrams: p.trackByWeight ? val * p.unitSize : p.stockGrams }));
   };
 
   const handleUnitSizeChange = (val: number) => {
-    setFormData(p => {
-      const newStock = !stockGramsManual ? p.quantity * val : p.stockGrams;
-      return { ...p, unitSize: val, stockGrams: newStock };
-    });
+    setStockGramsManual(false);
+    setFormData(p => ({ ...p, unitSize: val, stockGrams: p.quantity * val }));
   };
 
   const handleTrackByWeightChange = (checked: boolean) => {
