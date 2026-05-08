@@ -4,7 +4,7 @@ import { useListAppointments, useListClients, useListServices, useListStaff } fr
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, eachDayOfInterval, endOfWeek } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, hexAlpha } from '../lib/utils';
 import { ManageAppointmentModal } from '../components/ManageAppointmentModal';
 import { EditAppointmentModal } from '../components/EditAppointmentModal';
 import { CompleteAppointmentModal } from '../components/CompleteAppointmentModal';
@@ -230,23 +230,33 @@ export const Appointments = () => {
                           {colApps.map(app => {
                             const client = clients.find(c => c.id === app.clientId);
                             const service = services.find(s => s.id === app.serviceId);
+                            const isCancelled = app.status === 'annullato';
+                            const isNoShow = app.status === 'no-show';
+                            const isCompleted = app.status === 'completato';
+                            const sc = col.color;
                             return (
                               <div
                                 key={app.id}
                                 onClick={() => setManageAppId(app.id)}
                                 className={cn(
-                                  "p-2 rounded-xl border flex flex-col gap-0.5 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] mb-1",
-                                  app.status === 'completato' ? "bg-stone-50 border-stone-200 text-stone-500" :
-                                  app.status === 'prenotato' ? "text-white" :
-                                  "bg-white border-stone-200 text-stone-900"
+                                  "p-2 rounded-xl border border-stone-200 flex flex-col gap-0.5 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] mb-1",
+                                  isCompleted ? "bg-stone-50 text-stone-400" : "text-stone-800",
+                                  (isCancelled || isNoShow) && "text-stone-400",
                                 )}
-                                style={app.status === 'prenotato' ? {
-                                  backgroundColor: 'var(--color-brand-dark)',
-                                  borderColor: 'var(--color-brand-dark)',
-                                } : undefined}
+                                style={{
+                                  borderLeftColor: sc,
+                                  borderLeftWidth: '4px',
+                                  ...(!isCompleted && {
+                                    backgroundColor: (isCancelled || isNoShow)
+                                      ? hexAlpha(sc, 0.06)
+                                      : hexAlpha(sc, 0.14),
+                                  }),
+                                }}
                               >
-                                <p className="font-medium text-xs truncate">{client?.firstName} {client?.lastName}</p>
-                                <p className={cn("text-[10px] truncate", app.status === 'prenotato' ? "opacity-70" : "text-stone-500")}>
+                                <p className={cn("font-medium text-xs truncate", isCancelled && "line-through")}>
+                                  {client?.firstName} {client?.lastName}
+                                </p>
+                                <p className="text-[10px] truncate opacity-60">
                                   {app.time} · {service?.name}
                                 </p>
                               </div>
@@ -297,40 +307,45 @@ export const Appointments = () => {
                           const client = clients.find(c => c.id === app.clientId);
                           const service = services.find(s => s.id === app.serviceId);
                           const staffMember = staff.find(m => m.id === app.staffId);
+                          const isCancelled = app.status === 'annullato';
+                          const isNoShow = app.status === 'no-show';
+                          const isCompleted = app.status === 'completato';
+                          const sc = staffMember?.color ?? '#94a3b8';
                           return (
                             <div
                               key={app.id}
                               onClick={() => setManageAppId(app.id)}
                               className={cn(
-                                "flex-1 min-w-0 p-3 rounded-xl border flex flex-col gap-1 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md",
-                                app.status === 'completato' ? "bg-stone-50 border-stone-200 text-stone-500" :
-                                app.status === 'prenotato' ? "text-white" :
-                                "bg-white border-stone-200 text-stone-900"
+                                "flex-1 min-w-0 p-3 rounded-xl border border-stone-200 flex flex-col gap-1 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md",
+                                isCompleted ? "bg-stone-50 text-stone-400" : "text-stone-800",
+                                (isCancelled || isNoShow) && "text-stone-400",
                               )}
-                              style={app.status === 'prenotato' ? {
-                                backgroundColor: 'var(--color-brand-dark)',
-                                borderColor: 'var(--color-brand-dark)',
-                              } : staffMember ? { borderLeftColor: staffMember.color, borderLeftWidth: '4px' } : undefined}
+                              style={{
+                                borderLeftColor: sc,
+                                borderLeftWidth: '4px',
+                                ...(!isCompleted && {
+                                  backgroundColor: (isCancelled || isNoShow)
+                                    ? hexAlpha(sc, 0.06)
+                                    : hexAlpha(sc, 0.14),
+                                }),
+                              }}
                             >
                               <div className="flex justify-between items-start gap-1">
-                                <p className="font-medium text-sm truncate">
+                                <p className={cn("font-medium text-sm truncate", isCancelled && "line-through")}>
                                   {client?.firstName} {client?.lastName}
                                 </p>
-                                <span className="text-[10px] uppercase opacity-70 tracking-wide font-mono shrink-0">
+                                <span className="text-[10px] uppercase opacity-60 tracking-wide font-mono shrink-0">
                                   {app.time}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                <p className={cn(
-                                  "text-xs truncate flex-1",
-                                  app.status === 'prenotato' ? "opacity-70" : "text-stone-500"
-                                )}>
+                                <p className="text-xs truncate flex-1 opacity-60">
                                   {service?.name}
                                 </p>
                                 {staffMember && (
                                   <span
                                     className="w-2 h-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: staffMember.color }}
+                                    style={{ backgroundColor: sc }}
                                     title={staffMember.name}
                                   />
                                 )}

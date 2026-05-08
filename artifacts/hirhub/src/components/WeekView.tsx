@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Plus } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, hexAlpha } from '../lib/utils';
 
 interface Appointment {
   id: string;
@@ -49,11 +49,6 @@ const HOURS = Array.from({ length: 11 }, (_, i) =>
   `${(i + 9).toString().padStart(2, '0')}:00`
 );
 
-const STATUS_CLASSES: Record<string, string> = {
-  completato: 'bg-stone-50 border-stone-200 text-stone-400',
-  annullato: 'bg-red-50 border-red-200 text-red-400 line-through',
-  'no-show': 'bg-red-50 border-red-200 text-red-400',
-};
 
 export const WeekView = ({
   weekDays,
@@ -181,36 +176,38 @@ export const WeekView = ({
                             const client = clients.find(c => c.id === app.clientId);
                             const service = services.find(s => s.id === app.serviceId);
                             const staffMember = staff.find(m => m.id === app.staffId);
+                            const isCancelled = app.status === 'annullato';
+                            const isNoShow = app.status === 'no-show';
+                            const isCompleted = app.status === 'completato';
+                            const sc = staffMember?.color ?? '#94a3b8';
                             return (
                               <div
                                 key={app.id}
                                 onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
                                 className={cn(
-                                  'flex-1 min-w-0 rounded-lg border px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] overflow-hidden flex flex-col justify-center relative',
-                                  app.status === 'prenotato'
-                                    ? 'text-white'
-                                    : (STATUS_CLASSES[app.status] ?? 'bg-white border-stone-200 text-stone-900')
+                                  'flex-1 min-w-0 rounded-lg border border-stone-200 px-1.5 py-1 cursor-pointer hover:shadow-sm transition-all active:scale-[0.97] overflow-hidden flex flex-col justify-center relative',
+                                  isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
+                                  (isCancelled || isNoShow) && 'text-stone-400',
                                 )}
-                                style={app.status === 'prenotato' ? {
-                                  backgroundColor: 'var(--color-brand-dark)',
-                                  borderColor: 'var(--color-brand-dark)',
-                                } : staffMember ? { borderLeftColor: staffMember.color, borderLeftWidth: '3px' } : undefined}
+                                style={{
+                                  borderLeftColor: sc,
+                                  borderLeftWidth: '3px',
+                                  ...(!isCompleted && {
+                                    backgroundColor: (isCancelled || isNoShow)
+                                      ? hexAlpha(sc, 0.06)
+                                      : hexAlpha(sc, 0.14),
+                                  }),
+                                }}
                               >
-                                <p className="text-[10px] font-semibold leading-tight truncate">
+                                <p className={cn(
+                                  'text-[10px] font-semibold leading-tight truncate',
+                                  isCancelled && 'line-through',
+                                )}>
                                   {client?.firstName} {client?.lastName}
                                 </p>
-                                <p className={cn(
-                                  'text-[9px] leading-tight truncate mt-0.5',
-                                  app.status === 'prenotato' ? 'opacity-70' : 'opacity-60'
-                                )}>
+                                <p className="text-[9px] leading-tight truncate mt-0.5 opacity-60">
                                   {app.time} · {service?.name}
                                 </p>
-                                {staffMember && (
-                                  <span
-                                    className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full"
-                                    style={{ backgroundColor: staffMember.color, opacity: app.status === 'prenotato' ? 0.75 : 1 }}
-                                  />
-                                )}
                               </div>
                             );
                           })}
