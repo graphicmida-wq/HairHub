@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AppointmentStatus } from '@workspace/api-client-react';
 import { toast } from './Toast';
 import { addMinsToTime, timeDiffMins } from '../lib/utils';
+import { X } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
 
   const makeDefault = () => ({
     clientId: '',
-    serviceId: '',
+    serviceIds: [] as string[],
     staffId: null as string | null,
     date: defaultDate ?? new Date().toISOString().split('T')[0],
     time: defaultTime ?? '10:00',
@@ -61,28 +62,44 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, defaultDate, defaultTime]);
 
+  const calcDuration = (ids: string[]) =>
+    ids.reduce((sum, id) => sum + (services.find(s => s.id === id)?.durationMins ?? 0), 0) || 30;
+
   const handleStartTimeChange = (val: string) => {
+    const dur = calcDuration(formData.serviceIds);
     setFormData(p => ({ ...p, time: val }));
-    setEndTime(addMinsToTime(val, formData.durationMins));
+    setEndTime(addMinsToTime(val, dur));
   };
 
   const handleEndTimeChange = (val: string) => {
     setEndTime(val);
     const diff = timeDiffMins(formData.time, val);
-    if (diff >= 5) {
-      setFormData(p => ({ ...p, durationMins: diff }));
-    }
+    if (diff >= 5) setFormData(p => ({ ...p, durationMins: diff }));
   };
 
-  const handleServiceChange = (serviceId: string) => {
-    const svc = services.find(s => s.id === serviceId);
-    const newDuration = svc ? svc.durationMins : formData.durationMins;
-    setFormData(p => ({ ...p, serviceId, durationMins: newDuration }));
-    setEndTime(addMinsToTime(formData.time, newDuration));
+  const handleAddService = (serviceId: string) => {
+    if (!serviceId || formData.serviceIds.includes(serviceId)) return;
+    const newIds = [...formData.serviceIds, serviceId];
+    const dur = calcDuration(newIds);
+    setFormData(p => ({ ...p, serviceIds: newIds, durationMins: dur }));
+    setEndTime(addMinsToTime(formData.time, dur));
   };
+
+  const handleRemoveService = (serviceId: string) => {
+    const newIds = formData.serviceIds.filter(id => id !== serviceId);
+    const dur = calcDuration(newIds);
+    setFormData(p => ({ ...p, serviceIds: newIds, durationMins: dur }));
+    setEndTime(addMinsToTime(formData.time, dur));
+  };
+
+  const availableToAdd = services.filter(s => !formData.serviceIds.includes(s.id));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.serviceIds.length === 0) {
+      toast.show('Seleziona almeno un servizio', 'error');
+      return;
+    }
     const duration = timeDiffMins(formData.time, endTime);
     createAppointment({ data: { ...formData, durationMins: duration >= 5 ? duration : formData.durationMins } });
   };
@@ -97,13 +114,39 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
             {clients.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
           </select>
         </div>
+
         <div className="flex flex-col gap-1">
-          <label className={LABEL}>Servizio</label>
-          <select required value={formData.serviceId} onChange={e => handleServiceChange(e.target.value)} className={INPUT}>
-            <option value="" disabled>Seleziona servizio</option>
-            {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.durationMins} min - {s.price}€)</option>)}
-          </select>
+          <label className={LABEL}>Servizi</label>
+          {formData.serviceIds.length > 0 && (
+            <div className="flex flex-col gap-1 mb-1">
+              {formData.serviceIds.map(sid => {
+                const svc = services.find(s => s.id === sid);
+                if (!svc) return null;
+                return (
+                  <div key={sid} className="flex items-center justify-between bg-stone-100 rounded-lg px-3 py-2">
+                    <span className="text-sm text-stone-800">
+                      {svc.name} <span className="text-stone-400 text-xs">({svc.durationMins} min · {svc.price}€)</span>
+                    </span>
+                    <button type="button" onClick={() => handleRemoveService(sid)} className="text-stone-400 hover:text-red-500 transition-colors ml-2 shrink-0">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {availableToAdd.length > 0 && (
+            <select
+              value=""
+              onChange={e => { if (e.target.value) { handleAddService(e.target.value); e.target.value = ''; } }}
+              className={INPUT}
+            >
+              <option value="">{formData.serviceIds.length === 0 ? 'Seleziona servizio…' : '+ Aggiungi altro servizio'}</option>
+              {availableToAdd.map(s => <option key={s.id} value={s.id}>{s.name} ({s.durationMins} min · {s.price}€)</option>)}
+            </select>
+          )}
         </div>
+
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Data</label>
           <input required type="date" value={formData.date} onChange={e => setFormData(p => ({...p, date: e.target.value}))} className={INPUT} />

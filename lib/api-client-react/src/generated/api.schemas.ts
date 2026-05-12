@@ -191,7 +191,8 @@ export interface UsedProductEntry {
 export interface Appointment {
   id: string;
   clientId: string;
-  serviceId: string;
+  /** @minItems 1 */
+  serviceIds: string[];
   staffId?: string | null;
   /** YYYY-MM-DD */
   date: string;
@@ -207,7 +208,8 @@ export interface Appointment {
 
 export interface CreateAppointmentInput {
   clientId: string;
-  serviceId: string;
+  /** @minItems 1 */
+  serviceIds: string[];
   staffId?: string | null;
   date: string;
   time: string;
@@ -220,7 +222,8 @@ export interface CreateAppointmentInput {
 
 export interface UpdateAppointmentInput {
   clientId?: string;
-  serviceId?: string;
+  /** @minItems 1 */
+  serviceIds?: string[];
   staffId?: string | null;
   date?: string;
   time?: string;

@@ -229,7 +229,7 @@ export const Appointments = () => {
                     {/* Appointments */}
                     {layout.map(({ item: app, top, height, leftPct, widthPct }) => {
                       const client = clients.find(c => c.id === app.clientId);
-                      const service = services.find(s => s.id === app.serviceId);
+                      const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                       const isCancelled = app.status === 'annullato';
                       const isNoShow = app.status === 'no-show';
                       const isCompleted = app.status === 'completato';
@@ -263,7 +263,7 @@ export const Appointments = () => {
                           <p className={cn('font-medium text-xs truncate mt-0.5', isCancelled && 'line-through')}>
                             {client?.firstName} {client?.lastName}
                           </p>
-                          <p className="text-[10px] truncate opacity-50">{service?.name}</p>
+                          <p className="text-[10px] truncate opacity-50">{serviceNames}</p>
                         </div>
                       );
                     })}
@@ -304,7 +304,7 @@ export const Appointments = () => {
               {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 22).map(
                 ({ item: app, top, height, leftPct, widthPct }) => {
                   const client = clients.find(c => c.id === app.clientId);
-                  const service = services.find(s => s.id === app.serviceId);
+                  const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                   const staffMember = staff.find(m => m.id === app.staffId);
                   const isCancelled = app.status === 'annullato';
                   const isNoShow = app.status === 'no-show';
@@ -344,7 +344,7 @@ export const Appointments = () => {
                       <p className={cn('font-medium text-sm truncate mt-0.5', isCancelled && 'line-through')}>
                         {client?.firstName} {client?.lastName}
                       </p>
-                      <p className="text-xs truncate opacity-50">{service?.name}</p>
+                      <p className="text-xs truncate opacity-50">{serviceNames}</p>
                     </div>
                   );
                 }

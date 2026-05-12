@@ -11,7 +11,8 @@ import type { UsedProductEntry } from "./usedProductEntry";
 export interface Appointment {
   id: string;
   clientId: string;
-  serviceId: string;
+  /** @minItems 1 */
+  serviceIds: string[];
   staffId?: string | null;
   /** YYYY-MM-DD */
   date: string;

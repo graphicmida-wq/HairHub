@@ -51,7 +51,8 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
 
   const appointment = appointments.find(a => a.id === appointmentId);
   const client = clients.find(c => c.id === appointment?.clientId);
-  const service = services.find(s => s.id === appointment?.serviceId);
+  const firstServiceId = appointment?.serviceIds?.[0];
+  const service = services.find(s => s.id === firstServiceId);
 
   const [notes, setNotes] = useState('');
   const [usedProducts, setUsedProducts] = useState<UsedProductRow[]>([]);
@@ -69,7 +70,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
       } else {
         setUsedProducts([]);
       }
-      setFormulaServiceId(appointment.serviceId || null);
+      setFormulaServiceId(appointment.serviceIds?.[0] ?? null);
     }
     setShowFormulaSection(false);
     setFormulaName('');

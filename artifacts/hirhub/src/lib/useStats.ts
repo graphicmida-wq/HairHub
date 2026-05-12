@@ -34,8 +34,10 @@ export function useStats() {
     const completedThisMonth = thisMonthAppts.filter(a => a.status === 'completato');
 
     const fatturato = completedThisMonth.reduce((sum, a) => {
-      const svc = services.find(s => s.id === a.serviceId);
-      return sum + (svc?.price ?? 0);
+      const svcTotal = (a.serviceIds ?? []).reduce((s2, sid) => {
+        return s2 + (services.find(s => s.id === sid)?.price ?? 0);
+      }, 0);
+      return sum + svcTotal;
     }, 0);
 
     const thisMonthCount = thisMonthAppts.length;
@@ -62,7 +64,9 @@ export function useStats() {
 
     const serviceCount: Record<string, number> = {};
     thisMonthAppts.forEach(a => {
-      serviceCount[a.serviceId] = (serviceCount[a.serviceId] ?? 0) + 1;
+      (a.serviceIds ?? []).forEach(sid => {
+        serviceCount[sid] = (serviceCount[sid] ?? 0) + 1;
+      });
     });
     const topServices = Object.entries(serviceCount)
       .sort((a, b) => b[1] - a[1])

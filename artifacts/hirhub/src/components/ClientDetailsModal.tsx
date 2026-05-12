@@ -363,7 +363,7 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
               <p className="text-sm text-stone-500 italic px-2">Nessun appuntamento passato.</p>
             ) : (
               clientAppointments.map(app => {
-                const svc = services.find(s => s.id === app.serviceId);
+                const svcNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                 const usedProds = app.usedProducts
                   ? app.usedProducts.map(up => {
                       const prod = products.find(p => p.id === up.productId);
@@ -392,8 +392,8 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
                       </span>
                     </div>
 
-                    {svc && (
-                      <p className="text-sm text-stone-600 pl-6">{svc.name}</p>
+                    {svcNames && (
+                      <p className="text-sm text-stone-600 pl-6">{svcNames}</p>
                     )}
 
                     {app.notes && (

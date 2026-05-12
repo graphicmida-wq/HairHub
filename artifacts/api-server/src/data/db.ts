@@ -108,7 +108,7 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
     CREATE TABLE IF NOT EXISTS appointments (
       id TEXT PRIMARY KEY,
       client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-      service_id TEXT NOT NULL REFERENCES services(id),
+      service_ids TEXT NOT NULL DEFAULT '[]',
       staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL,
       date TEXT NOT NULL,
       time TEXT NOT NULL,
@@ -140,6 +140,9 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN used_products TEXT"); } catch { /* already exists */ }
+  // serviceIds migration: add column, populate from service_id if present
+  try { sqlite.exec("ALTER TABLE appointments ADD COLUMN service_ids TEXT NOT NULL DEFAULT '[]'"); } catch { /* already exists */ }
+  try { sqlite.exec("UPDATE appointments SET service_ids = json_array(service_id) WHERE service_ids = '[]' AND service_id IS NOT NULL"); } catch { /* service_id column may not exist */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN unit_size REAL"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN unit_type TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN stock_grams REAL"); } catch { /* already exists */ }
@@ -175,9 +178,9 @@ function seedSqliteIfEmpty(db: SqliteDb) {
     { id: p3id, name: "Maschera Idratante", category: "Finish", brand: "Loreal", quantity: 2, minThreshold: 4, supplier: null, notes: null, unitSize: 200, unitType: "ml" as const, stockGrams: 400 },
   ]).run();
   db.insert(sqliteAppts).values([
-    { id: uid(), clientId: c1.id, serviceId: s3.id, date: today, time: "10:00", durationMins: 90, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
-    { id: uid(), clientId: c2.id, serviceId: s4.id, date: today, time: "11:15", durationMins: 30, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
-    { id: uid(), clientId: c3.id, serviceId: s1.id, date: today, time: "14:00", durationMins: 45, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
+    { id: uid(), clientId: c1.id, serviceIds: JSON.stringify([s3.id]), date: today, time: "10:00", durationMins: 90, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
+    { id: uid(), clientId: c2.id, serviceIds: JSON.stringify([s4.id]), date: today, time: "11:15", durationMins: 30, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
+    { id: uid(), clientId: c3.id, serviceIds: JSON.stringify([s1.id]), date: today, time: "14:00", durationMins: 45, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
   ]).run();
   db.insert(sqliteSalon).values({ salonName: "L'Atelier", address: null, phone: null, email: null }).run();
   logger.info("SQLite seed complete");
@@ -237,9 +240,9 @@ async function mysqlSeedIfEmpty() {
     { id: uid(), name: "Maschera Idratante", category: "Finish", brand: "Loreal", quantity: 2, minThreshold: 4, supplier: null, notes: null, unitSize: "200.00", unitType: "ml", stockGrams: "400.00" },
   ]);
   await db.insert(appointmentsTable).values([
-    { id: uid(), clientId: c1id, serviceId: s3id, date: today, time: "10:00", durationMins: 90, status: "prenotato", notes: null, usedProductIds: null },
-    { id: uid(), clientId: c2id, serviceId: s4id, date: today, time: "11:15", durationMins: 30, status: "prenotato", notes: null, usedProductIds: null },
-    { id: uid(), clientId: c3id, serviceId: s1id, date: today, time: "14:00", durationMins: 45, status: "prenotato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c1id, serviceIds: [s3id], date: today, time: "10:00", durationMins: 90, status: "prenotato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c2id, serviceIds: [s4id], date: today, time: "11:15", durationMins: 30, status: "prenotato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c3id, serviceIds: [s1id], date: today, time: "14:00", durationMins: 45, status: "prenotato", notes: null, usedProductIds: null },
   ]);
   await db.insert(salonSettingsTable).values({ salonName: "L'Atelier", address: null, phone: null, email: null });
   logger.info("MySQL seed complete");
@@ -498,6 +501,7 @@ export async function dbDeleteStaffMember(id: string) {
 function parseApptRow(a: typeof sqliteAppts.$inferSelect) {
   return {
     ...a,
+    serviceIds: parseJson<string[]>(a.serviceIds) ?? [],
     usedProductIds: parseJson<string[]>(a.usedProductIds),
     usedProducts: parseJson<UsedProductEntry[]>(a.usedProducts),
   };
@@ -525,7 +529,7 @@ export async function dbGetAppointment(id: string) {
 
 export async function dbCreateAppointment(data: {
   clientId: string;
-  serviceId: string;
+  serviceIds: string[];
   staffId?: string | null;
   date: string;
   time: string;
@@ -541,7 +545,7 @@ export async function dbCreateAppointment(data: {
     await getMysqlDb().insert(appointmentsTable).values({
       id,
       clientId: data.clientId,
-      serviceId: data.serviceId,
+      serviceIds: data.serviceIds,
       staffId: data.staffId ?? null,
       date: data.date,
       time: data.time,
@@ -556,7 +560,7 @@ export async function dbCreateAppointment(data: {
   getSqliteDb().insert(sqliteAppts).values({
     id,
     clientId: data.clientId,
-    serviceId: data.serviceId,
+    serviceIds: JSON.stringify(data.serviceIds),
     staffId: data.staffId ?? null,
     date: data.date,
     time: data.time,
@@ -571,7 +575,7 @@ export async function dbCreateAppointment(data: {
 
 export async function dbUpdateAppointment(id: string, data: Partial<{
   clientId: string;
-  serviceId: string;
+  serviceIds: string[];
   staffId: string | null;
   date: string;
   time: string;
@@ -585,7 +589,7 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
     const { appointmentsTable } = await import("@workspace/db");
     const mysqlPatch: Partial<typeof appointmentsTable.$inferInsert> = {};
     if (data.clientId !== undefined) mysqlPatch.clientId = data.clientId;
-    if (data.serviceId !== undefined) mysqlPatch.serviceId = data.serviceId;
+    if (data.serviceIds !== undefined) mysqlPatch.serviceIds = data.serviceIds;
     if (data.staffId !== undefined) mysqlPatch.staffId = data.staffId;
     if (data.date !== undefined) mysqlPatch.date = data.date;
     if (data.time !== undefined) mysqlPatch.time = data.time;
@@ -599,7 +603,7 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
   }
   const sqlitePatch: Partial<typeof sqliteAppts.$inferInsert> = {};
   if (data.clientId !== undefined) sqlitePatch.clientId = data.clientId;
-  if (data.serviceId !== undefined) sqlitePatch.serviceId = data.serviceId;
+  if (data.serviceIds !== undefined) sqlitePatch.serviceIds = JSON.stringify(data.serviceIds);
   if (data.staffId !== undefined) sqlitePatch.staffId = data.staffId;
   if (data.date !== undefined) sqlitePatch.date = data.date;
   if (data.time !== undefined) sqlitePatch.time = data.time;

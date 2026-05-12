@@ -2,13 +2,12 @@ import { mysqlTable, varchar, text, char, int, mysqlEnum, json } from "drizzle-o
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { clientsTable } from "./clients";
-import { servicesTable } from "./services";
 import { staffMembersTable } from "./staff";
 
 export const appointmentsTable = mysqlTable("appointments", {
   id: char("id", { length: 12 }).primaryKey(),
   clientId: char("client_id", { length: 12 }).notNull().references(() => clientsTable.id, { onDelete: "cascade" }),
-  serviceId: char("service_id", { length: 12 }).notNull().references(() => servicesTable.id),
+  serviceIds: json("service_ids").notNull().$type<string[]>(),
   staffId: char("staff_id", { length: 12 }).references(() => staffMembersTable.id, { onDelete: "set null" }),
   date: varchar("date", { length: 10 }).notNull(),
   time: varchar("time", { length: 5 }).notNull(),

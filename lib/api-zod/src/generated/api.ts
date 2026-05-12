@@ -320,12 +320,13 @@ export const DeleteProductParams = zod.object({
 /**
  * @summary List all appointments
  */
+
 export const listAppointmentsResponseUsedProductsItemQuantityUsedMin = 0;
 
 export const ListAppointmentsResponseItem = zod.object({
   id: zod.string(),
   clientId: zod.string(),
-  serviceId: zod.string(),
+  serviceIds: zod.array(zod.string()).min(1),
   staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
@@ -353,11 +354,12 @@ export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 /**
  * @summary Create a new appointment
  */
+
 export const createAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 
 export const CreateAppointmentBody = zod.object({
   clientId: zod.string(),
-  serviceId: zod.string(),
+  serviceIds: zod.array(zod.string()).min(1),
   staffId: zod.string().nullish(),
   date: zod.string(),
   time: zod.string(),
@@ -390,7 +392,7 @@ export const getAppointmentResponseUsedProductsItemQuantityUsedMin = 0;
 export const GetAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
-  serviceId: zod.string(),
+  serviceIds: zod.array(zod.string()).min(1),
   staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
@@ -425,7 +427,7 @@ export const updateAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 
 export const UpdateAppointmentBody = zod.object({
   clientId: zod.string().optional(),
-  serviceId: zod.string().optional(),
+  serviceIds: zod.array(zod.string()).min(1).optional(),
   staffId: zod.string().nullish(),
   date: zod.string().optional(),
   time: zod.string().optional(),
@@ -456,7 +458,7 @@ export const updateAppointmentResponseUsedProductsItemQuantityUsedMin = 0;
 export const UpdateAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
-  serviceId: zod.string(),
+  serviceIds: zod.array(zod.string()).min(1),
   staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),

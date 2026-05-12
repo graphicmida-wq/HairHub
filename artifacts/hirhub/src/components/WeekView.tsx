@@ -7,7 +7,7 @@ import { cn, hexAlpha, computeCalendarLayout, addMinsToTime } from '../lib/utils
 interface Appointment {
   id: string;
   clientId: string;
-  serviceId: string;
+  serviceIds: string[];
   staffId?: string | null;
   date: string;
   time: string;
@@ -140,7 +140,7 @@ export const WeekView = ({
                   {/* Appointments — absolutely positioned by time + duration */}
                   {layout.map(({ item: app, top, height, leftPct, widthPct }) => {
                     const client = clients.find(c => c.id === app.clientId);
-                    const service = services.find(s => s.id === app.serviceId);
+                    const serviceNames = app.serviceIds.map(sid => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                     const staffMember = staff.find(m => m.id === app.staffId);
                     const isCancelled = app.status === 'annullato';
                     const isNoShow = app.status === 'no-show';
@@ -177,7 +177,7 @@ export const WeekView = ({
                           {client?.firstName} {client?.lastName}
                         </p>
                         <p className="text-[9px] leading-tight truncate opacity-50">
-                          {service?.name}
+                          {serviceNames}
                         </p>
                       </div>
                     );

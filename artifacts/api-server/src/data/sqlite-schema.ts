@@ -45,7 +45,7 @@ export const staffMembers = sqliteTable("staff_members", {
 export const appointments = sqliteTable("appointments", {
   id: text("id").primaryKey(),
   clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
-  serviceId: text("service_id").notNull().references(() => services.id),
+  serviceIds: text("service_ids").notNull(),
   staffId: text("staff_id"),
   date: text("date").notNull(),
   time: text("time").notNull(),

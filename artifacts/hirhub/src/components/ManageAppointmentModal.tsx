@@ -43,9 +43,9 @@ export const ManageAppointmentModal = ({
 
   const appointment = appointments.find(a => a.id === appointmentId);
   const client = clients.find(c => c.id === appointment?.clientId);
-  const service = services.find(s => s.id === appointment?.serviceId);
+  const appointmentServices = (appointment?.serviceIds ?? []).map(sid => services.find(s => s.id === sid)).filter(Boolean) as { id: string; name: string }[];
 
-  if (!appointment || !client || !service) return null;
+  if (!appointment || !client || appointmentServices.length === 0) return null;
 
   const handleDelete = () => {
     if (window.confirm('Sei sicuro di voler eliminare questo appuntamento?')) {
@@ -64,8 +64,10 @@ export const ManageAppointmentModal = ({
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-serif text-2xl text-stone-900">{client.firstName} {client.lastName}</h3>
-            <div className="flex text-lg font-medium text-stone-600 mt-1">
-              {service.name}
+            <div className="flex flex-wrap gap-1 mt-1">
+              {appointmentServices.map(svc => (
+                <span key={svc.id} className="text-sm font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">{svc.name}</span>
+              ))}
             </div>
           </div>
           <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-sm ${

@@ -203,7 +203,7 @@ export const Dashboard = () => {
                         <div>
                           {appts.map(app => {
                             const client = clients.find(c => c.id === app.clientId);
-                            const service = services.find(s => s.id === app.serviceId);
+                            const serviceNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                             return (
                               <div
                                 key={app.id}
@@ -225,7 +225,7 @@ export const Dashboard = () => {
                                   <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>
                                     {client?.firstName} {client?.lastName}
                                   </p>
-                                  <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{service?.name}</p>
+                                  <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{serviceNames}</p>
                                 </div>
                                 <div
                                   className="w-7 h-7 rounded-full border flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
