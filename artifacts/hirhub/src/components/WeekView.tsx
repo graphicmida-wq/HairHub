@@ -138,7 +138,7 @@ export const WeekView = ({
                   ))}
 
                   {/* Appointments — absolutely positioned by time + duration */}
-                  {layout.map(({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
+                  {layout.map(({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
                     const client = clients.find(c => c.id === app.clientId);
                     const serviceNames = app.serviceIds.map(sid => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                     const staffMember = staff.find(m => m.id === app.staffId);
@@ -161,7 +161,7 @@ export const WeekView = ({
                         style={{
                           top: top + 2,
                           height: height - 4,
-                          left: offsetPx + 2,
+                          left: `calc(${leftPct * 100}% + 2px)`,
                           width: `calc(${widthPct * 100}% - 4px)`,
                           borderLeftColor: sc,
                           borderLeftWidth: '3px',

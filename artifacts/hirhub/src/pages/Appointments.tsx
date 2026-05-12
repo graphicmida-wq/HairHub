@@ -227,7 +227,7 @@ export const Appointments = () => {
                       />
                     ))}
                     {/* Appointments */}
-                    {layout.map(({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
+                    {layout.map(({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
                       const client = clients.find(c => c.id === app.clientId);
                       const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                       const isCancelled = app.status === 'annullato';
@@ -249,7 +249,7 @@ export const Appointments = () => {
                           style={{
                             top: top + 2,
                             height: height - 4,
-                            left: offsetPx + 2,
+                            left: `calc(${leftPct * 100}% + 2px)`,
                             width: `calc(${widthPct * 100}% - 4px)`,
                             borderLeftColor: sc,
                             borderLeftWidth: '4px',
@@ -305,7 +305,7 @@ export const Appointments = () => {
 
               {/* Appointments */}
               {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 52).map(
-                ({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
+                ({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
                   const client = clients.find(c => c.id === app.clientId);
                   const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                   const staffMember = staff.find(m => m.id === app.staffId);
@@ -328,7 +328,7 @@ export const Appointments = () => {
                       style={{
                         top: top + 2,
                         height: height - 4,
-                        left: offsetPx + 4,
+                        left: `calc(${leftPct * 100}% + 4px)`,
                         width: `calc(${widthPct * 100}% - 8px)`,
                         borderLeftColor: sc,
                         borderLeftWidth: '4px',

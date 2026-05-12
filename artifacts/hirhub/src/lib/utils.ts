@@ -30,7 +30,7 @@ interface CalItem { id: string; time: string; durationMins: number; }
  */
 export function computeCalendarLayout<T extends CalItem>(
   items: T[], startHour: number, hourH: number, minH = 22,
-): Array<{ item: T; top: number; height: number; offsetPx: number; widthPct: number; trackIndex: number }> {
+): Array<{ item: T; top: number; height: number; leftPct: number; widthPct: number; trackIndex: number }> {
   if (items.length === 0) return [];
   const toM = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
   const PPM = hourH / 60;
@@ -47,12 +47,14 @@ export function computeCalendarLayout<T extends CalItem>(
   }
   return es.map(e => {
     const ti = tracks.findIndex(t => t.some(x => x.it.id === e.it.id));
+    // Count tracks that overlap with this event's time window
+    const cc = tracks.filter(t => t.some(x => x.s < e.e && x.e > e.s)).length;
     return {
       item: e.it,
       top: (e.s - startHour * 60) * PPM,
       height: Math.max(e.it.durationMins * PPM, minH),
-      offsetPx: Math.min(ti * 22, 44),
-      widthPct: 0.88,
+      leftPct: ti / cc,
+      widthPct: 1 / cc,
       trackIndex: ti,
     };
   });
