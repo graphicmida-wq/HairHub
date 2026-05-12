@@ -227,17 +227,20 @@ export const Appointments = () => {
                       />
                     ))}
                     {/* Appointments */}
-                    {layout.map(({ item: app, top, height, leftPct, widthPct }) => {
+                    {layout.map(({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
                       const client = clients.find(c => c.id === app.clientId);
                       const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                       const isCancelled = app.status === 'annullato';
                       const isNoShow = app.status === 'no-show';
                       const isCompleted = app.status === 'completato';
                       const sc = col.color;
+                      const baseZ = trackIndex + 1;
                       return (
                         <div
                           key={app.id}
                           onClick={() => setManageAppId(app.id)}
+                          onMouseEnter={e => { e.currentTarget.style.zIndex = '50'; }}
+                          onMouseLeave={e => { e.currentTarget.style.zIndex = String(baseZ); }}
                           className={cn(
                             'absolute rounded-xl border border-stone-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex flex-col',
                             isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
@@ -246,12 +249,12 @@ export const Appointments = () => {
                           style={{
                             top: top + 2,
                             height: height - 4,
-                            left: `calc(${leftPct * 100}% + 2px)`,
+                            left: offsetPx + 2,
                             width: `calc(${widthPct * 100}% - 4px)`,
                             borderLeftColor: sc,
                             borderLeftWidth: '4px',
                             padding: '4px 6px',
-                            zIndex: 1,
+                            zIndex: baseZ,
                             ...(!isCompleted && {
                               backgroundColor: (isCancelled || isNoShow) ? hexAlpha(sc, 0.06) : hexAlpha(sc, 0.14),
                             }),
@@ -302,7 +305,7 @@ export const Appointments = () => {
 
               {/* Appointments */}
               {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 22).map(
-                ({ item: app, top, height, leftPct, widthPct }) => {
+                ({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
                   const client = clients.find(c => c.id === app.clientId);
                   const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                   const staffMember = staff.find(m => m.id === app.staffId);
@@ -310,10 +313,13 @@ export const Appointments = () => {
                   const isNoShow = app.status === 'no-show';
                   const isCompleted = app.status === 'completato';
                   const sc = staffMember?.color ?? '#94a3b8';
+                  const baseZ = trackIndex + 1;
                   return (
                     <div
                       key={app.id}
                       onClick={() => setManageAppId(app.id)}
+                      onMouseEnter={e => { e.currentTarget.style.zIndex = '50'; }}
+                      onMouseLeave={e => { e.currentTarget.style.zIndex = String(baseZ); }}
                       className={cn(
                         'absolute rounded-xl border border-stone-200 flex flex-col cursor-pointer hover:shadow-md transition-shadow overflow-hidden',
                         isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
@@ -322,12 +328,12 @@ export const Appointments = () => {
                       style={{
                         top: top + 2,
                         height: height - 4,
-                        left: `calc(${leftPct * 100}% + 4px)`,
+                        left: offsetPx + 4,
                         width: `calc(${widthPct * 100}% - 8px)`,
                         borderLeftColor: sc,
                         borderLeftWidth: '4px',
                         padding: '6px 8px',
-                        zIndex: 1,
+                        zIndex: baseZ,
                         ...(!isCompleted && {
                           backgroundColor: (isCancelled || isNoShow) ? hexAlpha(sc, 0.06) : hexAlpha(sc, 0.14),
                         }),

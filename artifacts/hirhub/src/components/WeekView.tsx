@@ -138,7 +138,7 @@ export const WeekView = ({
                   ))}
 
                   {/* Appointments — absolutely positioned by time + duration */}
-                  {layout.map(({ item: app, top, height, leftPct, widthPct }) => {
+                  {layout.map(({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
                     const client = clients.find(c => c.id === app.clientId);
                     const serviceNames = app.serviceIds.map(sid => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                     const staffMember = staff.find(m => m.id === app.staffId);
@@ -146,10 +146,13 @@ export const WeekView = ({
                     const isNoShow = app.status === 'no-show';
                     const isCompleted = app.status === 'completato';
                     const sc = staffMember?.color ?? '#94a3b8';
+                    const baseZ = trackIndex + 1;
                     return (
                       <div
                         key={app.id}
                         onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
+                        onMouseEnter={e => { e.currentTarget.style.zIndex = '50'; }}
+                        onMouseLeave={e => { e.currentTarget.style.zIndex = String(baseZ); }}
                         className={cn(
                           'absolute rounded-lg border border-stone-200 px-1.5 py-1 cursor-pointer hover:shadow-md transition-shadow overflow-hidden flex flex-col',
                           isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
@@ -158,11 +161,11 @@ export const WeekView = ({
                         style={{
                           top: top + 2,
                           height: height - 4,
-                          left: `calc(${leftPct * 100}% + 2px)`,
+                          left: offsetPx + 2,
                           width: `calc(${widthPct * 100}% - 4px)`,
                           borderLeftColor: sc,
                           borderLeftWidth: '3px',
-                          zIndex: 1,
+                          zIndex: baseZ,
                           ...(!isCompleted && {
                             backgroundColor: (isCancelled || isNoShow)
                               ? hexAlpha(sc, 0.06)

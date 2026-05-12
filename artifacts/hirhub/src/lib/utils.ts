@@ -23,9 +23,14 @@ export const timeDiffMins = (start: string, end: string): number => {
 
 interface CalItem { id: string; time: string; durationMins: number; }
 
+/**
+ * Cascade layout: overlapping appointments are shown at ~88% width with a
+ * growing horizontal pixel offset per overlap level, so text stays readable.
+ * Hovering raises the z-index via the caller (trackIndex drives baseZ).
+ */
 export function computeCalendarLayout<T extends CalItem>(
   items: T[], startHour: number, hourH: number, minH = 22,
-): Array<{ item: T; top: number; height: number; leftPct: number; widthPct: number }> {
+): Array<{ item: T; top: number; height: number; offsetPx: number; widthPct: number; trackIndex: number }> {
   if (items.length === 0) return [];
   const toM = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
   const PPM = hourH / 60;
@@ -42,13 +47,13 @@ export function computeCalendarLayout<T extends CalItem>(
   }
   return es.map(e => {
     const ti = tracks.findIndex(t => t.some(x => x.it.id === e.it.id));
-    const cc = tracks.filter(t => t.some(x => x.s < e.e && x.e > e.s)).length;
     return {
       item: e.it,
       top: (e.s - startHour * 60) * PPM,
       height: Math.max(e.it.durationMins * PPM, minH),
-      leftPct: ti / cc,
-      widthPct: 1 / cc,
+      offsetPx: ti * 10,
+      widthPct: 0.88,
+      trackIndex: ti,
     };
   });
 }
