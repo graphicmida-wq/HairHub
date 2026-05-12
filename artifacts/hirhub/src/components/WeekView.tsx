@@ -119,7 +119,7 @@ export const WeekView = ({
             {weekDays.map(day => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const dayApps = filteredApps.filter(a => a.date === dateStr);
-              const layout = computeCalendarLayout(dayApps, START_HOUR, HOUR_H, 22);
+              const layout = computeCalendarLayout(dayApps, START_HOUR, HOUR_H, 52);
 
               return (
                 <div key={day.toISOString()} className={cn(dayColClass, 'relative')}>

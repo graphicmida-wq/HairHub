@@ -51,7 +51,7 @@ export function computeCalendarLayout<T extends CalItem>(
       item: e.it,
       top: (e.s - startHour * 60) * PPM,
       height: Math.max(e.it.durationMins * PPM, minH),
-      offsetPx: Math.min(ti * 10, 30),
+      offsetPx: Math.min(ti * 22, 44),
       widthPct: 0.88,
       trackIndex: ti,
     };

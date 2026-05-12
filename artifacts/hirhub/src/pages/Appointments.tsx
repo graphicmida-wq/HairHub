@@ -210,7 +210,7 @@ export const Appointments = () => {
                 const colApps = dailyAppointments.filter(a =>
                   col.id === null ? !a.staffId : a.staffId === col.id
                 );
-                const layout = computeCalendarLayout(colApps, START_HOUR, HOUR_H, 22);
+                const layout = computeCalendarLayout(colApps, START_HOUR, HOUR_H, 52);
                 return (
                   <div
                     key={col.id ?? '__none__'}
@@ -304,7 +304,7 @@ export const Appointments = () => {
               ))}
 
               {/* Appointments */}
-              {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 22).map(
+              {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 52).map(
                 ({ item: app, top, height, offsetPx, widthPct, trackIndex }) => {
                   const client = clients.find(c => c.id === app.clientId);
                   const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
