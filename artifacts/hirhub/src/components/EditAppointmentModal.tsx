@@ -73,9 +73,8 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     ids.reduce((sum, id) => sum + (services.find(s => s.id === id)?.durationMins ?? 0), 0) || 30;
 
   const handleStartTimeChange = (val: string) => {
-    const dur = calcDuration(formData.serviceIds);
     setFormData(p => ({ ...p, time: val }));
-    setEndTime(addMinsToTime(val, dur));
+    setEndTime(addMinsToTime(val, formData.durationMins));
   };
 
   const handleEndTimeChange = (val: string) => {
