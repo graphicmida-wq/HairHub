@@ -285,6 +285,7 @@ export const Settings = () => {
         },
         onError: () => {
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
+          toast.show('Errore durante il salvataggio delle informazioni', 'error');
         },
       }
     );
