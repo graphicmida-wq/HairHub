@@ -11,10 +11,15 @@ const SELECT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-
 
 type UnitType = 'g' | 'ml';
 
+function getTrackedQuantity(quantity: number, unitSize: number, stockGrams: number): number {
+  return unitSize > 0 ? Math.max(0, Math.floor(stockGrams / unitSize)) : quantity;
+}
+
 interface FormData {
   name: string;
   category: string;
   brand: string;
+  price: number;
   quantity: number;
   minThreshold: number;
   supplier?: string;
@@ -26,7 +31,7 @@ interface FormData {
 }
 
 const emptyForm: FormData = {
-  name: '', category: '', brand: '', quantity: 0, minThreshold: 5,
+  name: '', category: '', brand: '', price: 0, quantity: 0, minThreshold: 5,
   trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
 };
 
@@ -75,6 +80,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
       name: formData.name,
       category: formData.category,
       brand: formData.brand,
+      price: formData.price,
       quantity: formData.quantity,
       minThreshold: formData.minThreshold,
       supplier: formData.supplier || null,
@@ -112,6 +118,18 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
               onChange={val => setFormData(p => ({ ...p, category: val }))}
             />
           </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className={LABEL}>Prezzo base (€)</label>
+          <input
+            required
+            type="number"
+            min="0"
+            step="0.5"
+            value={formData.price}
+            onChange={e => setFormData(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))}
+            className={INPUT}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
@@ -166,7 +184,11 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
                 onChange={e => {
                   const val = parseFloat(e.target.value) || 0;
                   setStockGramsManual(true);
-                  setFormData(p => ({ ...p, stockGrams: val }));
+                  setFormData(p => ({
+                    ...p,
+                    stockGrams: val,
+                    quantity: p.trackByWeight ? getTrackedQuantity(p.quantity, p.unitSize, val) : p.quantity,
+                  }));
                 }}
                 className={INPUT} />
               <p className="text-xs text-stone-400">

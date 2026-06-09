@@ -23,17 +23,25 @@ export const Inventory = () => {
     return product.quantity <= product.minThreshold;
   }
 
+  function getDisplayQuantity(product: typeof products[0]): number {
+    if (product.unitSize != null && product.stockGrams != null && product.unitSize > 0) {
+      return Math.max(0, Math.floor(product.stockGrams / product.unitSize));
+    }
+    return product.quantity;
+  }
+
   function formatStock(product: typeof products[0]): React.ReactNode {
     if (product.unitSize != null && product.stockGrams != null) {
       const unit = product.unitType ?? 'g';
       const low = isLowStock(product);
+      const quantity = getDisplayQuantity(product);
       return (
         <div className="flex flex-col items-end gap-0.5">
           <span className={cn("text-lg font-medium", low ? "text-red-600" : "text-stone-900")}>
             {product.stockGrams % 1 === 0 ? product.stockGrams : product.stockGrams.toFixed(1)}{' '}
             <span className="text-sm font-normal text-stone-400">{unit}</span>
           </span>
-          <span className="text-xs text-stone-400">{product.quantity} pz</span>
+          <span className="text-xs text-stone-400">{quantity} pz</span>
         </div>
       );
     }

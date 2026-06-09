@@ -7,6 +7,7 @@ import { toast } from './Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { addMinsToTime } from '../lib/utils';
+import { ClientInfoPanel } from './ClientInfoPanel';
 
 export const ManageAppointmentModal = ({
   isOpen,
@@ -26,6 +27,7 @@ export const ManageAppointmentModal = ({
   const { data: clients = [] } = useListClients();
   const { data: services = [] } = useListServices();
   const { data: products = [] } = useListProducts();
+  const [isClientInfoOpen, setIsClientInfoOpen] = React.useState(false);
 
   const { mutate: deleteAppointment } = useDeleteAppointment({
     mutation: {
@@ -43,7 +45,9 @@ export const ManageAppointmentModal = ({
 
   const appointment = appointments.find(a => a.id === appointmentId);
   const client = clients.find(c => c.id === appointment?.clientId);
-  const appointmentServices = (appointment?.serviceIds ?? []).map(sid => services.find(s => s.id === sid)).filter(Boolean) as { id: string; name: string }[];
+  const appointmentServices = (appointment?.serviceIds ?? [])
+    .map(sid => services.find(s => s.id === sid))
+    .filter(Boolean) as typeof services;
 
   if (!appointment || !client || appointmentServices.length === 0) return null;
 
@@ -57,6 +61,28 @@ export const ManageAppointmentModal = ({
     ? appointment.usedProductIds.map(pid => products.find(p => p.id === pid)?.name).filter(Boolean)
     : [];
 
+  const servicesTotal = (appointment.serviceIds ?? []).reduce((sum, sid, i) => {
+    const v = appointment.servicePrices?.[i];
+    if (typeof v === 'number' && Number.isFinite(v)) return sum + v;
+    return sum + Number(services.find(s => s.id === sid)?.price ?? 0);
+  }, 0);
+
+  const soldTotal = (appointment.soldProducts ?? []).reduce((sum, sp) => {
+    if (sp.quantity > 0) return sum + sp.quantity * sp.unitPrice;
+    return sum;
+  }, 0);
+
+  const grandTotal = servicesTotal + soldTotal;
+
+  const soldProds = appointment.soldProducts?.length
+    ? appointment.soldProducts
+        .map(sp => ({
+          ...sp,
+          name: products.find(p => p.id === sp.productId)?.name ?? 'Prodotto',
+        }))
+        .filter(sp => sp.quantity > 0)
+    : [];
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Dettagli Appuntamento">
       <div className="flex flex-col gap-6">
@@ -64,10 +90,39 @@ export const ManageAppointmentModal = ({
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-serif text-2xl text-stone-900">{client.firstName} {client.lastName}</h3>
+            <button
+              type="button"
+              onClick={() => setIsClientInfoOpen(true)}
+              className="text-xs font-medium text-stone-500 hover:text-stone-800 transition-colors mt-1"
+            >
+              Info cliente
+            </button>
             <div className="flex flex-wrap gap-1 mt-1">
-              {appointmentServices.map(svc => (
-                <span key={svc.id} className="text-sm font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">{svc.name}</span>
-              ))}
+              {appointmentServices.map((svc, idx) => {
+                const listPrice = appointment.serviceListPrices?.[idx] ?? svc.price;
+                const applied = appointment.servicePrices?.[idx];
+                const appliedPrice =
+                  typeof applied === 'number' && Number.isFinite(applied) ? applied : listPrice;
+                return (
+                  <span key={svc.id} className="text-sm font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                    {svc.name} · {appliedPrice}€ <span className="text-stone-400 text-xs">(listino {listPrice}€)</span>
+                  </span>
+                );
+              })}
+            </div>
+            <div className="mt-2 bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 flex flex-col gap-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-stone-600">Totale servizi</span>
+                <span className="font-semibold text-stone-900">€{servicesTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-stone-600">Prodotti venduti</span>
+                <span className="font-semibold text-stone-900">€{soldTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-stone-700 font-medium">Totale finale</span>
+                <span className="font-semibold text-stone-900">€{grandTotal.toFixed(2)}</span>
+              </div>
             </div>
           </div>
           <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-sm ${
@@ -103,7 +158,7 @@ export const ManageAppointmentModal = ({
           </div>
         </div>
 
-        {(appointment.notes || usedProds.length > 0) && (
+        {(appointment.notes || usedProds.length > 0 || soldProds.length > 0) && (
           <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 flex flex-col gap-3">
             {appointment.notes && (
               <div>
@@ -117,6 +172,18 @@ export const ManageAppointmentModal = ({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {usedProds.map((p, i) => (
                     <span key={i} className="text-xs bg-white text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {soldProds.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Box className="w-3 h-3" /> Prodotti Venduti</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {soldProds.map((p) => (
+                    <span key={p.productId} className="text-xs bg-white text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">
+                      {p.name} × {p.quantity} · {p.unitPrice}€
+                    </span>
                   ))}
                 </div>
               </div>
@@ -151,6 +218,12 @@ export const ManageAppointmentModal = ({
         </div>
 
       </div>
+
+      <ClientInfoPanel
+        open={isClientInfoOpen}
+        onOpenChange={setIsClientInfoOpen}
+        client={client}
+      />
     </Modal>
   );
 }

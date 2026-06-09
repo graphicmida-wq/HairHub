@@ -7,6 +7,7 @@ export const productsTable = mysqlTable("products", {
   name: varchar("name", { length: 200 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   brand: varchar("brand", { length: 100 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0"),
   quantity: int("quantity").notNull().default(0),
   minThreshold: int("min_threshold").notNull().default(5),
   supplier: varchar("supplier", { length: 200 }),

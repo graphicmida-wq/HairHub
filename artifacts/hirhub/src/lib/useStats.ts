@@ -34,10 +34,15 @@ export function useStats() {
     const completedThisMonth = thisMonthAppts.filter(a => a.status === 'completato');
 
     const fatturato = completedThisMonth.reduce((sum, a) => {
-      const svcTotal = (a.serviceIds ?? []).reduce((s2, sid) => {
+      const svcTotal = (a.serviceIds ?? []).reduce((s2, sid, i) => {
+        const v = a.servicePrices?.[i];
+        if (typeof v === 'number' && Number.isFinite(v)) return s2 + v;
         return s2 + (services.find(s => s.id === sid)?.price ?? 0);
       }, 0);
-      return sum + svcTotal;
+      const soldTotal = (a.soldProducts ?? []).reduce((s3, sp) => {
+        return s3 + sp.quantity * sp.unitPrice;
+      }, 0);
+      return sum + svcTotal + soldTotal;
     }, 0);
 
     const thisMonthCount = thisMonthAppts.length;

@@ -18,8 +18,8 @@ export const NewClientModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: 
         setFormData({ firstName: '', lastName: '', phone: '', email: '', dob: '', notes: '', allergies: '' });
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        toast.show(msg ?? 'Errore durante il salvataggio', 'error');
+        const data = (err as { data?: unknown })?.data as { message?: string } | undefined;
+        toast.show(data?.message ?? (err as { message?: string })?.message ?? 'Errore durante il salvataggio', 'error');
       },
     },
   });

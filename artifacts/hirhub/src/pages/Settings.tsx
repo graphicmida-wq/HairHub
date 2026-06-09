@@ -52,6 +52,8 @@ const LS_INFO_KEY = 'hirhub_salon_info';
 
 interface SalonInfo {
   salonName: string;
+  logoUrl?: string | null;
+  showSalonName?: boolean | null;
   address: string;
   phone: string;
   email: string;
@@ -216,6 +218,8 @@ export const Settings = () => {
   };
 
   const [salonName, setSalonName] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [showSalonName, setShowSalonName] = useState(true);
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -231,6 +235,8 @@ export const Settings = () => {
   useEffect(() => {
     if (apiSettings) {
       setSalonName(apiSettings.salonName ?? '');
+      setLogoUrl(apiSettings.logoUrl ?? null);
+      setShowSalonName(apiSettings.showSalonName ?? true);
       setAddress(apiSettings.address ?? '');
       setPhone(apiSettings.phone ?? '');
       setEmail(apiSettings.email ?? '');
@@ -245,6 +251,8 @@ export const Settings = () => {
       const fallback = loadInfoFallback();
       if (fallback) {
         setSalonName(fallback.salonName);
+        setLogoUrl(fallback.logoUrl ?? null);
+        setShowSalonName(fallback.showSalonName ?? true);
         setAddress(fallback.address);
         setPhone(fallback.phone);
         setEmail(fallback.email);
@@ -257,14 +265,21 @@ export const Settings = () => {
   }, []);
 
   const handleSaveInfo = () => {
-    const payload = { salonName, address: address || null, phone: phone || null, email: email || null };
+    const payload = {
+      salonName,
+      logoUrl,
+      showSalonName,
+      address: address || null,
+      phone: phone || null,
+      email: email || null,
+    };
     queryClient.setQueryData(getGetSettingsQueryKey(), payload);
     updateSettings.mutate(
       { data: payload },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
-          saveInfoFallback({ salonName, address, phone, email });
+          saveInfoFallback({ salonName, logoUrl, showSalonName, address, phone, email });
           setInfoSaved(true);
           setTimeout(() => setInfoSaved(false), 2500);
         },
@@ -361,6 +376,66 @@ export const Settings = () => {
                     className={inputClass}
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-stone-600 mb-1.5 uppercase tracking-wide">
+                    Logo (opzionale)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl border border-stone-200 bg-stone-50 flex items-center justify-center overflow-hidden shrink-0">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Logo salone" className="w-full h-full object-contain" />
+                      ) : (
+                        <span className="text-stone-400 text-sm">—</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.currentTarget.value = '';
+                          if (!file) return;
+                          if (!file.type.startsWith('image/')) {
+                            toast.show('Seleziona un file immagine (PNG/JPG)', 'error');
+                            return;
+                          }
+                          if (file.size > 500_000) {
+                            toast.show('Logo troppo grande (max 500 KB)', 'error');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const result = reader.result;
+                            if (typeof result === 'string') setLogoUrl(result);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        className="text-sm text-stone-700"
+                      />
+                      {logoUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setLogoUrl(null)}
+                          className="text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors text-left"
+                        >
+                          Rimuovi logo
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 text-sm text-stone-700">
+                  <input
+                    type="checkbox"
+                    checked={showSalonName}
+                    onChange={(e) => setShowSalonName(e.target.checked)}
+                    className="w-4 h-4 rounded border-stone-300 accent-stone-900"
+                  />
+                  Mostra nome del salone nell'header
+                </label>
 
                 <div>
                   <label className="block text-xs font-medium text-stone-600 mb-1.5 uppercase tracking-wide">

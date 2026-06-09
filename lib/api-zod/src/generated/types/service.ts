@@ -10,6 +10,7 @@ export interface Service {
   id: string;
   name: string;
   category: string;
+  color: string;
   durationMins: number;
   price: number;
   notes?: string | null;

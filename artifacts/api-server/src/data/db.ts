@@ -9,7 +9,7 @@
 
 import { randomBytes } from "crypto";
 import path from "path";
-import { eq } from "drizzle-orm";
+import { asc, eq, like, or, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
@@ -82,6 +82,7 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       category TEXT NOT NULL,
+      color TEXT NOT NULL DEFAULT '#94a3b8',
       duration_mins INTEGER NOT NULL,
       price REAL NOT NULL,
       notes TEXT
@@ -91,6 +92,7 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       name TEXT NOT NULL,
       category TEXT NOT NULL,
       brand TEXT NOT NULL,
+      price REAL NOT NULL DEFAULT 0,
       quantity INTEGER NOT NULL DEFAULT 0,
       min_threshold INTEGER NOT NULL DEFAULT 5,
       supplier TEXT,
@@ -109,6 +111,9 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       id TEXT PRIMARY KEY,
       client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
       service_ids TEXT NOT NULL DEFAULT '[]',
+      service_prices TEXT,
+      service_list_prices TEXT,
+      sold_products TEXT,
       staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL,
       date TEXT NOT NULL,
       time TEXT NOT NULL,
@@ -130,6 +135,8 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
     CREATE TABLE IF NOT EXISTS salon_settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       salon_name TEXT NOT NULL DEFAULT 'L''Atelier',
+      logo_url TEXT,
+      show_salon_name INTEGER NOT NULL DEFAULT 1,
       address TEXT,
       phone TEXT,
       email TEXT,
@@ -138,8 +145,16 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
   `);
   // Migrations: no-op if column already present
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN logo_url TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN show_salon_name INTEGER NOT NULL DEFAULT 1"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN used_products TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE services ADD COLUMN color TEXT NOT NULL DEFAULT '#94a3b8'"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE appointments ADD COLUMN service_prices TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE appointments ADD COLUMN service_list_prices TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("UPDATE appointments SET service_list_prices = service_prices WHERE service_list_prices IS NULL AND service_prices IS NOT NULL"); } catch { /* column may not exist yet */ }
+  try { sqlite.exec("ALTER TABLE appointments ADD COLUMN sold_products TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE products ADD COLUMN price REAL NOT NULL DEFAULT 0"); } catch { /* already exists */ }
   // serviceIds migration: add column, populate from service_id if present
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN service_ids TEXT NOT NULL DEFAULT '[]'"); } catch { /* already exists */ }
   try { sqlite.exec("UPDATE appointments SET service_ids = json_array(service_id) WHERE service_ids = '[]' AND service_id IS NOT NULL"); } catch { /* service_id column may not exist */ }
@@ -166,21 +181,21 @@ function seedSqliteIfEmpty(db: SqliteDb) {
   const c2 = { id: uid(), firstName: "Marco", lastName: "Rossi", phone: "347 9876543", email: "marco@example.com", dob: null, allergies: null, notes: null, hairSpecs: null };
   const c3 = { id: uid(), firstName: "Elena", lastName: "Conti", phone: "320 5551234", email: "elena@example.com", dob: "1985-11-22", allergies: "Ammoniaca", notes: "Preferisce prodotti bio", hairSpecs: null };
   db.insert(sqliteClients).values([c1, c2, c3]).run();
-  const s1 = { id: uid(), name: "Taglio Donna", category: "Taglio", durationMins: 45, price: 35, notes: null };
-  const s2 = { id: uid(), name: "Piega Corti", category: "Piega", durationMins: 30, price: 18, notes: null };
-  const s3 = { id: uid(), name: "Colore Base", category: "Colore", durationMins: 90, price: 65, notes: "Include messa in piega" };
-  const s4 = { id: uid(), name: "Taglio Uomo", category: "Taglio", durationMins: 30, price: 20, notes: null };
+  const s1 = { id: uid(), name: "Taglio Donna", category: "Taglio", color: "#22c55e", durationMins: 45, price: 35, notes: null };
+  const s2 = { id: uid(), name: "Piega Corti", category: "Piega", color: "#a855f7", durationMins: 30, price: 18, notes: null };
+  const s3 = { id: uid(), name: "Colore Base", category: "Colore", color: "#f59e0b", durationMins: 90, price: 65, notes: "Include messa in piega" };
+  const s4 = { id: uid(), name: "Taglio Uomo", category: "Taglio", color: "#0ea5e9", durationMins: 30, price: 20, notes: null };
   db.insert(sqliteServices).values([s1, s2, s3, s4]).run();
   const p1id = uid(); const p2id = uid(); const p3id = uid();
   db.insert(sqliteProducts).values([
-    { id: p1id, name: "Shampoo Volumizzante", category: "Lavaggio", brand: "Kerastase", quantity: 3, minThreshold: 5, supplier: null, notes: null, unitSize: 250, unitType: "ml" as const, stockGrams: 750 },
-    { id: p2id, name: "Colore 7.0 Biondo", category: "Colore", brand: "Schwarzkopf", quantity: 8, minThreshold: 3, supplier: null, notes: null, unitSize: 100, unitType: "g" as const, stockGrams: 800 },
-    { id: p3id, name: "Maschera Idratante", category: "Finish", brand: "Loreal", quantity: 2, minThreshold: 4, supplier: null, notes: null, unitSize: 200, unitType: "ml" as const, stockGrams: 400 },
+    { id: p1id, name: "Shampoo Volumizzante", category: "Lavaggio", brand: "Kerastase", price: 18, quantity: 3, minThreshold: 5, supplier: null, notes: null, unitSize: 250, unitType: "ml" as const, stockGrams: 750 },
+    { id: p2id, name: "Colore 7.0 Biondo", category: "Colore", brand: "Schwarzkopf", price: 12, quantity: 8, minThreshold: 3, supplier: null, notes: null, unitSize: 100, unitType: "g" as const, stockGrams: 800 },
+    { id: p3id, name: "Maschera Idratante", category: "Finish", brand: "Loreal", price: 22, quantity: 2, minThreshold: 4, supplier: null, notes: null, unitSize: 200, unitType: "ml" as const, stockGrams: 400 },
   ]).run();
   db.insert(sqliteAppts).values([
-    { id: uid(), clientId: c1.id, serviceIds: JSON.stringify([s3.id]), date: today, time: "10:00", durationMins: 90, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
-    { id: uid(), clientId: c2.id, serviceIds: JSON.stringify([s4.id]), date: today, time: "11:15", durationMins: 30, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
-    { id: uid(), clientId: c3.id, serviceIds: JSON.stringify([s1.id]), date: today, time: "14:00", durationMins: 45, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
+    { id: uid(), clientId: c1.id, serviceIds: JSON.stringify([s3.id]), servicePrices: JSON.stringify([s3.price]), serviceListPrices: JSON.stringify([s3.price]), date: today, time: "10:00", durationMins: 90, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
+    { id: uid(), clientId: c2.id, serviceIds: JSON.stringify([s4.id]), servicePrices: JSON.stringify([s4.price]), serviceListPrices: JSON.stringify([s4.price]), date: today, time: "11:15", durationMins: 30, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
+    { id: uid(), clientId: c3.id, serviceIds: JSON.stringify([s1.id]), servicePrices: JSON.stringify([s1.price]), serviceListPrices: JSON.stringify([s1.price]), date: today, time: "14:00", durationMins: 45, status: "prenotato" as const, notes: null, usedProductIds: null, usedProducts: null },
   ]).run();
   db.insert(sqliteSalon).values({ salonName: "L'Atelier", address: null, phone: null, email: null }).run();
   logger.info("SQLite seed complete");
@@ -229,20 +244,20 @@ async function mysqlSeedIfEmpty() {
   ]);
   const s1id = uid(); const s2id = uid(); const s3id = uid(); const s4id = uid();
   await db.insert(servicesTable).values([
-    { id: s1id, name: "Taglio Donna", category: "Taglio", durationMins: 45, price: "35.00", notes: null },
-    { id: s2id, name: "Piega Corti", category: "Piega", durationMins: 30, price: "18.00", notes: null },
-    { id: s3id, name: "Colore Base", category: "Colore", durationMins: 90, price: "65.00", notes: "Include messa in piega" },
-    { id: s4id, name: "Taglio Uomo", category: "Taglio", durationMins: 30, price: "20.00", notes: null },
+    { id: s1id, name: "Taglio Donna", category: "Taglio", color: "#22c55e", durationMins: 45, price: "35.00", notes: null },
+    { id: s2id, name: "Piega Corti", category: "Piega", color: "#a855f7", durationMins: 30, price: "18.00", notes: null },
+    { id: s3id, name: "Colore Base", category: "Colore", color: "#f59e0b", durationMins: 90, price: "65.00", notes: "Include messa in piega" },
+    { id: s4id, name: "Taglio Uomo", category: "Taglio", color: "#0ea5e9", durationMins: 30, price: "20.00", notes: null },
   ]);
   await db.insert(productsTable).values([
-    { id: uid(), name: "Shampoo Volumizzante", category: "Lavaggio", brand: "Kerastase", quantity: 3, minThreshold: 5, supplier: null, notes: null, unitSize: "250.00", unitType: "ml", stockGrams: "750.00" },
-    { id: uid(), name: "Colore 7.0 Biondo", category: "Colore", brand: "Schwarzkopf", quantity: 8, minThreshold: 3, supplier: null, notes: null, unitSize: "100.00", unitType: "g", stockGrams: "800.00" },
-    { id: uid(), name: "Maschera Idratante", category: "Finish", brand: "Loreal", quantity: 2, minThreshold: 4, supplier: null, notes: null, unitSize: "200.00", unitType: "ml", stockGrams: "400.00" },
+    { id: uid(), name: "Shampoo Volumizzante", category: "Lavaggio", brand: "Kerastase", price: "18.00", quantity: 3, minThreshold: 5, supplier: null, notes: null, unitSize: "250.00", unitType: "ml", stockGrams: "750.00" },
+    { id: uid(), name: "Colore 7.0 Biondo", category: "Colore", brand: "Schwarzkopf", price: "12.00", quantity: 8, minThreshold: 3, supplier: null, notes: null, unitSize: "100.00", unitType: "g", stockGrams: "800.00" },
+    { id: uid(), name: "Maschera Idratante", category: "Finish", brand: "Loreal", price: "22.00", quantity: 2, minThreshold: 4, supplier: null, notes: null, unitSize: "200.00", unitType: "ml", stockGrams: "400.00" },
   ]);
   await db.insert(appointmentsTable).values([
-    { id: uid(), clientId: c1id, serviceIds: [s3id], date: today, time: "10:00", durationMins: 90, status: "prenotato", notes: null, usedProductIds: null },
-    { id: uid(), clientId: c2id, serviceIds: [s4id], date: today, time: "11:15", durationMins: 30, status: "prenotato", notes: null, usedProductIds: null },
-    { id: uid(), clientId: c3id, serviceIds: [s1id], date: today, time: "14:00", durationMins: 45, status: "prenotato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c1id, serviceIds: [s3id], servicePrices: [65], serviceListPrices: [65], date: today, time: "10:00", durationMins: 90, status: "prenotato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c2id, serviceIds: [s4id], servicePrices: [20], serviceListPrices: [20], date: today, time: "11:15", durationMins: 30, status: "prenotato", notes: null, usedProductIds: null },
+    { id: uid(), clientId: c3id, serviceIds: [s1id], servicePrices: [35], serviceListPrices: [35], date: today, time: "14:00", durationMins: 45, status: "prenotato", notes: null, usedProductIds: null },
   ]);
   await db.insert(salonSettingsTable).values({ salonName: "L'Atelier", address: null, phone: null, email: null });
   logger.info("MySQL seed complete");
@@ -311,6 +326,80 @@ export async function dbDeleteClient(id: string) {
   getSqliteDb().delete(sqliteClients).where(eq(sqliteClients.id, id)).run();
 }
 
+function normalizePhoneDigits(phone: string): string {
+  return phone.replace(/\D+/g, "");
+}
+
+export async function dbGetClientByPhone(phone: string) {
+  const normalized = normalizePhoneDigits(phone);
+  if (!normalized) return Promise.resolve(undefined);
+
+  if (_useMysql) {
+    const { clientsTable } = await import("@workspace/db");
+    const db = getMysqlDb();
+    const matchExpr = sql<string>`replace(replace(replace(replace(replace(replace(${clientsTable.phone}, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), '.', '')`;
+    return db
+      .select()
+      .from(clientsTable)
+      .where(eq(matchExpr, normalized))
+      .limit(1)
+      .execute()
+      .then((r) => r[0]);
+  }
+
+  const matchExpr = sql<string>`replace(replace(replace(replace(replace(replace(${sqliteClients.phone}, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), '.', '')`;
+  return Promise.resolve(
+    getSqliteDb()
+      .select()
+      .from(sqliteClients)
+      .where(eq(matchExpr, normalized))
+      .limit(1)
+      .all()[0],
+  );
+}
+
+export async function dbSearchClients(query: string, limit = 20) {
+  const q = query.trim();
+  if (!q) return Promise.resolve([]);
+
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(50, Math.floor(limit))) : 20;
+  const pattern = `%${q}%`;
+
+  if (_useMysql) {
+    const { clientsTable } = await import("@workspace/db");
+    const db = getMysqlDb();
+    return db
+      .select()
+      .from(clientsTable)
+      .where(
+        or(
+          like(clientsTable.firstName, pattern),
+          like(clientsTable.lastName, pattern),
+          like(clientsTable.phone, pattern),
+        ),
+      )
+      .orderBy(asc(clientsTable.lastName), asc(clientsTable.firstName))
+      .limit(safeLimit)
+      .execute();
+  }
+
+  return Promise.resolve(
+    getSqliteDb()
+      .select()
+      .from(sqliteClients)
+      .where(
+        or(
+          like(sqliteClients.firstName, pattern),
+          like(sqliteClients.lastName, pattern),
+          like(sqliteClients.phone, pattern),
+        ),
+      )
+      .orderBy(asc(sqliteClients.lastName), asc(sqliteClients.firstName))
+      .limit(safeLimit)
+      .all(),
+  );
+}
+
 // ── Services ───────────────────────────────────────────────────────────────────
 
 export async function dbGetServices() {
@@ -350,6 +439,7 @@ export async function dbUpdateService(id: string, data: Partial<Omit<typeof sqli
     const mysqlPatch: Partial<typeof servicesTable.$inferInsert> = {};
     if (data.name !== undefined) mysqlPatch.name = data.name;
     if (data.category !== undefined) mysqlPatch.category = data.category;
+    if (data.color !== undefined) mysqlPatch.color = data.color;
     if (data.durationMins !== undefined) mysqlPatch.durationMins = data.durationMins;
     if (data.price !== undefined) mysqlPatch.price = String(data.price);
     if (data.notes !== undefined) mysqlPatch.notes = data.notes;
@@ -373,30 +463,49 @@ export async function dbDeleteService(id: string) {
 
 // ── Products ───────────────────────────────────────────────────────────────────
 
-function normalizeMysqlProduct(row: Record<string, unknown>) {
+function getTrackedQuantity(
+  quantity: number,
+  unitSize: number | null,
+  stockGrams: number | null,
+): number {
+  if (unitSize != null && stockGrams != null && unitSize > 0) {
+    return Math.max(0, Math.floor(stockGrams / unitSize));
+  }
+  return quantity;
+}
+
+function normalizeProduct(row: Record<string, unknown>) {
+  const price = row["price"] != null ? Number(row["price"]) : 0;
+  const unitSize = row["unitSize"] != null ? Number(row["unitSize"]) : null;
+  const stockGrams = row["stockGrams"] != null ? Number(row["stockGrams"]) : null;
+  const quantity = getTrackedQuantity(Number(row["quantity"] ?? 0), unitSize, stockGrams);
+
   return {
     ...row,
-    unitSize: row["unitSize"] != null ? Number(row["unitSize"]) : null,
-    stockGrams: row["stockGrams"] != null ? Number(row["stockGrams"]) : null,
+    price,
+    quantity,
+    unitSize,
+    stockGrams,
   };
 }
 
 export async function dbGetProducts() {
   if (_useMysql) {
     const { productsTable } = await import("@workspace/db");
-    return getMysqlDb().select().from(productsTable).execute().then(rows => rows.map(normalizeMysqlProduct));
+    return getMysqlDb().select().from(productsTable).execute().then(rows => rows.map(normalizeProduct));
   }
-  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).all());
+  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).all().map(row => normalizeProduct(row)));
 }
 
 export async function dbGetProduct(id: string) {
   if (_useMysql) {
     const { productsTable } = await import("@workspace/db");
     return getMysqlDb().select().from(productsTable).where(eq(productsTable.id, id)).execute().then(r =>
-      r[0] ? normalizeMysqlProduct(r[0] as Record<string, unknown>) : undefined
+      r[0] ? normalizeProduct(r[0] as Record<string, unknown>) : undefined
     );
   }
-  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get());
+  const row = getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get();
+  return Promise.resolve(row ? normalizeProduct(row) : undefined);
 }
 
 export async function dbCreateProduct(data: Omit<typeof sqliteProducts.$inferInsert, "id">) {
@@ -405,38 +514,55 @@ export async function dbCreateProduct(data: Omit<typeof sqliteProducts.$inferIns
   const stockGrams = data.stockGrams != null
     ? data.stockGrams
     : (data.unitSize != null ? (data.quantity ?? 0) * data.unitSize : null);
-  const productData = { ...data, stockGrams };
+  const quantity = getTrackedQuantity(data.quantity ?? 0, data.unitSize ?? null, stockGrams);
+  const productData = { ...data, quantity, stockGrams };
 
   if (_useMysql) {
     const { productsTable } = await import("@workspace/db");
     const mysqlData = {
       ...productData,
       id,
+      price: String((productData as { price?: number }).price ?? 0),
       unitSize: productData.unitSize != null ? String(productData.unitSize) : null,
       stockGrams: productData.stockGrams != null ? String(productData.stockGrams) : null,
     };
     await getMysqlDb().insert(productsTable).values(mysqlData as typeof productsTable.$inferInsert);
     return getMysqlDb().select().from(productsTable).where(eq(productsTable.id, id)).execute().then(r =>
-      normalizeMysqlProduct(r[0]! as Record<string, unknown>)
+      normalizeProduct(r[0]! as Record<string, unknown>)
     );
   }
   getSqliteDb().insert(sqliteProducts).values({ ...productData, id }).run();
-  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get()!);
+  return Promise.resolve(normalizeProduct(getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get()!));
 }
 
 export async function dbUpdateProduct(id: string, data: Partial<Omit<typeof sqliteProducts.$inferInsert, "id">>) {
+  const existing = await dbGetProduct(id);
+  if (!existing) {
+    return undefined;
+  }
+
+  const unitSize = data.unitSize !== undefined ? data.unitSize : existing.unitSize;
+  const stockGrams = data.stockGrams !== undefined ? data.stockGrams : existing.stockGrams;
+  const normalizedData = { ...data };
+
+  if (unitSize != null && stockGrams != null && unitSize > 0) {
+    normalizedData.quantity = getTrackedQuantity(existing.quantity, unitSize, stockGrams);
+  }
+
   if (_useMysql) {
     const { productsTable } = await import("@workspace/db");
-    const mysqlPatch: Record<string, unknown> = { ...data };
-    if (data.unitSize !== undefined) mysqlPatch["unitSize"] = data.unitSize != null ? String(data.unitSize) : null;
-    if (data.stockGrams !== undefined) mysqlPatch["stockGrams"] = data.stockGrams != null ? String(data.stockGrams) : null;
+    const mysqlPatch: Record<string, unknown> = { ...normalizedData };
+    if (normalizedData.price !== undefined) mysqlPatch["price"] = normalizedData.price != null ? String(normalizedData.price) : "0";
+    if (normalizedData.unitSize !== undefined) mysqlPatch["unitSize"] = normalizedData.unitSize != null ? String(normalizedData.unitSize) : null;
+    if (normalizedData.stockGrams !== undefined) mysqlPatch["stockGrams"] = normalizedData.stockGrams != null ? String(normalizedData.stockGrams) : null;
     await getMysqlDb().update(productsTable).set(mysqlPatch as Partial<typeof productsTable.$inferInsert>).where(eq(productsTable.id, id));
     return getMysqlDb().select().from(productsTable).where(eq(productsTable.id, id)).execute().then(r =>
-      r[0] ? normalizeMysqlProduct(r[0] as Record<string, unknown>) : undefined
+      r[0] ? normalizeProduct(r[0] as Record<string, unknown>) : undefined
     );
   }
-  getSqliteDb().update(sqliteProducts).set(data).where(eq(sqliteProducts.id, id)).run();
-  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get());
+  getSqliteDb().update(sqliteProducts).set(normalizedData).where(eq(sqliteProducts.id, id)).run();
+  const updated = getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get();
+  return Promise.resolve(updated ? normalizeProduct(updated) : undefined);
 }
 
 export async function dbDeleteProduct(id: string) {
@@ -502,6 +628,9 @@ function parseApptRow(a: typeof sqliteAppts.$inferSelect) {
   return {
     ...a,
     serviceIds: parseJson<string[]>(a.serviceIds) ?? [],
+    servicePrices: parseJson<number[]>(a.servicePrices),
+    serviceListPrices: parseJson<number[]>(a.serviceListPrices),
+    soldProducts: parseJson<{ productId: string; quantity: number; unitPrice: number }[]>(a.soldProducts),
     usedProductIds: parseJson<string[]>(a.usedProductIds),
     usedProducts: parseJson<UsedProductEntry[]>(a.usedProducts),
   };
@@ -530,6 +659,9 @@ export async function dbGetAppointment(id: string) {
 export async function dbCreateAppointment(data: {
   clientId: string;
   serviceIds: string[];
+  servicePrices?: number[] | null;
+  serviceListPrices?: number[] | null;
+  soldProducts?: { productId: string; quantity: number; unitPrice: number }[] | null;
   staffId?: string | null;
   date: string;
   time: string;
@@ -546,6 +678,9 @@ export async function dbCreateAppointment(data: {
       id,
       clientId: data.clientId,
       serviceIds: data.serviceIds,
+      servicePrices: data.servicePrices ?? null,
+      serviceListPrices: data.serviceListPrices ?? null,
+      soldProducts: data.soldProducts ?? null,
       staffId: data.staffId ?? null,
       date: data.date,
       time: data.time,
@@ -561,6 +696,9 @@ export async function dbCreateAppointment(data: {
     id,
     clientId: data.clientId,
     serviceIds: JSON.stringify(data.serviceIds),
+    servicePrices: serializeJson(data.servicePrices ?? null),
+    serviceListPrices: serializeJson(data.serviceListPrices ?? null),
+    soldProducts: serializeJson(data.soldProducts ?? null),
     staffId: data.staffId ?? null,
     date: data.date,
     time: data.time,
@@ -576,6 +714,9 @@ export async function dbCreateAppointment(data: {
 export async function dbUpdateAppointment(id: string, data: Partial<{
   clientId: string;
   serviceIds: string[];
+  servicePrices: number[] | null;
+  serviceListPrices: number[] | null;
+  soldProducts: { productId: string; quantity: number; unitPrice: number }[] | null;
   staffId: string | null;
   date: string;
   time: string;
@@ -590,6 +731,9 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
     const mysqlPatch: Partial<typeof appointmentsTable.$inferInsert> = {};
     if (data.clientId !== undefined) mysqlPatch.clientId = data.clientId;
     if (data.serviceIds !== undefined) mysqlPatch.serviceIds = data.serviceIds;
+    if (data.servicePrices !== undefined) (mysqlPatch as Record<string, unknown>)["servicePrices"] = data.servicePrices;
+    if (data.serviceListPrices !== undefined) (mysqlPatch as Record<string, unknown>)["serviceListPrices"] = data.serviceListPrices;
+    if (data.soldProducts !== undefined) (mysqlPatch as Record<string, unknown>)["soldProducts"] = data.soldProducts;
     if (data.staffId !== undefined) mysqlPatch.staffId = data.staffId;
     if (data.date !== undefined) mysqlPatch.date = data.date;
     if (data.time !== undefined) mysqlPatch.time = data.time;
@@ -604,6 +748,9 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
   const sqlitePatch: Partial<typeof sqliteAppts.$inferInsert> = {};
   if (data.clientId !== undefined) sqlitePatch.clientId = data.clientId;
   if (data.serviceIds !== undefined) sqlitePatch.serviceIds = JSON.stringify(data.serviceIds);
+  if (data.servicePrices !== undefined) sqlitePatch.servicePrices = serializeJson(data.servicePrices);
+  if (data.serviceListPrices !== undefined) sqlitePatch.serviceListPrices = serializeJson(data.serviceListPrices);
+  if (data.soldProducts !== undefined) sqlitePatch.soldProducts = serializeJson(data.soldProducts);
   if (data.staffId !== undefined) sqlitePatch.staffId = data.staffId;
   if (data.date !== undefined) sqlitePatch.date = data.date;
   if (data.time !== undefined) sqlitePatch.time = data.time;
@@ -734,26 +881,56 @@ export async function dbGetSettings() {
     const { salonSettingsTable } = await import("@workspace/db");
     let row = await getMysqlDb().select().from(salonSettingsTable).execute().then(r => r[0]);
     if (!row) {
-      await getMysqlDb().insert(salonSettingsTable).values({ salonName: "L'Atelier" });
+      await getMysqlDb().insert(salonSettingsTable).values({ salonName: "L'Atelier", showSalonName: 1 });
       row = await getMysqlDb().select().from(salonSettingsTable).execute().then(r => r[0]!);
     }
-    return row;
+    return {
+      ...row,
+      showSalonName: row.showSalonName ? true : false,
+    };
   }
   let s = getSqliteDb().select().from(sqliteSalon).get();
   if (!s) {
-    getSqliteDb().insert(sqliteSalon).values({ salonName: "L'Atelier" }).run();
+    getSqliteDb().insert(sqliteSalon).values({ salonName: "L'Atelier", showSalonName: 1 }).run();
     s = getSqliteDb().select().from(sqliteSalon).get()!;
   }
-  return Promise.resolve(s);
+  return Promise.resolve({
+    ...s,
+    showSalonName: s.showSalonName ? true : false,
+  });
 }
 
-export async function dbUpdateSettings(data: Partial<Omit<typeof sqliteSalon.$inferInsert, "id">>) {
+export async function dbUpdateSettings(data: Partial<{
+  salonName: string;
+  logoUrl: string | null;
+  showSalonName: boolean | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  brandColor: string | null;
+}>) {
   const current = await dbGetSettings();
   if (_useMysql) {
     const { salonSettingsTable } = await import("@workspace/db");
-    await getMysqlDb().update(salonSettingsTable).set(data).where(eq(salonSettingsTable.id, current.id));
+    const patch: Partial<typeof salonSettingsTable.$inferInsert> = {};
+    if (data.salonName !== undefined) patch.salonName = data.salonName;
+    if (data.logoUrl !== undefined) patch.logoUrl = data.logoUrl;
+    if (data.showSalonName !== undefined) patch.showSalonName = data.showSalonName ? 1 : 0;
+    if (data.address !== undefined) patch.address = data.address;
+    if (data.phone !== undefined) patch.phone = data.phone;
+    if (data.email !== undefined) patch.email = data.email;
+    if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
+    await getMysqlDb().update(salonSettingsTable).set(patch).where(eq(salonSettingsTable.id, current.id));
     return dbGetSettings();
   }
-  getSqliteDb().update(sqliteSalon).set(data).where(eq(sqliteSalon.id, current.id)).run();
+  const patch: Partial<typeof sqliteSalon.$inferInsert> = {};
+  if (data.salonName !== undefined) patch.salonName = data.salonName;
+  if (data.logoUrl !== undefined) patch.logoUrl = data.logoUrl;
+  if (data.showSalonName !== undefined) patch.showSalonName = data.showSalonName ? 1 : 0;
+  if (data.address !== undefined) patch.address = data.address;
+  if (data.phone !== undefined) patch.phone = data.phone;
+  if (data.email !== undefined) patch.email = data.email;
+  if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
+  getSqliteDb().update(sqliteSalon).set(patch).where(eq(sqliteSalon.id, current.id)).run();
   return dbGetSettings();
 }

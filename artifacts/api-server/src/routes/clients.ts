@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import {
   dbGetClients,
   dbGetClient,
+  dbGetClientByPhone,
+  dbSearchClients,
   dbCreateClient,
   dbUpdateClient,
   dbDeleteClient,
@@ -18,6 +20,40 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+router.get("/clients/search", async (req, res) => {
+  const q = typeof req.query.q === "string" ? req.query.q : "";
+  const limitRaw = typeof req.query.limit === "string" ? Number(req.query.limit) : undefined;
+  const limit = Number.isFinite(limitRaw) ? (limitRaw as number) : 20;
+  const data = await dbSearchClients(q, limit);
+  const parsed = ListClientsResponse.safeParse(data);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /clients/search");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
+});
+
+router.get("/clients/by-phone", async (req, res) => {
+  const phone = typeof req.query.phone === "string" ? req.query.phone : "";
+  if (!phone.trim()) {
+    res.status(400).json({ message: "Missing phone" });
+    return;
+  }
+  const existing = await dbGetClientByPhone(phone);
+  if (!existing) {
+    res.status(404).json({ message: "Client not found" });
+    return;
+  }
+  const parsed = GetClientResponse.safeParse(existing);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /clients/by-phone");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
+});
 
 router.get("/clients", async (req, res) => {
   const data = await dbGetClients();
@@ -36,6 +72,13 @@ router.post("/clients", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
+
+  const existing = await dbGetClientByPhone(body.data.phone);
+  if (existing) {
+    res.status(409).json({ message: "Cliente già esistente", existingClient: existing });
+    return;
+  }
+
   const created = await dbCreateClient(body.data);
   const parsed = GetClientResponse.safeParse(created);
   if (!parsed.success) {

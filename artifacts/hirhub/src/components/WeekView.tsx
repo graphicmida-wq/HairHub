@@ -17,7 +17,7 @@ interface Appointment {
 }
 
 interface Client { id: string; firstName: string; lastName: string; }
-interface Service { id: string; name: string; }
+interface Service { id: string; name: string; color: string; }
 interface StaffMember { id: string; name: string; color: string; role?: string | null; }
 
 interface WeekViewProps {
@@ -75,7 +75,7 @@ export const WeekView = ({
         <div
           ref={headerScrollRef}
           onScroll={onHeaderScroll}
-          className="flex-1 overflow-x-auto"
+          className="flex-1 overflow-x-auto no-scrollbar"
           style={{ scrollbarWidth: 'none' }}
         >
           <div className="flex">
@@ -99,7 +99,7 @@ export const WeekView = ({
       </div>
 
       {/* Body */}
-      <div className="flex max-h-[62vh] overflow-y-auto">
+      <div className="flex">
         {/* Time gutter */}
         <div className="w-10 md:w-14 shrink-0 relative" style={{ height: totalH }}>
           {HOURS.map((hour, i) => (
@@ -113,13 +113,14 @@ export const WeekView = ({
         <div
           ref={bodyScrollRef}
           onScroll={onBodyScroll}
-          className="flex-1 overflow-x-auto"
+          className="flex-1 overflow-x-auto no-scrollbar"
+          style={{ scrollbarWidth: 'none' }}
         >
           <div className="flex" style={{ height: totalH }}>
             {weekDays.map(day => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const dayApps = filteredApps.filter(a => a.date === dateStr);
-              const layout = computeCalendarLayout(dayApps, START_HOUR, HOUR_H, 52);
+              const layout = computeCalendarLayout(dayApps, START_HOUR, HOUR_H, 76);
 
               return (
                 <div key={day.toISOString()} className={cn(dayColClass, 'relative')}>
@@ -140,13 +141,15 @@ export const WeekView = ({
                   {/* Appointments — absolutely positioned by time + duration */}
                   {layout.map(({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
                     const client = clients.find(c => c.id === app.clientId);
+                    const primaryServiceId = app.serviceIds[0];
+                    const primaryService = primaryServiceId ? services.find(s => s.id === primaryServiceId) : undefined;
                     const serviceNames = app.serviceIds.map(sid => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
-                    const staffMember = staff.find(m => m.id === app.staffId);
                     const isCancelled = app.status === 'annullato';
                     const isNoShow = app.status === 'no-show';
                     const isCompleted = app.status === 'completato';
-                    const sc = staffMember?.color ?? '#94a3b8';
+                    const sc = primaryService?.color ?? '#94a3b8';
                     const baseZ = trackIndex + 1;
+                    const clientName = `${client?.firstName ?? ''} ${client?.lastName ?? ''}`.trim();
                     return (
                       <div
                         key={app.id}
@@ -154,7 +157,7 @@ export const WeekView = ({
                         onMouseEnter={e => { e.currentTarget.style.zIndex = '50'; }}
                         onMouseLeave={e => { e.currentTarget.style.zIndex = String(baseZ); }}
                         className={cn(
-                          'absolute rounded-lg border border-stone-200 px-1.5 py-1 cursor-pointer hover:shadow-md transition-shadow overflow-hidden flex flex-col',
+                          'absolute rounded-lg border border-stone-200 px-2 py-1 cursor-pointer hover:shadow-md transition-shadow overflow-hidden flex flex-col',
                           isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
                           (isCancelled || isNoShow) && 'text-stone-400',
                         )}
@@ -164,20 +167,18 @@ export const WeekView = ({
                           left: `calc(${leftPct * 100}% + 2px)`,
                           width: `calc(${widthPct * 100}% - 4px)`,
                           borderLeftColor: sc,
-                          borderLeftWidth: '3px',
+                          borderLeftWidth: '24px',
                           zIndex: baseZ,
                           ...(!isCompleted && {
-                            backgroundColor: (isCancelled || isNoShow)
-                              ? hexAlpha(sc, 0.06)
-                              : hexAlpha(sc, 0.14),
+                            backgroundColor: '#ffffff',
                           }),
                         }}
                       >
                         <p className="text-[9px] font-bold leading-none tracking-wide opacity-80">
                           {app.time} → {addMinsToTime(app.time, app.durationMins)}
                         </p>
-                        <p className={cn('text-[10px] font-semibold leading-tight truncate mt-0.5', isCancelled && 'line-through')}>
-                          {client?.firstName} {client?.lastName}
+                        <p className={cn('text-[10px] leading-tight truncate mt-0.5', isCancelled && 'line-through')}>
+                          <span className="font-semibold">{clientName || '(Senza nome)'}</span>
                         </p>
                         <p className="text-[9px] leading-tight truncate opacity-50">
                           {serviceNames}

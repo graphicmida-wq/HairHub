@@ -8,25 +8,14 @@ const isBuild = process.argv.some(a => a === "build");
 
 const rawPort = process.env.PORT;
 
-if (!rawPort && !isBuild) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
-const port = rawPort ? Number(rawPort) : 3000;
+const port = rawPort ? Number(rawPort) : 5173;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
 const basePath = process.env.BASE_PATH ?? "/";
-
-if (!process.env.BASE_PATH && !isBuild) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
+const strictPort = Boolean(rawPort);
 
 export default defineConfig({
   base: basePath,
@@ -62,7 +51,7 @@ export default defineConfig({
   },
   server: {
     port,
-    strictPort: true,
+    strictPort,
     host: "0.0.0.0",
     allowedHosts: true,
     fs: {

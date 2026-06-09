@@ -51,6 +51,7 @@ export interface Service {
   id: string;
   name: string;
   category: string;
+  color: string;
   durationMins: number;
   price: number;
   notes?: string | null;
@@ -59,6 +60,7 @@ export interface Service {
 export interface CreateServiceInput {
   name: string;
   category: string;
+  color: string;
   durationMins: number;
   price: number;
   notes?: string | null;
@@ -67,6 +69,7 @@ export interface CreateServiceInput {
 export interface UpdateServiceInput {
   name?: string;
   category?: string;
+  color?: string;
   durationMins?: number;
   price?: number;
   notes?: string | null;
@@ -89,6 +92,8 @@ export interface Product {
   name: string;
   category: string;
   brand: string;
+  /** @minimum 0 */
+  price: number;
   /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;
@@ -115,6 +120,8 @@ export interface CreateProductInput {
   name: string;
   category: string;
   brand: string;
+  /** @minimum 0 */
+  price: number;
   /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;
@@ -140,6 +147,8 @@ export interface UpdateProductInput {
   name?: string;
   category?: string;
   brand?: string;
+  /** @minimum 0 */
+  price?: number;
   quantity?: number;
   minThreshold?: number;
   supplier?: string | null;
@@ -188,11 +197,21 @@ export interface UsedProductEntry {
   quantityUsed: number;
 }
 
+export interface SoldProductEntry {
+  productId: string;
+  /** @minimum 1 */
+  quantity: number;
+  /** @minimum 0 */
+  unitPrice: number;
+}
+
 export interface Appointment {
   id: string;
   clientId: string;
   /** @minItems 1 */
   serviceIds: string[];
+  servicePrices?: number[] | null;
+  serviceListPrices?: number[] | null;
   staffId?: string | null;
   /** YYYY-MM-DD */
   date: string;
@@ -204,12 +223,15 @@ export interface Appointment {
   /** Deprecated: use usedProducts instead */
   usedProductIds?: string[] | null;
   usedProducts?: UsedProductEntry[] | null;
+  soldProducts?: SoldProductEntry[] | null;
 }
 
 export interface CreateAppointmentInput {
   clientId: string;
   /** @minItems 1 */
   serviceIds: string[];
+  servicePrices?: number[] | null;
+  serviceListPrices?: number[] | null;
   staffId?: string | null;
   date: string;
   time: string;
@@ -218,12 +240,15 @@ export interface CreateAppointmentInput {
   notes?: string | null;
   usedProductIds?: string[] | null;
   usedProducts?: UsedProductEntry[] | null;
+  soldProducts?: SoldProductEntry[] | null;
 }
 
 export interface UpdateAppointmentInput {
   clientId?: string;
   /** @minItems 1 */
   serviceIds?: string[];
+  servicePrices?: number[] | null;
+  serviceListPrices?: number[] | null;
   staffId?: string | null;
   date?: string;
   time?: string;
@@ -233,6 +258,7 @@ export interface UpdateAppointmentInput {
   /** Deprecated: use usedProducts instead */
   usedProductIds?: string[] | null;
   usedProducts?: UsedProductEntry[] | null;
+  soldProducts?: SoldProductEntry[] | null;
 }
 
 export interface ClientFormulaProduct {
@@ -273,6 +299,9 @@ export interface UpdateClientFormulaInput {
 
 export interface SalonSettings {
   salonName: string;
+  /** Logo image URL or data URL (e.g. data:image/png;base64,...) */
+  logoUrl?: string | null;
+  showSalonName?: boolean | null;
   address?: string | null;
   phone?: string | null;
   email?: string | null;

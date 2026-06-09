@@ -16,6 +16,7 @@ export const services = sqliteTable("services", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   category: text("category").notNull(),
+  color: text("color").notNull().default("#94a3b8"),
   durationMins: integer("duration_mins").notNull(),
   price: real("price").notNull(),
   notes: text("notes"),
@@ -26,6 +27,7 @@ export const products = sqliteTable("products", {
   name: text("name").notNull(),
   category: text("category").notNull(),
   brand: text("brand").notNull(),
+  price: real("price").notNull().default(0),
   quantity: integer("quantity").notNull().default(0),
   minThreshold: integer("min_threshold").notNull().default(5),
   supplier: text("supplier"),
@@ -46,6 +48,8 @@ export const appointments = sqliteTable("appointments", {
   id: text("id").primaryKey(),
   clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   serviceIds: text("service_ids").notNull(),
+  servicePrices: text("service_prices"),
+  serviceListPrices: text("service_list_prices"),
   staffId: text("staff_id"),
   date: text("date").notNull(),
   time: text("time").notNull(),
@@ -54,6 +58,7 @@ export const appointments = sqliteTable("appointments", {
   notes: text("notes"),
   usedProductIds: text("used_product_ids"),
   usedProducts: text("used_products"),
+  soldProducts: text("sold_products"),
 });
 
 export const clientFormulas = sqliteTable("client_formulas", {
@@ -69,6 +74,8 @@ export const clientFormulas = sqliteTable("client_formulas", {
 export const salonSettings = sqliteTable("salon_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   salonName: text("salon_name").notNull().default("L'Atelier"),
+  logoUrl: text("logo_url"),
+  showSalonName: integer("show_salon_name").notNull().default(1),
   address: text("address"),
   phone: text("phone"),
   email: text("email"),

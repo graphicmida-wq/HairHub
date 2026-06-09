@@ -25,6 +25,7 @@ export * from "./product";
 export * from "./productUnitType";
 export * from "./salonSettings";
 export * from "./service";
+export * from "./soldProductEntry";
 export * from "./staffMember";
 export * from "./updateAppointmentInput";
 export * from "./updateClientFormulaInput";

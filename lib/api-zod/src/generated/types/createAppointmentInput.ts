@@ -6,12 +6,15 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { AppointmentStatus } from "./appointmentStatus";
+import type { SoldProductEntry } from "./soldProductEntry";
 import type { UsedProductEntry } from "./usedProductEntry";
 
 export interface CreateAppointmentInput {
   clientId: string;
   /** @minItems 1 */
   serviceIds: string[];
+  servicePrices?: number[] | null;
+  serviceListPrices?: number[] | null;
   staffId?: string | null;
   date: string;
   time: string;
@@ -20,4 +23,5 @@ export interface CreateAppointmentInput {
   notes?: string | null;
   usedProductIds?: string[] | null;
   usedProducts?: UsedProductEntry[] | null;
+  soldProducts?: SoldProductEntry[] | null;
 }

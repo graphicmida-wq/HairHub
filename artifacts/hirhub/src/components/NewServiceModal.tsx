@@ -13,7 +13,7 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
         queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() });
         toast.show('Servizio aggiunto con successo');
         onClose();
-        setFormData({ name: '', category: '', durationMins: '', price: '', notes: '' });
+        setFormData({ name: '', category: '', color: '#94a3b8', durationMins: '', price: '', notes: '' });
       },
       onError: (err: unknown) => {
         const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -23,7 +23,7 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
   });
 
   const [formData, setFormData] = useState({
-    name: '', category: '', durationMins: '', price: '', notes: '',
+    name: '', category: '', color: '#94a3b8', durationMins: '', price: '', notes: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,6 +32,7 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
       data: {
         name: formData.name,
         category: formData.category,
+        color: formData.color,
         durationMins: Number(formData.durationMins),
         price: Number(formData.price),
         notes: formData.notes || null,
@@ -61,6 +62,23 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
             value={formData.category}
             onChange={v => setFormData(p => ({ ...p, category: v }))}
           />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-stone-700">Colore</label>
+          <div className="flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5">
+            <input
+              type="color"
+              value={formData.color}
+              onChange={e => setFormData(p => ({ ...p, color: e.target.value }))}
+              className="h-8 w-10 p-0 bg-transparent border-0"
+            />
+            <input
+              type="text"
+              value={formData.color}
+              onChange={e => setFormData(p => ({ ...p, color: e.target.value }))}
+              className="flex-1 bg-transparent outline-none text-sm text-stone-700"
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">

@@ -6,6 +6,7 @@ export const servicesTable = mysqlTable("services", {
   id: char("id", { length: 12 }).primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
+  color: varchar("color", { length: 9 }).notNull().default("#94a3b8"),
   durationMins: int("duration_mins").notNull(),
   price: decimal("price", { precision: 8, scale: 2 }).notNull(),
   notes: text("notes"),

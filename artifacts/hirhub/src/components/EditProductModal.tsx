@@ -11,10 +11,15 @@ const SELECT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-
 
 type UnitType = 'g' | 'ml';
 
+function getTrackedQuantity(quantity: number, unitSize: number, stockGrams: number): number {
+  return unitSize > 0 ? Math.max(0, Math.floor(stockGrams / unitSize)) : quantity;
+}
+
 interface FormData {
   name: string;
   category: string;
   brand: string;
+  price: number;
   quantity: number;
   minThreshold: number;
   trackByWeight: boolean;
@@ -57,7 +62,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
   });
 
   const [formData, setFormData] = useState<FormData>({
-    name: '', category: '', brand: '', quantity: 0, minThreshold: 5,
+    name: '', category: '', brand: '', price: 0, quantity: 0, minThreshold: 5,
     trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
   });
   const [stockGramsManual, setStockGramsManual] = useState(false);
@@ -68,7 +73,11 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
         name: product.name,
         category: product.category,
         brand: product.brand,
-        quantity: product.quantity,
+        price: product.price ?? 0,
+        quantity:
+          product.unitSize != null && product.stockGrams != null
+            ? getTrackedQuantity(product.quantity, product.unitSize, product.stockGrams)
+            : product.quantity,
         minThreshold: product.minThreshold,
         trackByWeight: product.unitSize != null,
         unitSize: product.unitSize ?? 100,
@@ -110,6 +119,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
       name: formData.name,
       category: formData.category,
       brand: formData.brand,
+      price: formData.price,
       quantity: formData.quantity,
       minThreshold: formData.minThreshold,
     };
@@ -154,6 +164,18 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
               onChange={val => setFormData(pr => ({ ...pr, category: val }))}
             />
           </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className={LABEL}>Prezzo base (€)</label>
+          <input
+            required
+            type="number"
+            min="0"
+            step="0.5"
+            value={formData.price}
+            onChange={e => setFormData(pr => ({ ...pr, price: parseFloat(e.target.value) || 0 }))}
+            className={INPUT}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
@@ -208,7 +230,11 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
                 onChange={e => {
                   const val = parseFloat(e.target.value) || 0;
                   setStockGramsManual(true);
-                  setFormData(pr => ({ ...pr, stockGrams: val }));
+                  setFormData(pr => ({
+                    ...pr,
+                    stockGrams: val,
+                    quantity: pr.trackByWeight ? getTrackedQuantity(pr.quantity, pr.unitSize, val) : pr.quantity,
+                  }));
                 }}
                 className={INPUT} />
               <p className="text-xs text-stone-400">

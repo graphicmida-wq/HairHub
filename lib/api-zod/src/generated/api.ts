@@ -108,6 +108,7 @@ export const ListServicesResponseItem = zod.object({
   id: zod.string(),
   name: zod.string(),
   category: zod.string(),
+  color: zod.string(),
   durationMins: zod.number(),
   price: zod.number(),
   notes: zod.string().nullish(),
@@ -120,6 +121,7 @@ export const ListServicesResponse = zod.array(ListServicesResponseItem);
 export const CreateServiceBody = zod.object({
   name: zod.string(),
   category: zod.string(),
+  color: zod.string(),
   durationMins: zod.number(),
   price: zod.number(),
   notes: zod.string().nullish(),
@@ -136,6 +138,7 @@ export const GetServiceResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   category: zod.string(),
+  color: zod.string(),
   durationMins: zod.number(),
   price: zod.number(),
   notes: zod.string().nullish(),
@@ -151,6 +154,7 @@ export const UpdateServiceParams = zod.object({
 export const UpdateServiceBody = zod.object({
   name: zod.string().optional(),
   category: zod.string().optional(),
+  color: zod.string().optional(),
   durationMins: zod.number().optional(),
   price: zod.number().optional(),
   notes: zod.string().nullish(),
@@ -160,6 +164,7 @@ export const UpdateServiceResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   category: zod.string(),
+  color: zod.string(),
   durationMins: zod.number(),
   price: zod.number(),
   notes: zod.string().nullish(),
@@ -175,11 +180,14 @@ export const DeleteServiceParams = zod.object({
 /**
  * @summary List all products
  */
+export const listProductsResponsePriceMin = 0;
+
 export const ListProductsResponseItem = zod.object({
   id: zod.string(),
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
+  price: zod.number().min(listProductsResponsePriceMin),
   quantity: zod
     .number()
     .describe("Number of physical units (bottles\/packages)"),
@@ -206,10 +214,13 @@ export const ListProductsResponse = zod.array(ListProductsResponseItem);
 /**
  * @summary Create a new product
  */
+export const createProductBodyPriceMin = 0;
+
 export const CreateProductBody = zod.object({
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
+  price: zod.number().min(createProductBodyPriceMin),
   quantity: zod
     .number()
     .describe("Number of physical units (bottles\/packages)"),
@@ -236,11 +247,14 @@ export const GetProductParams = zod.object({
   id: zod.coerce.string(),
 });
 
+export const getProductResponsePriceMin = 0;
+
 export const GetProductResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
+  price: zod.number().min(getProductResponsePriceMin),
   quantity: zod
     .number()
     .describe("Number of physical units (bottles\/packages)"),
@@ -270,10 +284,13 @@ export const UpdateProductParams = zod.object({
   id: zod.coerce.string(),
 });
 
+export const updateProductBodyPriceMin = 0;
+
 export const UpdateProductBody = zod.object({
   name: zod.string().optional(),
   category: zod.string().optional(),
   brand: zod.string().optional(),
+  price: zod.number().min(updateProductBodyPriceMin).optional(),
   quantity: zod.number().optional(),
   minThreshold: zod.number().optional(),
   supplier: zod.string().nullish(),
@@ -283,11 +300,14 @@ export const UpdateProductBody = zod.object({
   stockGrams: zod.number().nullish(),
 });
 
+export const updateProductResponsePriceMin = 0;
+
 export const UpdateProductResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   category: zod.string(),
   brand: zod.string(),
+  price: zod.number().min(updateProductResponsePriceMin),
   quantity: zod
     .number()
     .describe("Number of physical units (bottles\/packages)"),
@@ -321,12 +341,24 @@ export const DeleteProductParams = zod.object({
  * @summary List all appointments
  */
 
+export const listAppointmentsResponseServicePricesItemMin = 0;
+
+export const listAppointmentsResponseServiceListPricesItemMin = 0;
+
 export const listAppointmentsResponseUsedProductsItemQuantityUsedMin = 0;
+
+export const listAppointmentsResponseSoldProductsItemUnitPriceMin = 0;
 
 export const ListAppointmentsResponseItem = zod.object({
   id: zod.string(),
   clientId: zod.string(),
   serviceIds: zod.array(zod.string()).min(1),
+  servicePrices: zod
+    .array(zod.number().min(listAppointmentsResponseServicePricesItemMin))
+    .nullish(),
+  serviceListPrices: zod
+    .array(zod.number().min(listAppointmentsResponseServiceListPricesItemMin))
+    .nullish(),
   staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
@@ -348,6 +380,17 @@ export const ListAppointmentsResponseItem = zod.object({
       }),
     )
     .nullish(),
+  soldProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod.number().min(1),
+        unitPrice: zod
+          .number()
+          .min(listAppointmentsResponseSoldProductsItemUnitPriceMin),
+      }),
+    )
+    .nullish(),
 });
 export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 
@@ -355,11 +398,23 @@ export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
  * @summary Create a new appointment
  */
 
+export const createAppointmentBodyServicePricesItemMin = 0;
+
+export const createAppointmentBodyServiceListPricesItemMin = 0;
+
 export const createAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
+
+export const createAppointmentBodySoldProductsItemUnitPriceMin = 0;
 
 export const CreateAppointmentBody = zod.object({
   clientId: zod.string(),
   serviceIds: zod.array(zod.string()).min(1),
+  servicePrices: zod
+    .array(zod.number().min(createAppointmentBodyServicePricesItemMin))
+    .nullish(),
+  serviceListPrices: zod
+    .array(zod.number().min(createAppointmentBodyServiceListPricesItemMin))
+    .nullish(),
   staffId: zod.string().nullish(),
   date: zod.string(),
   time: zod.string(),
@@ -378,6 +433,17 @@ export const CreateAppointmentBody = zod.object({
       }),
     )
     .nullish(),
+  soldProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod.number().min(1),
+        unitPrice: zod
+          .number()
+          .min(createAppointmentBodySoldProductsItemUnitPriceMin),
+      }),
+    )
+    .nullish(),
 });
 
 /**
@@ -387,12 +453,24 @@ export const GetAppointmentParams = zod.object({
   id: zod.coerce.string(),
 });
 
+export const getAppointmentResponseServicePricesItemMin = 0;
+
+export const getAppointmentResponseServiceListPricesItemMin = 0;
+
 export const getAppointmentResponseUsedProductsItemQuantityUsedMin = 0;
+
+export const getAppointmentResponseSoldProductsItemUnitPriceMin = 0;
 
 export const GetAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
   serviceIds: zod.array(zod.string()).min(1),
+  servicePrices: zod
+    .array(zod.number().min(getAppointmentResponseServicePricesItemMin))
+    .nullish(),
+  serviceListPrices: zod
+    .array(zod.number().min(getAppointmentResponseServiceListPricesItemMin))
+    .nullish(),
   staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
@@ -414,6 +492,17 @@ export const GetAppointmentResponse = zod.object({
       }),
     )
     .nullish(),
+  soldProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod.number().min(1),
+        unitPrice: zod
+          .number()
+          .min(getAppointmentResponseSoldProductsItemUnitPriceMin),
+      }),
+    )
+    .nullish(),
 });
 
 /**
@@ -423,11 +512,23 @@ export const UpdateAppointmentParams = zod.object({
   id: zod.coerce.string(),
 });
 
+export const updateAppointmentBodyServicePricesItemMin = 0;
+
+export const updateAppointmentBodyServiceListPricesItemMin = 0;
+
 export const updateAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
+
+export const updateAppointmentBodySoldProductsItemUnitPriceMin = 0;
 
 export const UpdateAppointmentBody = zod.object({
   clientId: zod.string().optional(),
   serviceIds: zod.array(zod.string()).min(1).optional(),
+  servicePrices: zod
+    .array(zod.number().min(updateAppointmentBodyServicePricesItemMin))
+    .nullish(),
+  serviceListPrices: zod
+    .array(zod.number().min(updateAppointmentBodyServiceListPricesItemMin))
+    .nullish(),
   staffId: zod.string().nullish(),
   date: zod.string().optional(),
   time: zod.string().optional(),
@@ -451,14 +552,37 @@ export const UpdateAppointmentBody = zod.object({
       }),
     )
     .nullish(),
+  soldProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod.number().min(1),
+        unitPrice: zod
+          .number()
+          .min(updateAppointmentBodySoldProductsItemUnitPriceMin),
+      }),
+    )
+    .nullish(),
 });
 
+export const updateAppointmentResponseServicePricesItemMin = 0;
+
+export const updateAppointmentResponseServiceListPricesItemMin = 0;
+
 export const updateAppointmentResponseUsedProductsItemQuantityUsedMin = 0;
+
+export const updateAppointmentResponseSoldProductsItemUnitPriceMin = 0;
 
 export const UpdateAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
   serviceIds: zod.array(zod.string()).min(1),
+  servicePrices: zod
+    .array(zod.number().min(updateAppointmentResponseServicePricesItemMin))
+    .nullish(),
+  serviceListPrices: zod
+    .array(zod.number().min(updateAppointmentResponseServiceListPricesItemMin))
+    .nullish(),
   staffId: zod.string().nullish(),
   date: zod.string().describe("YYYY-MM-DD"),
   time: zod.string().describe("HH:MM"),
@@ -477,6 +601,17 @@ export const UpdateAppointmentResponse = zod.object({
           .number()
           .min(updateAppointmentResponseUsedProductsItemQuantityUsedMin)
           .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
+  soldProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod.number().min(1),
+        unitPrice: zod
+          .number()
+          .min(updateAppointmentResponseSoldProductsItemUnitPriceMin),
       }),
     )
     .nullish(),
@@ -675,6 +810,11 @@ export const DeleteClientFormulaParams = zod.object({
  */
 export const GetSettingsResponse = zod.object({
   salonName: zod.string(),
+  logoUrl: zod
+    .string()
+    .nullish()
+    .describe("Logo image URL or data URL (e.g. data:image\/png;base64,...)"),
+  showSalonName: zod.boolean().nullish(),
   address: zod.string().nullish(),
   phone: zod.string().nullish(),
   email: zod.string().nullish(),
@@ -691,6 +831,11 @@ export const GetSettingsResponse = zod.object({
  */
 export const UpdateSettingsBody = zod.object({
   salonName: zod.string(),
+  logoUrl: zod
+    .string()
+    .nullish()
+    .describe("Logo image URL or data URL (e.g. data:image\/png;base64,...)"),
+  showSalonName: zod.boolean().nullish(),
   address: zod.string().nullish(),
   phone: zod.string().nullish(),
   email: zod.string().nullish(),
@@ -704,6 +849,11 @@ export const UpdateSettingsBody = zod.object({
 
 export const UpdateSettingsResponse = zod.object({
   salonName: zod.string(),
+  logoUrl: zod
+    .string()
+    .nullish()
+    .describe("Logo image URL or data URL (e.g. data:image\/png;base64,...)"),
+  showSalonName: zod.boolean().nullish(),
   address: zod.string().nullish(),
   phone: zod.string().nullish(),
   email: zod.string().nullish(),

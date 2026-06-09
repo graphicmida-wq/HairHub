@@ -26,6 +26,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { data: settings } = useGetSettings();
 
   const salonName = settings?.salonName ?? "Capelli & Vanitá";
+  const logoUrl = settings?.logoUrl ?? null;
+  const showName = settings?.showSalonName ?? true;
   const today = format(new Date(), "d MMMM yyyy", { locale: it });
 
   const navItems = [
@@ -46,13 +48,23 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       >
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <span style={{ color: 'var(--color-brand-muted)', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
-            <h1
-              className="text-[#F5F0E3] text-xl font-semibold tracking-wide leading-tight"
-              style={{ fontFamily: '"Playfair Display", serif' }}
-            >
-              {salonName}
-            </h1>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="Logo salone"
+                className="w-6 h-6 rounded-md object-contain bg-white/10"
+              />
+            ) : (
+              <span style={{ color: 'var(--color-brand-muted)', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
+            )}
+            {showName ? (
+              <h1
+                className="text-[#F5F0E3] text-xl font-semibold tracking-wide leading-tight"
+                style={{ fontFamily: '"Playfair Display", serif' }}
+              >
+                {salonName}
+              </h1>
+            ) : null}
           </div>
           <p className="text-[10px] uppercase tracking-[0.2em] ml-[28px]" style={{ color: 'var(--color-brand-muted)' }}>
             Gestione Salone
@@ -132,13 +144,23 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           style={{ backgroundColor: SIDEBAR_BG }}
         >
           <div className="flex items-center gap-2">
-            <span style={{ color: 'var(--color-brand-muted)' }}>♥</span>
-            <h1
-              className="text-[#F5F0E3] text-xl font-semibold"
-              style={{ fontFamily: '"Playfair Display", serif' }}
-            >
-              {salonName}
-            </h1>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="Logo salone"
+                className="w-7 h-7 rounded-lg object-contain bg-white/10"
+              />
+            ) : (
+              <span style={{ color: 'var(--color-brand-muted)' }}>♥</span>
+            )}
+            {showName ? (
+              <h1
+                className="text-[#F5F0E3] text-xl font-semibold"
+                style={{ fontFamily: '"Playfair Display", serif' }}
+              >
+                {salonName}
+              </h1>
+            ) : null}
           </div>
           <Link
             to="/impostazioni"

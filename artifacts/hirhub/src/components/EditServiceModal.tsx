@@ -54,7 +54,7 @@ export const EditServiceModal = ({
   });
 
   const [formData, setFormData] = useState({
-    name: '', category: '', durationMins: '', price: '', notes: '',
+    name: '', category: '', color: '#94a3b8', durationMins: '', price: '', notes: '',
   });
 
   useEffect(() => {
@@ -62,6 +62,7 @@ export const EditServiceModal = ({
       setFormData({
         name: service.name,
         category: service.category,
+        color: service.color ?? '#94a3b8',
         durationMins: String(service.durationMins),
         price: String(service.price),
         notes: service.notes ?? '',
@@ -77,6 +78,7 @@ export const EditServiceModal = ({
       data: {
         name: formData.name,
         category: formData.category,
+        color: formData.color,
         durationMins: Number(formData.durationMins),
         price: Number(formData.price),
         notes: formData.notes || null,
@@ -110,6 +112,23 @@ export const EditServiceModal = ({
             value={formData.category}
             onChange={v => setFormData(p => ({ ...p, category: v }))}
           />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-stone-700">Colore</label>
+          <div className="flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5">
+            <input
+              type="color"
+              value={formData.color}
+              onChange={e => setFormData(p => ({ ...p, color: e.target.value }))}
+              className="h-8 w-10 p-0 bg-transparent border-0"
+            />
+            <input
+              type="text"
+              value={formData.color}
+              onChange={e => setFormData(p => ({ ...p, color: e.target.value }))}
+              className="flex-1 bg-transparent outline-none text-sm text-stone-700"
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">

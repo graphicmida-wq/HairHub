@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import {
-  useCreateAppointment, useListClients, useListServices, useListStaff,
+  useCreateAppointment, useListServices, useListStaff,
   getListAppointmentsQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,10 @@ import { AppointmentStatus } from '@workspace/api-client-react';
 import { toast } from './Toast';
 import { addMinsToTime, timeDiffMins } from '../lib/utils';
 import { X } from 'lucide-react';
+import type { Client } from '@workspace/api-client-react';
+import { ClientPicker } from './ClientPicker';
+import { QuickClientCreate } from './QuickClientCreate';
+import { ClientInfoPanel } from './ClientInfoPanel';
 
 interface Props {
   isOpen: boolean;
@@ -22,9 +26,12 @@ const LABEL = "text-sm font-medium text-stone-700";
 
 export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime }: Props) => {
   const queryClient = useQueryClient();
-  const { data: clients = [] } = useListClients();
   const { data: services = [] } = useListServices();
   const { data: staff = [] } = useListStaff();
+
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isQuickClientOpen, setIsQuickClientOpen] = useState(false);
+  const [isClientInfoOpen, setIsClientInfoOpen] = useState(false);
 
   const { mutate: createAppointment, isPending } = useCreateAppointment({
     mutation: {
@@ -43,6 +50,8 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
   const makeDefault = () => ({
     clientId: '',
     serviceIds: [] as string[],
+    servicePrices: [] as number[],
+    serviceListPrices: [] as number[],
     staffId: null as string | null,
     date: defaultDate ?? new Date().toISOString().split('T')[0],
     time: defaultTime ?? '10:00',
@@ -58,6 +67,9 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
       const d = makeDefault();
       setFormData(d);
       setEndTime(addMinsToTime(d.time, d.durationMins));
+      setSelectedClient(null);
+      setIsQuickClientOpen(false);
+      setIsClientInfoOpen(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, defaultDate, defaultTime]);
@@ -78,16 +90,22 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
 
   const handleAddService = (serviceId: string) => {
     if (!serviceId || formData.serviceIds.includes(serviceId)) return;
+    const svc = services.find(s => s.id === serviceId);
     const newIds = [...formData.serviceIds, serviceId];
+    const newPrices = [...formData.servicePrices, Number(svc?.price ?? 0)];
+    const newListPrices = [...formData.serviceListPrices, Number(svc?.price ?? 0)];
     const dur = calcDuration(newIds);
-    setFormData(p => ({ ...p, serviceIds: newIds, durationMins: dur }));
+    setFormData(p => ({ ...p, serviceIds: newIds, servicePrices: newPrices, serviceListPrices: newListPrices, durationMins: dur }));
     setEndTime(addMinsToTime(formData.time, dur));
   };
 
   const handleRemoveService = (serviceId: string) => {
+    const idx = formData.serviceIds.findIndex(id => id === serviceId);
     const newIds = formData.serviceIds.filter(id => id !== serviceId);
+    const newPrices = idx >= 0 ? formData.servicePrices.filter((_, i) => i !== idx) : formData.servicePrices;
+    const newListPrices = idx >= 0 ? formData.serviceListPrices.filter((_, i) => i !== idx) : formData.serviceListPrices;
     const dur = calcDuration(newIds);
-    setFormData(p => ({ ...p, serviceIds: newIds, durationMins: dur }));
+    setFormData(p => ({ ...p, serviceIds: newIds, servicePrices: newPrices, serviceListPrices: newListPrices, durationMins: dur }));
     setEndTime(addMinsToTime(formData.time, dur));
   };
 
@@ -95,37 +113,107 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.clientId) {
+      toast.show('Seleziona un cliente', 'error');
+      return;
+    }
     if (formData.serviceIds.length === 0) {
       toast.show('Seleziona almeno un servizio', 'error');
       return;
     }
+    const servicePrices = formData.serviceIds.map((sid, i) => {
+      const v = formData.servicePrices[i];
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      return Number(services.find(s => s.id === sid)?.price ?? 0);
+    });
+    const serviceListPrices = formData.serviceIds.map((sid, i) => {
+      const v = formData.serviceListPrices[i];
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      return Number(services.find(s => s.id === sid)?.price ?? 0);
+    });
     const duration = timeDiffMins(formData.time, endTime);
-    createAppointment({ data: { ...formData, durationMins: duration >= 5 ? duration : formData.durationMins } });
+    createAppointment({ data: { ...formData, servicePrices, serviceListPrices, durationMins: duration >= 5 ? duration : formData.durationMins } });
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nuovo Appuntamento">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label className={LABEL}>Cliente</label>
-          <select required value={formData.clientId} onChange={e => setFormData(p => ({...p, clientId: e.target.value}))} className={INPUT}>
-            <option value="" disabled>Seleziona cliente</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
-          </select>
+          <div className="flex items-center justify-between gap-3">
+            <label className={LABEL}>Cliente</label>
+            {selectedClient ? (
+              <button
+                type="button"
+                onClick={() => setIsClientInfoOpen(true)}
+                className="text-xs font-medium text-stone-500 hover:text-stone-800 transition-colors"
+              >
+                Info
+              </button>
+            ) : null}
+          </div>
+          <ClientPicker
+            value={selectedClient}
+            onChange={(c) => {
+              setSelectedClient(c);
+              setFormData((p) => ({ ...p, clientId: c.id }));
+            }}
+            onCreateNew={() => setIsQuickClientOpen(true)}
+          />
         </div>
+
+        <QuickClientCreate
+          open={isQuickClientOpen}
+          onOpenChange={setIsQuickClientOpen}
+          onClientReady={(c) => {
+            setSelectedClient(c);
+            setFormData((p) => ({ ...p, clientId: c.id }));
+          }}
+        />
+
+        <ClientInfoPanel
+          open={isClientInfoOpen}
+          onOpenChange={setIsClientInfoOpen}
+          client={selectedClient}
+        />
 
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Servizi</label>
           {formData.serviceIds.length > 0 && (
             <div className="flex flex-col gap-1 mb-1">
-              {formData.serviceIds.map(sid => {
+              {formData.serviceIds.map((sid, idx) => {
                 const svc = services.find(s => s.id === sid);
                 if (!svc) return null;
+                const listPrice = Number.isFinite(formData.serviceListPrices[idx])
+                  ? formData.serviceListPrices[idx]
+                  : svc.price;
                 return (
                   <div key={sid} className="flex items-center justify-between bg-stone-100 rounded-lg px-3 py-2">
-                    <span className="text-sm text-stone-800">
-                      {svc.name} <span className="text-stone-400 text-xs">({svc.durationMins} min · {svc.price}€)</span>
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="min-w-0">
+                        <div className="text-sm text-stone-800 truncate">
+                          {svc.name} <span className="text-stone-400 text-xs">({svc.durationMins} min)</span>
+                        </div>
+                        <div className="text-xs text-stone-500">Listino {listPrice}€</div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.50"
+                          value={Number.isFinite(formData.servicePrices[idx]) ? formData.servicePrices[idx] : svc.price}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setFormData((p) => {
+                              const next = [...p.servicePrices];
+                              next[idx] = Number.isFinite(val) ? val : 0;
+                              return { ...p, servicePrices: next };
+                            });
+                          }}
+                          className="w-24 bg-white border border-stone-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-brand-dark"
+                        />
+                        <span className="text-stone-400 text-xs">€</span>
+                      </div>
+                    </div>
                     <button type="button" onClick={() => handleRemoveService(sid)} className="text-stone-400 hover:text-red-500 transition-colors ml-2 shrink-0">
                       <X className="w-4 h-4" />
                     </button>
@@ -145,6 +233,22 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
             </select>
           )}
         </div>
+
+        {formData.serviceIds.length > 0 && (
+          <div className="bg-stone-50 border border-stone-100 rounded-xl p-3 flex items-center justify-between">
+            <span className="text-sm font-medium text-stone-700">Totale servizi</span>
+            <span className="text-sm font-semibold text-stone-900">
+              €
+              {formData.serviceIds
+                .reduce((sum, sid, i) => {
+                  const v = formData.servicePrices[i];
+                  if (typeof v === 'number' && Number.isFinite(v)) return sum + v;
+                  return sum + Number(services.find(s => s.id === sid)?.price ?? 0);
+                }, 0)
+                .toFixed(2)}
+            </span>
+          </div>
+        )}
 
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Data</label>

@@ -9,6 +9,7 @@
 export interface CreateServiceInput {
   name: string;
   category: string;
+  color: string;
   durationMins: number;
   price: number;
   notes?: string | null;

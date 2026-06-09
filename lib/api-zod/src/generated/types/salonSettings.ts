@@ -8,6 +8,9 @@
 
 export interface SalonSettings {
   salonName: string;
+  /** Logo image URL or data URL (e.g. data:image/png;base64,...) */
+  logoUrl?: string | null;
+  showSalonName?: boolean | null;
   address?: string | null;
   phone?: string | null;
   email?: string | null;

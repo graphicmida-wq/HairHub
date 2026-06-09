@@ -210,7 +210,7 @@ export const Appointments = () => {
                 const colApps = dailyAppointments.filter(a =>
                   col.id === null ? !a.staffId : a.staffId === col.id
                 );
-                const layout = computeCalendarLayout(colApps, START_HOUR, HOUR_H, 52);
+                const layout = computeCalendarLayout(colApps, START_HOUR, HOUR_H, 76);
                 return (
                   <div
                     key={col.id ?? '__none__'}
@@ -229,11 +229,13 @@ export const Appointments = () => {
                     {/* Appointments */}
                     {layout.map(({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
                       const client = clients.find(c => c.id === app.clientId);
+                      const primaryServiceId = app.serviceIds[0];
+                      const primaryService = primaryServiceId ? services.find(s => s.id === primaryServiceId) : undefined;
                       const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
                       const isCancelled = app.status === 'annullato';
                       const isNoShow = app.status === 'no-show';
                       const isCompleted = app.status === 'completato';
-                      const sc = col.color;
+                      const sc = primaryService?.color ?? '#94a3b8';
                       const baseZ = trackIndex + 1;
                       return (
                         <div
@@ -252,11 +254,11 @@ export const Appointments = () => {
                             left: `calc(${leftPct * 100}% + 2px)`,
                             width: `calc(${widthPct * 100}% - 4px)`,
                             borderLeftColor: sc,
-                            borderLeftWidth: '4px',
-                            padding: '4px 6px',
+                            borderLeftWidth: '24px',
+                            padding: '6px 10px',
                             zIndex: baseZ,
                             ...(!isCompleted && {
-                              backgroundColor: (isCancelled || isNoShow) ? hexAlpha(sc, 0.06) : hexAlpha(sc, 0.14),
+                              backgroundColor: '#ffffff',
                             }),
                           }}
                         >
@@ -304,15 +306,16 @@ export const Appointments = () => {
               ))}
 
               {/* Appointments */}
-              {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 52).map(
+              {computeCalendarLayout(dailyAppointments, START_HOUR, HOUR_H, 76).map(
                 ({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
                   const client = clients.find(c => c.id === app.clientId);
+                  const primaryServiceId = app.serviceIds[0];
+                  const primaryService = primaryServiceId ? services.find(s => s.id === primaryServiceId) : undefined;
                   const serviceNames = app.serviceIds.map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
-                  const staffMember = staff.find(m => m.id === app.staffId);
                   const isCancelled = app.status === 'annullato';
                   const isNoShow = app.status === 'no-show';
                   const isCompleted = app.status === 'completato';
-                  const sc = staffMember?.color ?? '#94a3b8';
+                  const sc = primaryService?.color ?? '#94a3b8';
                   const baseZ = trackIndex + 1;
                   return (
                     <div
@@ -331,11 +334,11 @@ export const Appointments = () => {
                         left: `calc(${leftPct * 100}% + 4px)`,
                         width: `calc(${widthPct * 100}% - 8px)`,
                         borderLeftColor: sc,
-                        borderLeftWidth: '4px',
-                        padding: '6px 8px',
+                        borderLeftWidth: '24px',
+                        padding: '6px 10px',
                         zIndex: baseZ,
                         ...(!isCompleted && {
-                          backgroundColor: (isCancelled || isNoShow) ? hexAlpha(sc, 0.06) : hexAlpha(sc, 0.14),
+                          backgroundColor: '#ffffff',
                         }),
                       }}
                     >
@@ -343,9 +346,6 @@ export const Appointments = () => {
                         <span className="text-xs font-bold opacity-80 shrink-0">
                           {app.time} → {addMinsToTime(app.time, app.durationMins)}
                         </span>
-                        {staffMember && (
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sc }} title={staffMember.name} />
-                        )}
                       </div>
                       <p className={cn('font-medium text-sm truncate mt-0.5', isCancelled && 'line-through')}>
                         {client?.firstName} {client?.lastName}

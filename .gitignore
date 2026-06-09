@@ -28,6 +28,7 @@ node_modules
 !.vscode/extensions.json
 
 # misc
+/.env.local
 /.sass-cache
 /connect.lock
 /coverage
@@ -50,3 +51,6 @@ Thumbs.db
 artifacts/api-server/dev.db
 artifacts/api-server/dev.db-shm
 artifacts/api-server/dev.db-wal
+/dev.db
+/dev.db-shm
+/dev.db-wal

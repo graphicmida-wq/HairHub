@@ -693,6 +693,8 @@ components:
           type: string
         category:
           type: string
+        color:
+          type: string
         durationMins:
           type: integer
         price:
@@ -704,6 +706,7 @@ components:
         - id
         - name
         - category
+        - color
         - durationMins
         - price
 
@@ -713,6 +716,8 @@ components:
         name:
           type: string
         category:
+          type: string
+        color:
           type: string
         durationMins:
           type: integer
@@ -724,6 +729,7 @@ components:
       required:
         - name
         - category
+        - color
         - durationMins
         - price
 
@@ -733,6 +739,8 @@ components:
         name:
           type: string
         category:
+          type: string
+        color:
           type: string
         durationMins:
           type: integer
@@ -753,6 +761,9 @@ components:
           type: string
         brand:
           type: string
+        price:
+          type: number
+          minimum: 0
         quantity:
           type: integer
           description: Number of physical units (bottles/packages)
@@ -782,6 +793,7 @@ components:
         - name
         - category
         - brand
+        - price
         - quantity
         - minThreshold
 
@@ -794,6 +806,9 @@ components:
           type: string
         brand:
           type: string
+        price:
+          type: number
+          minimum: 0
         quantity:
           type: integer
           description: Number of physical units (bottles/packages)
@@ -821,6 +836,7 @@ components:
         - name
         - category
         - brand
+        - price
         - quantity
         - minThreshold
 
@@ -833,6 +849,9 @@ components:
           type: string
         brand:
           type: string
+        price:
+          type: number
+          minimum: 0
         quantity:
           type: integer
         minThreshold:
@@ -918,6 +937,22 @@ components:
         - productId
         - quantityUsed
 
+    SoldProductEntry:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+          minimum: 0
+      required:
+        - productId
+        - quantity
+        - unitPrice
+
     Appointment:
       type: object
       properties:
@@ -930,6 +965,18 @@ components:
           items:
             type: string
           minItems: 1
+        servicePrices:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          nullable: true
+        serviceListPrices:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          nullable: true
         staffId:
           type: string
           nullable: true
@@ -957,6 +1004,11 @@ components:
           items:
             $ref: "#/components/schemas/UsedProductEntry"
           nullable: true
+        soldProducts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SoldProductEntry"
+          nullable: true
       required:
         - id
         - clientId
@@ -976,6 +1028,18 @@ components:
           items:
             type: string
           minItems: 1
+        servicePrices:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          nullable: true
+        serviceListPrices:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          nullable: true
         staffId:
           type: string
           nullable: true
@@ -1000,6 +1064,11 @@ components:
           items:
             $ref: "#/components/schemas/UsedProductEntry"
           nullable: true
+        soldProducts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SoldProductEntry"
+          nullable: true
       required:
         - clientId
         - serviceIds
@@ -1018,6 +1087,18 @@ components:
           items:
             type: string
           minItems: 1
+        servicePrices:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          nullable: true
+        serviceListPrices:
+          type: array
+          items:
+            type: number
+            minimum: 0
+          nullable: true
         staffId:
           type: string
           nullable: true
@@ -1042,6 +1123,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UsedProductEntry"
+          nullable: true
+        soldProducts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SoldProductEntry"
           nullable: true
 
     ClientFormulaProduct:
@@ -1130,6 +1216,13 @@ components:
       properties:
         salonName:
           type: string
+        logoUrl:
+          type: string
+          nullable: true
+          description: "Logo image URL or data URL (e.g. data:image/png;base64,...)"
+        showSalonName:
+          type: boolean
+          nullable: true
         address:
           type: string
           nullable: true

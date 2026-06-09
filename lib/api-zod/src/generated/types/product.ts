@@ -12,6 +12,8 @@ export interface Product {
   name: string;
   category: string;
   brand: string;
+  /** @minimum 0 */
+  price: number;
   /** Number of physical units (bottles/packages) */
   quantity: number;
   minThreshold: number;

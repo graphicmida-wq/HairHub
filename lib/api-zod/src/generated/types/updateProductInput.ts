@@ -11,6 +11,8 @@ export interface UpdateProductInput {
   name?: string;
   category?: string;
   brand?: string;
+  /** @minimum 0 */
+  price?: number;
   quantity?: number;
   minThreshold?: number;
   supplier?: string | null;
