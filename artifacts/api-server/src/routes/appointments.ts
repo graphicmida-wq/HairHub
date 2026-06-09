@@ -113,28 +113,6 @@ router.put("/appointments/:id", async (req, res) => {
     }
   }
 
-  if (isCompletingNow && body.data.soldProducts && body.data.soldProducts.length > 0) {
-    const aggregated = new Map<string, number>();
-    for (const { productId, quantity } of body.data.soldProducts) {
-      if (quantity > 0) {
-        aggregated.set(productId, (aggregated.get(productId) ?? 0) + quantity);
-      }
-    }
-    for (const [productId, qtySold] of aggregated) {
-      const product = await dbGetProduct(productId);
-      if (!product) continue;
-      const patch: Parameters<typeof dbUpdateProduct>[1] = {};
-      if (product.stockGrams != null && product.unitSize != null && Number(product.unitSize) > 0) {
-        const newStock = Math.max(0, Number(product.stockGrams) - qtySold * Number(product.unitSize));
-        patch.stockGrams = newStock;
-        patch.quantity = Math.max(0, Math.floor(newStock / Number(product.unitSize)));
-      } else {
-        patch.quantity = Math.max(0, Number((product as any).quantity ?? 0) - qtySold);
-      }
-      await dbUpdateProduct(productId, patch);
-    }
-  }
-
   const updated = await dbUpdateAppointment(params.data.id, body.data);
   if (!updated) {
     res.status(404).json({ message: "Appointment not found" });

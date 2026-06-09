@@ -1,0 +1,3 @@
+- [CORS produzione](cors-production.md) — corsOrigin=false blocca tutto in prod; usare true quando CORS_ORIGIN non è impostato su Replit
+- [API base URL](api-base-url.md) — mai usare localhost hardcoded in main.tsx; URL relativi funzionano via proxy Replit sia in dev che in prod
+- [Lib stale types](lib-stale-types.md) — errori TypeScript su campi presenti negli schemi → eseguire pnpm run typecheck:libs per ricostruire .d.ts

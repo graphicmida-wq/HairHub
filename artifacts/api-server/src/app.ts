@@ -32,13 +32,13 @@ const isProduction = process.env["NODE_ENV"] === "production";
 let corsOrigin: cors.CorsOptions["origin"];
 if (corsOriginEnv) {
   corsOrigin = corsOriginEnv.split(",").map((o) => o.trim());
-} else if (isProduction) {
-  logger.warn(
-    "CORS_ORIGIN is not set in production; cross-origin requests will be blocked. " +
-    "Set CORS_ORIGIN to the frontend domain (e.g. https://tuodominio.it)."
-  );
-  corsOrigin = false;
 } else {
+  if (isProduction) {
+    logger.warn(
+      "CORS_ORIGIN is not set; allowing all origins. " +
+      "Set CORS_ORIGIN to restrict access (e.g. https://tuodominio.it)."
+    );
+  }
   corsOrigin = true;
 }
 
