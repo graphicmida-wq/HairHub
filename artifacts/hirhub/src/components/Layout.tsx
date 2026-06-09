@@ -46,27 +46,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         className="hidden md:flex w-56 flex-col shrink-0"
         style={{ backgroundColor: SIDEBAR_BG, borderRight: `1px solid ${SIDEBAR_BORDER}` }}
       >
-        <div className="p-6 pb-4">
-          <div className="flex items-center gap-2 mb-1">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt="Logo salone"
-                className="w-6 h-6 rounded-md object-contain bg-white/10"
-              />
-            ) : (
-              <span style={{ color: 'var(--color-brand-muted)', fontSize: '1.1rem', lineHeight: 1 }}>♥</span>
-            )}
-            {showName ? (
-              <h1
-                className="text-[#F5F0E3] text-xl font-semibold tracking-wide leading-tight"
-                style={{ fontFamily: '"Playfair Display", serif' }}
-              >
-                {salonName}
-              </h1>
-            ) : null}
-          </div>
-          <p className="text-[10px] uppercase tracking-[0.2em] ml-[28px]" style={{ color: 'var(--color-brand-muted)' }}>
+        <div className="p-6 pb-4 flex flex-col items-center text-center">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt="Logo salone"
+              className="w-28 h-28 rounded-xl object-contain mb-3"
+            />
+          ) : (
+            <span style={{ color: 'var(--color-brand-muted)', fontSize: '2.5rem', lineHeight: 1 }} className="mb-3">♥</span>
+          )}
+          {showName ? (
+            <h1
+              className="text-[#F5F0E3] text-xl font-semibold tracking-wide leading-tight mb-1"
+              style={{ fontFamily: '"Playfair Display", serif' }}
+            >
+              {salonName}
+            </h1>
+          ) : null}
+          <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--color-brand-muted)' }}>
             Gestione Salone
           </p>
         </div>
