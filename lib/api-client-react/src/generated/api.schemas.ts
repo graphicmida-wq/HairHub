@@ -13,6 +13,59 @@ export interface ApiError {
   message: string;
 }
 
+export type AuthUserRole = (typeof AuthUserRole)[keyof typeof AuthUserRole];
+
+export const AuthUserRole = {
+  admin: "admin",
+  user: "user",
+} as const;
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  role: AuthUserRole;
+  name?: string | null;
+}
+
+export interface LoginInput {
+  username: string;
+  password: string;
+}
+
+export type CreateUserInputRole =
+  (typeof CreateUserInputRole)[keyof typeof CreateUserInputRole];
+
+export const CreateUserInputRole = {
+  admin: "admin",
+  user: "user",
+} as const;
+
+export interface CreateUserInput {
+  /** @minLength 1 */
+  username: string;
+  /** @minLength 8 */
+  password: string;
+  role: CreateUserInputRole;
+  name?: string | null;
+}
+
+export type UpdateUserInputRole =
+  (typeof UpdateUserInputRole)[keyof typeof UpdateUserInputRole];
+
+export const UpdateUserInputRole = {
+  admin: "admin",
+  user: "user",
+} as const;
+
+export interface UpdateUserInput {
+  /** @minLength 1 */
+  username?: string;
+  /** @minLength 8 */
+  password?: string;
+  role?: UpdateUserInputRole;
+  name?: string | null;
+}
+
 export interface Client {
   id: string;
   firstName: string;

@@ -21,6 +21,7 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - Validazione API: Zod + drizzle-zod
 - Codegen: Orval (OpenAPI spec → React Query hooks + Zod schemas)
 - State: `@tanstack/react-query` per server state, `ModalStore` minimo per UI locale
+- Auth: JWT in cookie httpOnly (jsonwebtoken) + hashing bcryptjs; due ruoli (admin/user); primo admin seedato al primo avvio
 
 ## Where things live
 
@@ -33,6 +34,9 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - `artifacts/hirhub/src/pages/` — Dashboard, Agenda, Clienti, Magazzino
 - `artifacts/hirhub/src/components/` — Layout, Modal*, tutti i form modali
 - `artifacts/hirhub/src/lib/store.ts` — solo stato modale (isNewClientOpen ecc.)
+- `artifacts/api-server/src/lib/auth.ts`, `src/middlewares/auth.ts` — hashing, JWT, guardie requireAuth/requireAdmin
+- `artifacts/api-server/src/routes/auth.ts`, `routes/users.ts` — login/logout/me, gestione utenti (admin)
+- `artifacts/hirhub/src/lib/auth-context.tsx`, `src/pages/Login.tsx`, `src/pages/Users.tsx` — auth frontend
 
 ## Architecture decisions
 
@@ -41,6 +45,7 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - **MySQL solo per produzione**: lib/db usa drizzle-orm/mysql-core per Netsons. Configurare DB_HOST, DB_USER, DB_PASS, DB_NAME prima del deploy.
 - **React Query per tutto**: nessun Zustand/Redux. Il frontend legge/scrive solo via hook generati.
 - **Modal state separato**: `ModalStore` è un semplice pub/sub leggero, non fa parte del server state.
+- **Auth self-contained** (no Replit Auth/Clerk, deploy Netsons): login username/password → JWT in cookie httpOnly firmato con `SESSION_SECRET` (~7gg). Guardie `requireAuth`/`requireAdmin` in `middlewares/auth.ts`; le rotte dati richiedono auth, `/users` e `PUT /settings` richiedono admin, `GET /settings` resta pubblica (branding login). Primo admin via `ensureAdminUser()` al primo avvio (env `ADMIN_USERNAME`/`ADMIN_PASSWORD`, fallback `admin`/`admin123` con warning).
 
 ## Product
 
@@ -49,6 +54,8 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - Clienti: lista cercabile, scheda cliente con storico appuntamenti e allergie
 - Magazzino: inventario prodotti con alert scorta minima
 - Servizi: CRUD completo via API (gestibile tramite modal)
+- Autenticazione: login username/password, due ruoli (admin/user); UI gating delle rotte; pulsante logout
+- Utenti: gestione utenti (CRUD) riservata agli admin; voci nav Utenti/Impostazioni visibili solo agli admin
 - Impostazioni salone: da implementare (task #6)
 
 ## User preferences
@@ -63,6 +70,8 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - **Non eseguire `pnpm dev` alla root** — usa `restart_workflow` o il pannello workflow
 - Dopo aver modificato openapi.yaml, eseguire sempre `pnpm --filter @workspace/api-spec run codegen`
 - lib/db/drizzle.config.ts richiede DB_HOST, DB_USER, DB_NAME — non è necessario in sviluppo
+- **SESSION_SECRET obbligatorio in produzione** — in dev esiste un fallback, ma con `NODE_ENV=production` il server termina se manca
+- Credenziali admin di sviluppo seedate: `admin` / `admin123` (vedi log all'avvio)
 
 ## Pointers
 

@@ -11,6 +11,7 @@ import { randomBytes } from "crypto";
 import path from "path";
 import { asc, eq, like, or, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { hashPassword, assertAuthSecret } from "../lib/auth";
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ import {
   appointments as sqliteAppts,
   clientFormulas as sqliteFormulas,
   salonSettings as sqliteSalon,
+  users as sqliteUsers,
 } from "./sqlite-schema";
 
 type SqliteDb = ReturnType<typeof sqliteDrizzle<typeof sqliteSchema>>;
@@ -142,6 +144,14 @@ function createSqliteTables(sqlite: InstanceType<typeof Database>) {
       email TEXT,
       brand_color TEXT
     );
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      name TEXT,
+      created_at TEXT NOT NULL
+    );
   `);
   // Migrations: no-op if column already present
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT"); } catch { /* already exists */ }
@@ -226,6 +236,18 @@ function getMysqlDb(): MysqlDb {
 async function initMysql() {
   const { getDb } = await import("@workspace/db");
   _mysqlDb = await getDb();
+  // Ensure the users table exists on first boot (production). Other tables are
+  // expected to already exist (created via drizzle push or earlier seeds).
+  await _mysqlDb.execute(sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id CHAR(12) PRIMARY KEY,
+      username VARCHAR(100) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      role ENUM('admin','user') NOT NULL DEFAULT 'user',
+      name VARCHAR(100),
+      created_at VARCHAR(40) NOT NULL
+    )
+  `);
   logger.info("MySQL database initialized");
 }
 
@@ -267,7 +289,33 @@ async function mysqlSeedIfEmpty() {
 
 let _useMysql = false;
 
+/**
+ * Seed an initial admin user when the users table is empty. Gated on
+ * dbCountUsers() rather than the per-entity *SeedIfEmpty helpers, which bail out
+ * once business data exists and would otherwise skip the admin in production.
+ */
+async function ensureAdminUser() {
+  const count = await dbCountUsers();
+  if (count > 0) return;
+  const envUsername = process.env["ADMIN_USERNAME"]?.trim();
+  const envPassword = process.env["ADMIN_PASSWORD"];
+  const username = envUsername || "admin";
+  const password = envPassword || "admin123";
+  const usingDefaults = !envUsername || !envPassword;
+  const passwordHash = await hashPassword(password);
+  await dbCreateUser({ username, passwordHash, role: "admin", name: "Amministratore" });
+  if (usingDefaults) {
+    logger.warn(
+      { username },
+      "ADMIN_USERNAME/ADMIN_PASSWORD not set — seeded a DEFAULT admin (admin / admin123). CHANGE THIS PASSWORD immediately after first login!",
+    );
+  } else {
+    logger.info({ username }, "Seeded initial admin user from ADMIN_USERNAME/ADMIN_PASSWORD");
+  }
+}
+
 export async function initDb() {
+  assertAuthSecret();
   if (process.env["DB_HOST"]) {
     _useMysql = true;
     await initMysql();
@@ -276,6 +324,7 @@ export async function initDb() {
     _useMysql = false;
     initSqlite();
   }
+  await ensureAdminUser();
 }
 
 // ── Clients ────────────────────────────────────────────────────────────────────
@@ -620,6 +669,92 @@ export async function dbDeleteStaffMember(id: string) {
     return;
   }
   getSqliteDb().delete(sqliteStaff).where(eq(sqliteStaff.id, id)).run();
+}
+
+// ── Users (auth) ─────────────────────────────────────────────────────────────
+
+export type Role = "admin" | "user";
+
+export interface CreateUserData {
+  username: string;
+  passwordHash: string;
+  role: Role;
+  name?: string | null;
+}
+
+export async function dbCountUsers(): Promise<number> {
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    const rows = await getMysqlDb().select().from(usersTable).execute();
+    return rows.length;
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteUsers).all().length);
+}
+
+export async function dbGetUsers() {
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(usersTable).execute();
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteUsers).all());
+}
+
+export async function dbGetUser(id: string) {
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(usersTable).where(eq(usersTable.id, id)).execute().then(r => r[0]);
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteUsers).where(eq(sqliteUsers.id, id)).get());
+}
+
+export async function dbGetUserByUsername(username: string) {
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(usersTable).where(eq(usersTable.username, username)).execute().then(r => r[0]);
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteUsers).where(eq(sqliteUsers.username, username)).get());
+}
+
+export async function dbCreateUser(data: CreateUserData) {
+  const id = uid();
+  const createdAt = new Date().toISOString();
+  const values = {
+    id,
+    username: data.username,
+    passwordHash: data.passwordHash,
+    role: data.role,
+    name: data.name ?? null,
+    createdAt,
+  };
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    await getMysqlDb().insert(usersTable).values(values);
+    return getMysqlDb().select().from(usersTable).where(eq(usersTable.id, id)).execute().then(r => r[0]!);
+  }
+  getSqliteDb().insert(sqliteUsers).values(values).run();
+  return Promise.resolve(getSqliteDb().select().from(sqliteUsers).where(eq(sqliteUsers.id, id)).get()!);
+}
+
+export async function dbUpdateUser(
+  id: string,
+  data: Partial<{ username: string; passwordHash: string; role: Role; name: string | null }>,
+) {
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    await getMysqlDb().update(usersTable).set(data).where(eq(usersTable.id, id));
+    return getMysqlDb().select().from(usersTable).where(eq(usersTable.id, id)).execute().then(r => r[0]);
+  }
+  getSqliteDb().update(sqliteUsers).set(data).where(eq(sqliteUsers.id, id)).run();
+  return Promise.resolve(getSqliteDb().select().from(sqliteUsers).where(eq(sqliteUsers.id, id)).get());
+}
+
+export async function dbDeleteUser(id: string) {
+  if (_useMysql) {
+    const { usersTable } = await import("@workspace/db");
+    await getMysqlDb().delete(usersTable).where(eq(usersTable.id, id));
+    return;
+  }
+  getSqliteDb().delete(sqliteUsers).where(eq(sqliteUsers.id, id)).run();
 }
 
 // ── Appointments ───────────────────────────────────────────────────────────────

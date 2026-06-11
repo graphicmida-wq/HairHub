@@ -71,6 +71,15 @@ export const clientFormulas = sqliteTable("client_formulas", {
   createdAt: text("created_at").notNull(),
 });
 
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
+  name: text("name"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const salonSettings = sqliteTable("salon_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   salonName: text("salon_name").notNull().default("L'Atelier"),
@@ -95,3 +104,5 @@ export type InsertAppointment = typeof appointments.$inferInsert;
 export type ClientFormula = typeof clientFormulas.$inferSelect;
 export type InsertClientFormula = typeof clientFormulas.$inferInsert;
 export type SalonSettings = typeof salonSettings.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;

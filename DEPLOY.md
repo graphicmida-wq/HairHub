@@ -127,17 +127,49 @@ Imposta queste variabili nel **Node.js Selector → Environment Variables**:
 | `DB_PASS` | Password MySQL | `password-sicura` |
 | `CORS_ORIGIN` | Origini consentite per CORS (dominio del frontend) | `https://tuodominio.it` |
 | `NODE_ENV` | Modalità produzione | `production` |
+| `SESSION_SECRET` | Segreto per firmare i token di sessione (JWT). **Obbligatorio in produzione: senza, il server non si avvia.** | stringa lunga e casuale (32+ caratteri) |
+| `ADMIN_USERNAME` | Nome utente del **primo** amministratore, creato solo al primo avvio | `admin` |
+| `ADMIN_PASSWORD` | Password del **primo** amministratore, creata solo al primo avvio | `password-sicura` |
 
 > **Nota CORS_ORIGIN:** Se il frontend è su `https://www.tuodominio.it` e anche su
 > `https://tuodominio.it`, elenca entrambi separati da virgola:
 > `CORS_ORIGIN=https://tuodominio.it,https://www.tuodominio.it`
 
+> **Nota SESSION_SECRET:** Genera un valore casuale, ad esempio con
+> `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+> Non cambiarlo dopo il deploy, altrimenti tutte le sessioni attive vengono invalidate
+> (gli utenti dovranno rifare il login). In produzione il server termina con errore
+> se la variabile non è impostata.
+
+> **Nota autenticazione e cookie:** La sessione viene gestita con un cookie `httpOnly`
+> firmato (JWT). Il cookie è marcato `Secure` in produzione, quindi il sito **deve**
+> essere servito via HTTPS, ed è `SameSite=Lax`. Per far funzionare il login senza
+> complicazioni, tieni frontend e API sullo **stesso dominio** con l'API raggiungibile
+> su `/api` (vedi Step 2). Configurazioni cross-domain richiederebbero `SameSite=None`.
+> In produzione, se `CORS_ORIGIN` non è impostato le richieste cross-origin vengono
+> **bloccate** (default sicuro): impostalo solo se frontend e API sono su domini diversi.
+
+> **Nota sicurezza login:** L'app non implementa rate limiting sul login. Per un salone
+> con pochi utenti è accettabile, ma se l'app è esposta pubblicamente valuta una
+> protezione anti-brute-force a livello di hosting (es. mod_security/fail2ban su cPanel)
+> e usa password robuste (minimo 8 caratteri, già imposto lato server).
+
 ---
 
-## Step 7 — Inizializzare il database MySQL
+## Step 7 — Inizializzare il database e il primo amministratore
 
-Al primo avvio, il server creerà automaticamente le tabelle necessarie
-(tramite `initDb()` in `artifacts/api-server/src/data/db.ts`).
+Al primo avvio, il server crea automaticamente le tabelle necessarie
+(tramite `initDb()` in `artifacts/api-server/src/data/db.ts`), inclusa la tabella `users`.
+
+Sempre al primo avvio, **se la tabella `users` è vuota**, il server crea un account
+amministratore usando `ADMIN_USERNAME` / `ADMIN_PASSWORD` (vedi Step 6). Se queste
+variabili non sono impostate, viene creato un admin di default `admin` / `admin123`
+con un avviso nei log: **cambia subito la password** dopo il primo login (dalla pagina
+Utenti, voce visibile solo agli amministratori).
+
+> La creazione dell'admin avviene **una sola volta**: se in seguito modifichi
+> `ADMIN_USERNAME`/`ADMIN_PASSWORD`, l'account esistente non viene toccato. Per
+> reimpostare le credenziali usa la pagina Utenti da un account admin.
 
 Se vuoi applicare lo schema Drizzle manualmente:
 

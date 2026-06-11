@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -32,17 +33,22 @@ const isProduction = process.env["NODE_ENV"] === "production";
 let corsOrigin: cors.CorsOptions["origin"];
 if (corsOriginEnv) {
   corsOrigin = corsOriginEnv.split(",").map((o) => o.trim());
+} else if (isProduction) {
+  // Secure default for the Netsons deploy: with credentials:true, reflecting all
+  // origins would expose the session cookie cross-site. The documented setup keeps
+  // frontend and API on the same domain (same-origin needs no CORS), so block
+  // cross-origin by default and require CORS_ORIGIN to be explicit for split domains.
+  logger.warn(
+    "CORS_ORIGIN non impostato in produzione: le richieste cross-origin sono bloccate. " +
+    "Imposta CORS_ORIGIN se frontend e API sono su domini diversi (es. https://tuodominio.it)."
+  );
+  corsOrigin = false;
 } else {
-  if (isProduction) {
-    logger.warn(
-      "CORS_ORIGIN is not set; allowing all origins. " +
-      "Set CORS_ORIGIN to restrict access (e.g. https://tuodominio.it)."
-    );
-  }
   corsOrigin = true;
 }
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
+app.use(cookieParser());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 

@@ -5,6 +5,7 @@ import {
   GetSettingsResponse,
   UpdateSettingsResponse,
 } from "@workspace/api-zod";
+import { requireAuth, requireAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
@@ -19,7 +20,7 @@ router.get("/settings", async (req, res) => {
   res.json(parsed.data);
 });
 
-router.put("/settings", async (req, res) => {
+router.put("/settings", requireAuth, requireAdmin, async (req, res) => {
   const body = UpdateSettingsBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });

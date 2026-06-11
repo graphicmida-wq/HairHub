@@ -864,3 +864,82 @@ export const UpdateSettingsResponse = zod.object({
       "Hex color string for the brand palette primary color, e.g. #5c5870",
     ),
 });
+
+/**
+ * @summary Log in with username and password
+ */
+export const LoginBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.string(),
+  username: zod.string(),
+  role: zod.enum(["admin", "user"]),
+  name: zod.string().nullish(),
+});
+
+/**
+ * @summary Get the currently authenticated user
+ */
+export const GetCurrentUserResponse = zod.object({
+  id: zod.string(),
+  username: zod.string(),
+  role: zod.enum(["admin", "user"]),
+  name: zod.string().nullish(),
+});
+
+/**
+ * @summary List all users (admin only)
+ */
+export const ListUsersResponseItem = zod.object({
+  id: zod.string(),
+  username: zod.string(),
+  role: zod.enum(["admin", "user"]),
+  name: zod.string().nullish(),
+});
+export const ListUsersResponse = zod.array(ListUsersResponseItem);
+
+/**
+ * @summary Create a new user (admin only)
+ */
+
+export const createUserBodyPasswordMin = 8;
+
+export const CreateUserBody = zod.object({
+  username: zod.string().min(1),
+  password: zod.string().min(createUserBodyPasswordMin),
+  role: zod.enum(["admin", "user"]),
+  name: zod.string().nullish(),
+});
+
+/**
+ * @summary Update a user (admin only)
+ */
+export const UpdateUserParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const updateUserBodyPasswordMin = 8;
+
+export const UpdateUserBody = zod.object({
+  username: zod.string().min(1).optional(),
+  password: zod.string().min(updateUserBodyPasswordMin).optional(),
+  role: zod.enum(["admin", "user"]).optional(),
+  name: zod.string().nullish(),
+});
+
+export const UpdateUserResponse = zod.object({
+  id: zod.string(),
+  username: zod.string(),
+  role: zod.enum(["admin", "user"]),
+  name: zod.string().nullish(),
+});
+
+/**
+ * @summary Delete a user (admin only)
+ */
+export const DeleteUserParams = zod.object({
+  id: zod.coerce.string(),
+});

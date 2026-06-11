@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Home, Package2, Plus, Scissors, Settings } from 'lucide-react';
+import { Calendar, Users, Home, Package2, Plus, Scissors, Settings, UserCog, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { store, useModalStore } from '../lib/store';
 import { useGetSettings } from '@workspace/api-client-react';
+import { useAuth } from '../lib/auth-context';
 import { NewClientModal } from './NewClientModal';
 import { NewAppointmentModal } from './NewAppointmentModal';
 import { NewProductModal } from './NewProductModal';
@@ -24,6 +25,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isFabOpen, setIsFabOpen] = React.useState(false);
   const modalState = useModalStore();
   const { data: settings } = useGetSettings();
+  const { user, isAdmin, logout } = useAuth();
 
   const salonName = settings?.salonName ?? "Capelli & Vanitá";
   const logoUrl = settings?.logoUrl ?? null;
@@ -39,6 +41,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const isSettingsActive = location.pathname === '/impostazioni';
+  const isUsersActive = location.pathname === '/utenti';
+  const userDisplayName = user?.name?.trim() || user?.username || '';
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden" style={{ background: SIDEBAR_BG }}>
@@ -103,36 +107,90 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           })}
         </nav>
 
-        <div className="px-3 pb-6">
-          <Link
-            to="/impostazioni"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium mb-4"
-            style={{
-              backgroundColor: isSettingsActive ? NAV_ACTIVE_BG : 'transparent',
-              color: isSettingsActive ? NAV_ACTIVE_TEXT : NAV_INACTIVE_TEXT,
-            }}
-            onMouseEnter={(e) => {
-              if (!isSettingsActive) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = NAV_HOVER_BG;
-                (e.currentTarget as HTMLElement).style.color = '#F5F0E3';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isSettingsActive) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                (e.currentTarget as HTMLElement).style.color = NAV_INACTIVE_TEXT;
-              }
-            }}
-          >
-            <Settings className="w-[18px] h-[18px] shrink-0" />
-            <span>Impostazioni</span>
-          </Link>
+        <div className="px-3 pb-6 flex flex-col gap-0.5">
+          {isAdmin && (
+            <Link
+              to="/utenti"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
+              style={{
+                backgroundColor: isUsersActive ? NAV_ACTIVE_BG : 'transparent',
+                color: isUsersActive ? NAV_ACTIVE_TEXT : NAV_INACTIVE_TEXT,
+              }}
+              onMouseEnter={(e) => {
+                if (!isUsersActive) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = NAV_HOVER_BG;
+                  (e.currentTarget as HTMLElement).style.color = '#F5F0E3';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isUsersActive) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLElement).style.color = NAV_INACTIVE_TEXT;
+                }
+              }}
+            >
+              <UserCog className="w-[18px] h-[18px] shrink-0" />
+              <span>Utenti</span>
+            </Link>
+          )}
+
+          {isAdmin && (
+            <Link
+              to="/impostazioni"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
+              style={{
+                backgroundColor: isSettingsActive ? NAV_ACTIVE_BG : 'transparent',
+                color: isSettingsActive ? NAV_ACTIVE_TEXT : NAV_INACTIVE_TEXT,
+              }}
+              onMouseEnter={(e) => {
+                if (!isSettingsActive) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = NAV_HOVER_BG;
+                  (e.currentTarget as HTMLElement).style.color = '#F5F0E3';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSettingsActive) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLElement).style.color = NAV_INACTIVE_TEXT;
+                }
+              }}
+            >
+              <Settings className="w-[18px] h-[18px] shrink-0" />
+              <span>Impostazioni</span>
+            </Link>
+          )}
 
           <div
-            className="px-3 pt-4"
+            className="px-3 pt-4 mt-3"
             style={{ borderTop: `1px solid ${SIDEBAR_BORDER}` }}
           >
-            <p className="text-sm capitalize" style={{ color: 'var(--color-brand-muted)' }}>{today}</p>
+            <p className="text-sm capitalize mb-3" style={{ color: 'var(--color-brand-muted)' }}>{today}</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium truncate" style={{ color: '#F5F0E3' }}>
+                  {userDisplayName}
+                </span>
+                <span className="text-[11px] truncate" style={{ color: 'var(--color-brand-muted)' }}>
+                  {isAdmin ? 'Amministratore' : 'Utente'}
+                </span>
+              </div>
+              <button
+                onClick={logout}
+                title="Esci"
+                className="p-2 rounded-lg shrink-0 transition-colors"
+                style={{ color: 'var(--color-brand-muted)' }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = NAV_HOVER_BG;
+                  (e.currentTarget as HTMLElement).style.color = '#F5F0E3';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--color-brand-muted)';
+                }}
+              >
+                <LogOut className="w-[18px] h-[18px]" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -160,14 +218,36 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </h1>
             ) : null}
           </div>
-          <Link
-            to="/impostazioni"
-            className="p-2 -mr-2 rounded-full transition-colors"
-            style={{ color: 'var(--color-brand-muted)' }}
-            onClick={() => setIsFabOpen(false)}
-          >
-            <Settings className="w-5 h-5" />
-          </Link>
+          <div className="flex items-center gap-1 -mr-2">
+            {isAdmin && (
+              <Link
+                to="/utenti"
+                className="p-2 rounded-full transition-colors"
+                style={{ color: 'var(--color-brand-muted)' }}
+                onClick={() => setIsFabOpen(false)}
+              >
+                <UserCog className="w-5 h-5" />
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                to="/impostazioni"
+                className="p-2 rounded-full transition-colors"
+                style={{ color: 'var(--color-brand-muted)' }}
+                onClick={() => setIsFabOpen(false)}
+              >
+                <Settings className="w-5 h-5" />
+              </Link>
+            )}
+            <button
+              onClick={() => { setIsFabOpen(false); logout(); }}
+              title="Esci"
+              className="p-2 rounded-full transition-colors"
+              style={{ color: 'var(--color-brand-muted)' }}
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 bg-[#61533e21]">
