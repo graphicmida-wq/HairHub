@@ -12,3 +12,15 @@ id = "aXB7lt7bv6nYdtPQslNsK"
 uri = "file://deploy-dist/lumii-backend.zip"
 type = "unspecified"
 title = "Backend Lumii (API Node.js) — per dopo"
+
+[[outputs]]
+id = "O86mh4eJmBUleLDgwypvY"
+uri = "file://artifacts/hirhub/public/pwa-512x512.png"
+type = "image"
+title = "Icona app Lumii (standard)"
+
+[[outputs]]
+id = "rANLoBqS89v0sW7wDtysB"
+uri = "file://artifacts/hirhub/public/maskable-512x512.png"
+type = "image"
+title = "Icona app Lumii (Android/schermata Home)"
