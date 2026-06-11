@@ -1036,6 +1036,42 @@ export async function dbDeleteUser(id: string) {
 
 // ── Appointments ───────────────────────────────────────────────────────────────
 
+// Legacy MySQL tables (created by older builds) can store the appointment JSON
+// columns as TEXT instead of a real JSON type, so mysql2 returns them as raw
+// strings rather than parsed arrays. drizzle-orm's MySqlJson defines no
+// mapFromDriverValue, so it passes that value straight through; Zod then rejects
+// the response ("array expected, string received") and the save surfaces as a
+// generic 500. Coerce every JSON-ish field defensively: parse it if it is a
+// string, keep it as-is if mysql2 already parsed it to an array/object.
+function coerceJson<T>(v: unknown): T | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (s === "") return null;
+    try { return JSON.parse(s) as T; } catch { return null; }
+  }
+  return v as T;
+}
+
+function normalizeApptRowMysql<T extends {
+  serviceIds: unknown;
+  servicePrices: unknown;
+  serviceListPrices: unknown;
+  soldProducts: unknown;
+  usedProductIds: unknown;
+  usedProducts: unknown;
+}>(a: T) {
+  return {
+    ...a,
+    serviceIds: coerceJson<string[]>(a.serviceIds) ?? [],
+    servicePrices: coerceJson<number[]>(a.servicePrices),
+    serviceListPrices: coerceJson<number[]>(a.serviceListPrices),
+    soldProducts: coerceJson<{ productId: string; quantity: number; unitPrice: number }[]>(a.soldProducts),
+    usedProductIds: coerceJson<string[]>(a.usedProductIds),
+    usedProducts: coerceJson<UsedProductEntry[]>(a.usedProducts),
+  };
+}
+
 function parseApptRow(a: typeof sqliteAppts.$inferSelect) {
   return {
     ...a,
@@ -1051,7 +1087,8 @@ function parseApptRow(a: typeof sqliteAppts.$inferSelect) {
 export async function dbGetAppointments() {
   if (_useMysql) {
     const { appointmentsTable } = await import("@workspace/db");
-    return getMysqlDb().select().from(appointmentsTable).execute();
+    const rows = await getMysqlDb().select().from(appointmentsTable).execute();
+    return rows.map(normalizeApptRowMysql);
   }
   return Promise.resolve(
     getSqliteDb().select().from(sqliteAppts).all().map(parseApptRow)
@@ -1061,7 +1098,8 @@ export async function dbGetAppointments() {
 export async function dbGetAppointment(id: string) {
   if (_useMysql) {
     const { appointmentsTable } = await import("@workspace/db");
-    return getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute().then(r => r[0]);
+    const r = await getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute();
+    return r[0] ? normalizeApptRowMysql(r[0]) : undefined;
   }
   const a = getSqliteDb().select().from(sqliteAppts).where(eq(sqliteAppts.id, id)).get();
   if (!a) return Promise.resolve(undefined);
@@ -1102,7 +1140,8 @@ export async function dbCreateAppointment(data: {
       usedProductIds: data.usedProductIds ?? null,
       usedProducts: data.usedProducts ?? null,
     });
-    return getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute().then(r => r[0]!);
+    const r = await getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute();
+    return normalizeApptRowMysql(r[0]!);
   }
   getSqliteDb().insert(sqliteAppts).values({
     id,
@@ -1155,7 +1194,8 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
     if (data.usedProductIds !== undefined) mysqlPatch.usedProductIds = data.usedProductIds;
     if (data.usedProducts !== undefined) (mysqlPatch as Record<string, unknown>)["usedProducts"] = data.usedProducts;
     await getMysqlDb().update(appointmentsTable).set(mysqlPatch).where(eq(appointmentsTable.id, id));
-    return getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute().then(r => r[0]);
+    const r = await getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute();
+    return r[0] ? normalizeApptRowMysql(r[0]) : undefined;
   }
   const sqlitePatch: Partial<typeof sqliteAppts.$inferInsert> = {};
   if (data.clientId !== undefined) sqlitePatch.clientId = data.clientId;

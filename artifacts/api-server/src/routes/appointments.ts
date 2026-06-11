@@ -74,7 +74,10 @@ router.post("/appointments", async (req, res) => {
   const parsed = GetAppointmentResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
-    res.status(500).json({ message: "Internal server error" });
+    const issue = parsed.error.issues[0];
+    res.status(500).json({
+      message: `Appuntamento salvato ma risposta non valida${issue ? ` (${issue.path.join(".") || "campo"}: ${issue.message})` : ""}`,
+    });
     return;
   }
   res.status(201).json(parsed.data);
@@ -162,7 +165,10 @@ router.put("/appointments/:id", async (req, res) => {
   const parsed = UpdateAppointmentResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /appointments/:id");
-    res.status(500).json({ message: "Internal server error" });
+    const issue = parsed.error.issues[0];
+    res.status(500).json({
+      message: `Modifica salvata ma risposta non valida${issue ? ` (${issue.path.join(".") || "campo"}: ${issue.message})` : ""}`,
+    });
     return;
   }
   res.json(parsed.data);

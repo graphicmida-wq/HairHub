@@ -56285,7 +56285,7 @@ var DeleteUserParams = objectType({
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
-var BUILD_VERSION = "salva-fix2-2026-06-11";
+var BUILD_VERSION = "salva-fix3-2026-06-11";
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
   res.json(data);
@@ -59711,6 +59711,30 @@ async function dbDeleteUser(id) {
   }
   getSqliteDb().delete(users).where(eq(users.id, id)).run();
 }
+function coerceJson(v) {
+  if (v === null || v === void 0) return null;
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (s === "") return null;
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  }
+  return v;
+}
+function normalizeApptRowMysql(a) {
+  return {
+    ...a,
+    serviceIds: coerceJson(a.serviceIds) ?? [],
+    servicePrices: coerceJson(a.servicePrices),
+    serviceListPrices: coerceJson(a.serviceListPrices),
+    soldProducts: coerceJson(a.soldProducts),
+    usedProductIds: coerceJson(a.usedProductIds),
+    usedProducts: coerceJson(a.usedProducts)
+  };
+}
 function parseApptRow(a) {
   return {
     ...a,
@@ -59725,7 +59749,8 @@ function parseApptRow(a) {
 async function dbGetAppointments() {
   if (_useMysql) {
     const { appointmentsTable: appointmentsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    return getMysqlDb().select().from(appointmentsTable2).execute();
+    const rows = await getMysqlDb().select().from(appointmentsTable2).execute();
+    return rows.map(normalizeApptRowMysql);
   }
   return Promise.resolve(
     getSqliteDb().select().from(appointments).all().map(parseApptRow)
@@ -59734,7 +59759,8 @@ async function dbGetAppointments() {
 async function dbGetAppointment(id) {
   if (_useMysql) {
     const { appointmentsTable: appointmentsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    return getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute().then((r) => r[0]);
+    const r = await getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute();
+    return r[0] ? normalizeApptRowMysql(r[0]) : void 0;
   }
   const a = getSqliteDb().select().from(appointments).where(eq(appointments.id, id)).get();
   if (!a) return Promise.resolve(void 0);
@@ -59760,7 +59786,8 @@ async function dbCreateAppointment(data) {
       usedProductIds: data.usedProductIds ?? null,
       usedProducts: data.usedProducts ?? null
     });
-    return getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute().then((r) => r[0]);
+    const r = await getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute();
+    return normalizeApptRowMysql(r[0]);
   }
   getSqliteDb().insert(appointments).values({
     id,
@@ -59798,7 +59825,8 @@ async function dbUpdateAppointment(id, data) {
     if (data.usedProductIds !== void 0) mysqlPatch.usedProductIds = data.usedProductIds;
     if (data.usedProducts !== void 0) mysqlPatch["usedProducts"] = data.usedProducts;
     await getMysqlDb().update(appointmentsTable2).set(mysqlPatch).where(eq(appointmentsTable2.id, id));
-    return getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute().then((r) => r[0]);
+    const r = await getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute();
+    return r[0] ? normalizeApptRowMysql(r[0]) : void 0;
   }
   const sqlitePatch = {};
   if (data.clientId !== void 0) sqlitePatch.clientId = data.clientId;
@@ -60445,7 +60473,10 @@ router7.post("/appointments", async (req, res) => {
   const parsed = GetAppointmentResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
-    res.status(500).json({ message: "Internal server error" });
+    const issue2 = parsed.error.issues[0];
+    res.status(500).json({
+      message: `Appuntamento salvato ma risposta non valida${issue2 ? ` (${issue2.path.join(".") || "campo"}: ${issue2.message})` : ""}`
+    });
     return;
   }
   res.status(201).json(parsed.data);
@@ -60523,7 +60554,10 @@ router7.put("/appointments/:id", async (req, res) => {
   const parsed = UpdateAppointmentResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /appointments/:id");
-    res.status(500).json({ message: "Internal server error" });
+    const issue2 = parsed.error.issues[0];
+    res.status(500).json({
+      message: `Modifica salvata ma risposta non valida${issue2 ? ` (${issue2.path.join(".") || "campo"}: ${issue2.message})` : ""}`
+    });
     return;
   }
   res.json(parsed.data);

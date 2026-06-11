@@ -52,6 +52,17 @@ SQLite in dev aveva già le migrazioni, MySQL no → il bug era invisibile in sv
   startup non aborta mai (Passenger su Netsons non cattura comunque stdout/pino).
 - JSON in MySQL 8 non ammette DEFAULT letterale → aggiungi le colonne JSON come nullable e
   fai il backfill a `JSON_ARRAY()` per soddisfare lo Zod `notNull string[]` in lettura.
+- **Lettura JSON drizzle+mysql2 (trappola subdola):** `drizzle-orm` mysql `json()` (v0.45.2)
+  override SOLO `mapToDriverValue` (write = `JSON.stringify`), NON ha `mapFromDriverValue`:
+  in lettura restituisce così com'è ciò che dà mysql2. mysql2 fa il parse SOLO se la colonna
+  è di tipo JSON reale → torna un array; ma una colonna **TEXT legacy** (vecchia build) torna
+  una **stringa grezza**. Quindi `serviceIds` ecc. possono arrivare come stringa, lo Zod
+  `array(...)` della response fallisce ("array expected, string received") e il salvataggio
+  va in 500 generico (la INSERT riesce, è la rilettura+validazione a rompersi). In dev SQLite
+  non si vede perché `parseApptRow` fa il JSON.parse a mano. **Regola:** ogni rilettura MySQL
+  che alimenta uno Zod `array/object` deve coercere difensivo (parse-se-stringa, tieni-se-già-array)
+  su TUTTI i campi JSON, non fidarti del tipo `$type<...>()` di drizzle (è solo compile-time).
+  Vale per tutti i path di lettura (list, get-by-id, e le riletture dopo insert/update).
 - Gli errori di `migrate()` inattesi devono andare a `logger.warn` (non `debug`): il default
   di pino è livello "info", quindi un fallimento reale a `debug` sarebbe invisibile in prod.
 - Non testabile in locale (dev = SQLite): valida la SQL MySQL con revisione architect.
