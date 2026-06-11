@@ -13,6 +13,7 @@ import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
 import { Login } from './pages/Login';
 import { Toaster } from './components/Toast';
+import { PwaReloadPrompt } from './components/PwaReloadPrompt';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { BRAND_PRESETS, DEFAULT_PALETTE, paletteFromCustomColor, applyBrandPalette, saveBrandPalette } from './lib/brand-color';
 
@@ -86,6 +87,7 @@ export default function App() {
           <BrandColorSync />
           <AppGate />
           <Toaster />
+          <PwaReloadPrompt />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
