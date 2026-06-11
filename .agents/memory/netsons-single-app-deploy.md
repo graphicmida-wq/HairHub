@@ -23,7 +23,13 @@ CORS/cookie tra domini diversi.
 - **mysql2 è external nel bundle**: `build.mjs` lo mette in `external`, quindi esbuild lo
   emette come `import` statico in cima a `index.mjs`, risolto al LINK time. Deve essere
   installato (è l'unica dependency runtime in `lumii-app/package.json`) o l'app crasha
-  all'avvio con `ERR_MODULE_NOT_FOUND`, anche se nel codice l'uso sembra dinamico.
+  all'avvio con `ERR_MODULE_NOT_FOUND: Cannot find package 'mysql2'`, anche se nel codice
+  l'uso sembra dinamico. **Recupero su cPanel**: "Setup Node.js App" → **Run NPM Install**
+  (legge `lumii-app/package.json`) → poi Restart. **ATTENZIONE**: il node_modules sta in un
+  venv PER-VERSIONE-NODE (`nodevenv/HairHub/lumii-app/<ver>/`); se cambia la versione Node
+  selezionata, i pacchetti spariscono e va ri-eseguito NPM Install. Quindi NON dare per
+  scontato "niente NPM install dopo gli update": se l'app crasha con questo errore, il fix è
+  Run NPM Install + Restart.
 - **better-sqlite3 è solo dev**: external + import dinamico in `initSqlite`, mai caricato
   quando `DB_HOST` è impostato (produzione MySQL).
 - **Niente dati demo in produzione**: il seed con clienti/appuntamenti finti è gated su
