@@ -36,8 +36,20 @@ SQLite in dev aveva già le migrazioni, MySQL no → il bug era invisibile in sv
   Pattern corretto: cerca il nome (auto-generato, non osservabile) della FK via
   `information_schema.KEY_COLUMN_USAGE` (filtra `TABLE_SCHEMA=DATABASE()`, `TABLE_NAME`,
   `COLUMN_NAME`, `REFERENCED_TABLE_NAME IS NOT NULL`), `DROP FOREIGN KEY <nome>` e poi
-  `DROP COLUMN`. `db.execute()` (drizzle/mysql2) può tornare `[rows, fields]` o righe piatte:
-  parsa difensivo entrambe le forme.
+  `DROP COLUMN`. **Per leggere information_schema in una migrazione, NON usare il
+  `db.execute()` di drizzle**: la forma di ritorno è ambigua e può tornare vuota in
+  silenzio (→ FK non droppata → `DROP COLUMN` fallisce → colonna `NOT NULL` resta → INSERT
+  rifiutato, identico al bug originale). Apri invece una connessione mysql2 dedicata
+  (`import("mysql2/promise")` + `createConnection` con le stesse env `DB_HOST/USER/PASS/NAME/PORT`,
+  `conn.end()` in `finally`): `conn.query()` garantisce la tupla `[rows, fields]`.
+- **Heal generico delle colonne legacy:** oltre alla FK specifica, conviene rilassare in
+  blocco OGNI colonna `NOT NULL` senza default che il codice non scrive più. Leggi
+  `information_schema.COLUMNS` (`IS_NULLABLE='NO'`, `COLUMN_DEFAULT IS NULL`, `COLUMN_KEY<>'PRI'`,
+  `EXTRA NOT LIKE '%auto_increment%'`), salta i nomi nel write-set corrente (tieni il set
+  allineato 1:1 alle colonne della tabella drizzle) e fai `MODIFY <col> <COLUMN_TYPE> NULL`.
+  Sicuro: rilassare a NULL non perde dati e le colonne scritte hanno sempre un valore.
+  Tutto dentro try/catch annidati + un try/catch esterno con solo `logger.warn`, così lo
+  startup non aborta mai (Passenger su Netsons non cattura comunque stdout/pino).
 - JSON in MySQL 8 non ammette DEFAULT letterale → aggiungi le colonne JSON come nullable e
   fai il backfill a `JSON_ARRAY()` per soddisfare lo Zod `notNull string[]` in lettura.
 - Gli errori di `migrate()` inattesi devono andare a `logger.warn` (non `debug`): il default

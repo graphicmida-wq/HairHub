@@ -16,7 +16,7 @@ export const NewServiceModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
         setFormData({ name: '', category: '', color: '#94a3b8', durationMins: '', price: '', notes: '' });
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { data?: { message?: string } })?.data?.message;
         toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },

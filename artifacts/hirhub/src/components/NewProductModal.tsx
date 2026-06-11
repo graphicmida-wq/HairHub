@@ -47,7 +47,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
         setStockGramsManual(false);
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { data?: { message?: string } })?.data?.message;
         toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },

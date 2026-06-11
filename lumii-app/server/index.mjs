@@ -56285,7 +56285,7 @@ var DeleteUserParams = objectType({
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
-var BUILD_VERSION = "salva-appuntamento-2026-06-11";
+var BUILD_VERSION = "salva-fix2-2026-06-11";
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
   res.json(data);
@@ -59225,26 +59225,80 @@ async function initMysql() {
   );
   await migrate("UPDATE appointments SET service_ids = JSON_ARRAY() WHERE service_ids IS NULL");
   try {
-    const fkResult = await db.execute(sql`
-      SELECT CONSTRAINT_NAME AS name
-      FROM information_schema.KEY_COLUMN_USAGE
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = 'appointments'
-        AND COLUMN_NAME = 'service_id'
-        AND REFERENCED_TABLE_NAME IS NOT NULL
-    `);
-    const fkRows = Array.isArray(fkResult) && Array.isArray(fkResult[0]) ? fkResult[0] : Array.isArray(fkResult) ? fkResult : [];
-    for (const row of fkRows) {
-      const name = row.name ?? row.CONSTRAINT_NAME;
-      if (name) await migrate(`ALTER TABLE appointments DROP FOREIGN KEY \`${name}\``);
+    const mysql = await import("mysql2/promise");
+    const conn = await mysql.createConnection({
+      host: process.env["DB_HOST"],
+      user: process.env["DB_USER"],
+      password: process.env["DB_PASS"] ?? "",
+      database: process.env["DB_NAME"],
+      port: Number(process.env["DB_PORT"] ?? 3306)
+    });
+    try {
+      const [fkRows] = await conn.query(
+        `SELECT CONSTRAINT_NAME AS name
+         FROM information_schema.KEY_COLUMN_USAGE
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'appointments'
+           AND COLUMN_NAME = 'service_id'
+           AND REFERENCED_TABLE_NAME IS NOT NULL`
+      );
+      for (const row of fkRows) {
+        try {
+          await conn.query(`ALTER TABLE appointments DROP FOREIGN KEY \`${row.name}\``);
+          logger.info({ fk: row.name }, "Dropped legacy service_id foreign key");
+        } catch (e) {
+          logger.warn({ err: e.message, fk: row.name }, "Could not drop legacy FK");
+        }
+      }
+      try {
+        await conn.query("ALTER TABLE appointments DROP COLUMN service_id");
+        logger.info("Dropped legacy appointments.service_id column");
+      } catch (e) {
+        if (e.errno !== 1091) {
+          logger.warn({ err: e.message }, "Could not drop legacy service_id column");
+        }
+      }
+      const WRITTEN_COLS = /* @__PURE__ */ new Set([
+        "id",
+        "client_id",
+        "service_ids",
+        "service_prices",
+        "service_list_prices",
+        "sold_products",
+        "staff_id",
+        "date",
+        "time",
+        "duration_mins",
+        "status",
+        "notes",
+        "used_product_ids",
+        "used_products"
+      ]);
+      const [colRows] = await conn.query(
+        `SELECT COLUMN_NAME AS name, COLUMN_TYPE AS type
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'appointments'
+           AND IS_NULLABLE = 'NO'
+           AND COLUMN_DEFAULT IS NULL
+           AND COLUMN_KEY <> 'PRI'
+           AND EXTRA NOT LIKE '%auto_increment%'`
+      );
+      for (const col of colRows) {
+        if (WRITTEN_COLS.has(col.name)) continue;
+        try {
+          await conn.query(`ALTER TABLE appointments MODIFY \`${col.name}\` ${col.type} NULL`);
+          logger.info({ col: col.name }, "Relaxed legacy NOT NULL appointments column");
+        } catch (e) {
+          logger.warn({ err: e.message, col: col.name }, "Could not relax legacy column");
+        }
+      }
+    } finally {
+      await conn.end();
     }
   } catch (err) {
-    logger.warn(
-      { err: err.message },
-      "Could not inspect/drop the legacy service_id foreign key"
-    );
+    logger.warn({ err: err.message }, "Legacy appointments heal step failed");
   }
-  await migrate("ALTER TABLE appointments DROP COLUMN service_id");
   logger.info("MySQL database initialized (all tables ensured)");
 }
 async function mysqlSeedIfEmpty() {

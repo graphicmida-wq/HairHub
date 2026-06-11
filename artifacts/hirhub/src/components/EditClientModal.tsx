@@ -20,7 +20,7 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
         onClose();
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { data?: { message?: string } })?.data?.message;
         toast.show(msg ?? 'Errore durante il salvataggio', 'error');
       },
     },
@@ -35,7 +35,7 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
         onClose();
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { data?: { message?: string } })?.data?.message;
         toast.show(msg ?? "Errore durante l'eliminazione", 'error');
       },
     },

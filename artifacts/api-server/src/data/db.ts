@@ -432,44 +432,87 @@ async function initMysql() {
   );
   await migrate("UPDATE appointments SET service_ids = JSON_ARRAY() WHERE service_ids IS NULL");
 
-  // The legacy `service_id` column was created NOT NULL with a foreign key to
-  // services(id). The current model replaced it with service_ids[] (backfilled
-  // above) and never writes service_id again, so on a real (older) MySQL table
-  // every INSERT is rejected with "Field 'service_id' doesn't have a default
-  // value" — which is exactly the "non posso salvare appuntamento" failure.
-  // We can't simply relax it: MySQL refuses `MODIFY ... NULL` while the column is
-  // referenced by a foreign key (ER_FK_CANNOT_CHANGE_COLUMN) and that ALTER fails
-  // silently. So drop the FK first (its name is auto-generated and unknown, hence
-  // the information_schema lookup) and then drop the column outright. Fully
-  // idempotent: on a fresh DB the column/FK don't exist and every step no-ops.
+  // Heal legacy `appointments` tables created by older builds. Such tables can
+  // carry columns the current model no longer writes — most importantly the old
+  // `service_id` (originally NOT NULL with a foreign key to services), replaced
+  // by service_ids[] (backfilled above). On those tables EVERY insert is rejected
+  // with "Field 'X' doesn't have a default value", which is exactly the
+  // "non posso salvare appuntamento" bug. An FK column can't be relaxed with
+  // MODIFY (MySQL errno 1832), so the FK must be dropped first; its name is
+  // auto-generated, so we look it up. We run this on a dedicated mysql2
+  // connection (not drizzle's pooled execute) so the information_schema reads
+  // have a guaranteed [rows, fields] shape and can't silently come back empty.
+  // Fully idempotent: on a fresh DB nothing matches and every step no-ops.
   try {
-    const fkResult = await db.execute(sql`
-      SELECT CONSTRAINT_NAME AS name
-      FROM information_schema.KEY_COLUMN_USAGE
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = 'appointments'
-        AND COLUMN_NAME = 'service_id'
-        AND REFERENCED_TABLE_NAME IS NOT NULL
-    `);
-    // drizzle/mysql2 returns [rows, fields]; be defensive about both shapes.
-    const fkRows = (
-      Array.isArray(fkResult) && Array.isArray(fkResult[0])
-        ? fkResult[0]
-        : Array.isArray(fkResult)
-          ? fkResult
-          : []
-    ) as Array<{ name?: string; CONSTRAINT_NAME?: string }>;
-    for (const row of fkRows) {
-      const name = row.name ?? row.CONSTRAINT_NAME;
-      if (name) await migrate(`ALTER TABLE appointments DROP FOREIGN KEY \`${name}\``);
+    const mysql = await import("mysql2/promise");
+    const conn = await mysql.createConnection({
+      host: process.env["DB_HOST"],
+      user: process.env["DB_USER"],
+      password: process.env["DB_PASS"] ?? "",
+      database: process.env["DB_NAME"],
+      port: Number(process.env["DB_PORT"] ?? 3306),
+    });
+    try {
+      // 1) Drop any foreign key still defined on service_id (name looked up live).
+      const [fkRows] = await conn.query(
+        `SELECT CONSTRAINT_NAME AS name
+         FROM information_schema.KEY_COLUMN_USAGE
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'appointments'
+           AND COLUMN_NAME = 'service_id'
+           AND REFERENCED_TABLE_NAME IS NOT NULL`,
+      );
+      for (const row of fkRows as Array<{ name: string }>) {
+        try {
+          await conn.query(`ALTER TABLE appointments DROP FOREIGN KEY \`${row.name}\``);
+          logger.info({ fk: row.name }, "Dropped legacy service_id foreign key");
+        } catch (e) {
+          logger.warn({ err: (e as Error).message, fk: row.name }, "Could not drop legacy FK");
+        }
+      }
+      // 2) Drop the now-unconstrained legacy column outright (errno 1091 = already gone).
+      try {
+        await conn.query("ALTER TABLE appointments DROP COLUMN service_id");
+        logger.info("Dropped legacy appointments.service_id column");
+      } catch (e) {
+        if ((e as { errno?: number }).errno !== 1091) {
+          logger.warn({ err: (e as Error).message }, "Could not drop legacy service_id column");
+        }
+      }
+      // 3) Relax any OTHER legacy NOT NULL / no-default column the code never
+      //    writes anymore (e.g. an old single `price`), so an insert that omits
+      //    it can't be rejected. Columns we do write are left untouched. Making a
+      //    column nullable is safe and reversible; we never drop unknown data.
+      const WRITTEN_COLS = new Set([
+        "id", "client_id", "service_ids", "service_prices", "service_list_prices",
+        "sold_products", "staff_id", "date", "time", "duration_mins", "status",
+        "notes", "used_product_ids", "used_products",
+      ]);
+      const [colRows] = await conn.query(
+        `SELECT COLUMN_NAME AS name, COLUMN_TYPE AS type
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'appointments'
+           AND IS_NULLABLE = 'NO'
+           AND COLUMN_DEFAULT IS NULL
+           AND COLUMN_KEY <> 'PRI'
+           AND EXTRA NOT LIKE '%auto_increment%'`,
+      );
+      for (const col of colRows as Array<{ name: string; type: string }>) {
+        if (WRITTEN_COLS.has(col.name)) continue;
+        try {
+          await conn.query(`ALTER TABLE appointments MODIFY \`${col.name}\` ${col.type} NULL`);
+          logger.info({ col: col.name }, "Relaxed legacy NOT NULL appointments column");
+        } catch (e) {
+          logger.warn({ err: (e as Error).message, col: col.name }, "Could not relax legacy column");
+        }
+      }
+    } finally {
+      await conn.end();
     }
   } catch (err) {
-    logger.warn(
-      { err: (err as Error).message },
-      "Could not inspect/drop the legacy service_id foreign key",
-    );
+    logger.warn({ err: (err as Error).message }, "Legacy appointments heal step failed");
   }
-  await migrate("ALTER TABLE appointments DROP COLUMN service_id");
 
   logger.info("MySQL database initialized (all tables ensured)");
 }

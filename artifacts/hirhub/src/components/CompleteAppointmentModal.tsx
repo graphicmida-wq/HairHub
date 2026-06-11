@@ -64,7 +64,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
         onClose();
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { data?: { message?: string } })?.data?.message;
         toast.show(msg ?? 'Errore durante il completamento', 'error');
       },
     },
@@ -76,7 +76,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
         queryClient.invalidateQueries({ queryKey: getListClientFormulasQueryKey() });
       },
       onError: (err: unknown) => {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { data?: { message?: string } })?.data?.message;
         toast.show(msg ?? 'Errore nel salvataggio formula', 'error');
       },
     },
