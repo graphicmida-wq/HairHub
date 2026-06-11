@@ -54,3 +54,4 @@ artifacts/api-server/dev.db-wal
 /dev.db
 /dev.db-shm
 /dev.db-wal
+deploy-dist/

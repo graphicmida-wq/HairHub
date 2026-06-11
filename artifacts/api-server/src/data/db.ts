@@ -34,8 +34,12 @@ function uid() {
 
 // ── SQLite backend (dev) ───────────────────────────────────────────────────────
 
-import Database from "better-sqlite3";
-import { drizzle as sqliteDrizzle } from "drizzle-orm/better-sqlite3";
+// better-sqlite3 (native) and its drizzle adapter are imported dynamically inside
+// initSqlite() — and marked external in build.mjs — so they are NEVER loaded at
+// startup in production (MySQL). This keeps the prod bundle free of the native
+// better-sqlite3 dependency; only mysql2 (pure JS) is needed on the server.
+import type BetterSqlite3 from "better-sqlite3";
+import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import * as sqliteSchema from "./sqlite-schema";
 import {
   clients as sqliteClients,
@@ -48,7 +52,7 @@ import {
   users as sqliteUsers,
 } from "./sqlite-schema";
 
-type SqliteDb = ReturnType<typeof sqliteDrizzle<typeof sqliteSchema>>;
+type SqliteDb = BetterSQLite3Database<typeof sqliteSchema>;
 let _sqliteDb: SqliteDb | null = null;
 
 function getSqliteDb(): SqliteDb {
@@ -67,7 +71,7 @@ function serializeJson(val: unknown): string | null {
   return JSON.stringify(val);
 }
 
-function createSqliteTables(sqlite: InstanceType<typeof Database>) {
+function createSqliteTables(sqlite: BetterSqlite3.Database) {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS clients (
       id TEXT PRIMARY KEY,
@@ -211,7 +215,9 @@ function seedSqliteIfEmpty(db: SqliteDb) {
   logger.info("SQLite seed complete");
 }
 
-function initSqlite() {
+async function initSqlite() {
+  const { default: Database } = await import("better-sqlite3");
+  const { drizzle: sqliteDrizzle } = await import("drizzle-orm/better-sqlite3");
   const dbPath = process.env["DB_FILE"] ?? path.join(process.cwd(), "dev.db");
   const sqlite = new Database(dbPath);
   sqlite.pragma("journal_mode = WAL");
@@ -322,7 +328,7 @@ export async function initDb() {
     await mysqlSeedIfEmpty();
   } else {
     _useMysql = false;
-    initSqlite();
+    await initSqlite();
   }
   await ensureAdminUser();
 }

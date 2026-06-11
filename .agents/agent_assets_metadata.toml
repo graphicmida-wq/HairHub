@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "SnMl1SzLxhTrr39j2Wrqa"
+uri = "file://deploy-dist/lumii-frontend.zip"
+type = "unspecified"
+title = "Frontend Lumii (il sito) — da caricare nel sottodominio"
+
+[[outputs]]
+id = "aXB7lt7bv6nYdtPQslNsK"
+uri = "file://deploy-dist/lumii-backend.zip"
+type = "unspecified"
+title = "Backend Lumii (API Node.js) — per dopo"
