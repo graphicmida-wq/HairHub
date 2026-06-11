@@ -56285,7 +56285,7 @@ var DeleteUserParams = objectType({
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
-var BUILD_VERSION = "salva-fix3-2026-06-11";
+var BUILD_VERSION = "salva-fix4-2026-06-11";
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
   res.json(data);
@@ -59735,6 +59735,13 @@ function normalizeApptRowMysql(a) {
     usedProducts: coerceJson(a.usedProducts)
   };
 }
+function normalizeFormulaRowMysql(f) {
+  return {
+    ...f,
+    products: coerceJson(f.products) ?? [],
+    createdAt: f.createdAt instanceof Date ? f.createdAt.toISOString() : String(f.createdAt)
+  };
+}
 function parseApptRow(a) {
   return {
     ...a,
@@ -59863,7 +59870,7 @@ async function dbGetClientFormulas(clientId) {
   if (_useMysql) {
     const { clientFormulasTable: clientFormulasTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
     const rows2 = clientId ? await getMysqlDb().select().from(clientFormulasTable2).where(eq(clientFormulasTable2.clientId, clientId)).execute() : await getMysqlDb().select().from(clientFormulasTable2).execute();
-    return rows2.map((r) => ({ ...r, createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt) }));
+    return rows2.map(normalizeFormulaRowMysql);
   }
   const rows = clientId ? getSqliteDb().select().from(clientFormulas).where(eq(clientFormulas.clientId, clientId)).all() : getSqliteDb().select().from(clientFormulas).all();
   return Promise.resolve(rows.map(parseFormulaRow));
@@ -59872,7 +59879,7 @@ async function dbGetClientFormula(id) {
   if (_useMysql) {
     const { clientFormulasTable: clientFormulasTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
     return getMysqlDb().select().from(clientFormulasTable2).where(eq(clientFormulasTable2.id, id)).execute().then(
-      (r) => r[0] ? { ...r[0], createdAt: r[0].createdAt instanceof Date ? r[0].createdAt.toISOString() : String(r[0].createdAt) } : void 0
+      (r) => r[0] ? normalizeFormulaRowMysql(r[0]) : void 0
     );
   }
   const f = getSqliteDb().select().from(clientFormulas).where(eq(clientFormulas.id, id)).get();
@@ -60662,11 +60669,23 @@ router9.post("/client-formulas", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const created = await dbCreateClientFormula(body.data);
+  let created;
+  try {
+    created = await dbCreateClientFormula(body.data);
+  } catch (err) {
+    req.log.error({ err }, "DB error on POST /client-formulas");
+    res.status(500).json({
+      message: `Formula non salvata (database): ${err.message}`
+    });
+    return;
+  }
   const parsed = GetClientFormulaResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /client-formulas");
-    res.status(500).json({ message: "Internal server error" });
+    const issue2 = parsed.error.issues[0];
+    res.status(500).json({
+      message: `Formula salvata ma risposta non valida${issue2 ? ` (${issue2.path.join(".") || "campo"}: ${issue2.message})` : ""}`
+    });
     return;
   }
   res.status(201).json(parsed.data);
@@ -60706,11 +60725,23 @@ router9.put("/client-formulas/:id", async (req, res) => {
     res.status(404).json({ message: "Formula not found" });
     return;
   }
-  const updated = await dbUpdateClientFormula(params.data.id, body.data);
+  let updated;
+  try {
+    updated = await dbUpdateClientFormula(params.data.id, body.data);
+  } catch (err) {
+    req.log.error({ err }, "DB error on PUT /client-formulas/:id");
+    res.status(500).json({
+      message: `Formula non aggiornata (database): ${err.message}`
+    });
+    return;
+  }
   const parsed = UpdateClientFormulaResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /client-formulas/:id");
-    res.status(500).json({ message: "Internal server error" });
+    const issue2 = parsed.error.issues[0];
+    res.status(500).json({
+      message: `Formula aggiornata ma risposta non valida${issue2 ? ` (${issue2.path.join(".") || "campo"}: ${issue2.message})` : ""}`
+    });
     return;
   }
   res.json(parsed.data);

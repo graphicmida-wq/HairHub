@@ -1072,6 +1072,16 @@ function normalizeApptRowMysql<T extends {
   };
 }
 
+// Same legacy-JSON-as-TEXT defense as normalizeApptRowMysql, for client formulas:
+// the `products` column may come back from mysql2 as a raw string on older tables.
+function normalizeFormulaRowMysql<T extends { products: unknown; createdAt: unknown }>(f: T) {
+  return {
+    ...f,
+    products: coerceJson<FormulaProduct[]>(f.products) ?? [],
+    createdAt: f.createdAt instanceof Date ? f.createdAt.toISOString() : String(f.createdAt),
+  };
+}
+
 function parseApptRow(a: typeof sqliteAppts.$inferSelect) {
   return {
     ...a,
@@ -1239,7 +1249,7 @@ export async function dbGetClientFormulas(clientId?: string) {
     const rows = clientId
       ? await getMysqlDb().select().from(clientFormulasTable).where(eq(clientFormulasTable.clientId, clientId)).execute()
       : await getMysqlDb().select().from(clientFormulasTable).execute();
-    return rows.map(r => ({ ...r, createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt) }));
+    return rows.map(normalizeFormulaRowMysql);
   }
   const rows = clientId
     ? getSqliteDb().select().from(sqliteFormulas).where(eq(sqliteFormulas.clientId, clientId)).all()
@@ -1251,7 +1261,7 @@ export async function dbGetClientFormula(id: string) {
   if (_useMysql) {
     const { clientFormulasTable } = await import("@workspace/db");
     return getMysqlDb().select().from(clientFormulasTable).where(eq(clientFormulasTable.id, id)).execute().then(r =>
-      r[0] ? { ...r[0], createdAt: r[0].createdAt instanceof Date ? r[0].createdAt.toISOString() : String(r[0].createdAt) } : undefined
+      r[0] ? normalizeFormulaRowMysql(r[0]) : undefined
     );
   }
   const f = getSqliteDb().select().from(sqliteFormulas).where(eq(sqliteFormulas.id, id)).get();
