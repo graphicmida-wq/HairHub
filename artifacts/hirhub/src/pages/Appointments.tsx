@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { store } from '../lib/store';
 import { useListAppointments, useListClients, useListServices, useListStaff } from '@workspace/api-client-react';
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, eachDayOfInterval, endOfWeek } from 'date-fns';
@@ -33,6 +34,24 @@ export const Appointments = () => {
   const { data: staff = [] } = useListStaff();
 
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
+
+  // Deep link from the Dashboard: /agenda?open=<appointmentId> jumps to that
+  // appointment's day and opens its detail modal, then clears the param so it
+  // doesn't reopen after the modal is closed.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (!openId || loadingAppts) return;
+    const target = appointments.find(a => a.id === openId);
+    if (target) {
+      setView('day');
+      setSelectedDate(new Date(target.date + 'T12:00:00'));
+      setManageAppId(openId);
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('open');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, loadingAppts, appointments, setSearchParams]);
 
   type ResourceColumn = { id: string | null; name: string; color: string };
   const resourceColumns: ResourceColumn[] = staff.map(m => ({ id: m.id, name: m.name, color: m.color }));

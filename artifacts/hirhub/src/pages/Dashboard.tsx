@@ -7,7 +7,7 @@ import {
   UserPlus, Scissors, CalendarDays, Calendar,
   Clock, ChevronRight, MoreHorizontal,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { cn } from '../lib/utils';
@@ -52,6 +52,7 @@ const KpiCard = ({
 );
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const {
     isLoading, isError,
     clients, services,
@@ -207,6 +208,10 @@ export const Dashboard = () => {
                             return (
                               <div
                                 key={app.id}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => navigate(`/agenda?open=${app.id}`)}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/agenda?open=${app.id}`); } }}
                                 className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
                                 style={{ borderBottom: `1px solid transparent` }}
                                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
