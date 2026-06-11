@@ -33,6 +33,7 @@ export default defineConfig({
         "apple-touch-icon.png",
       ],
       manifest: {
+        id: basePath,
         name: "Lumii — Gestione Salone",
         short_name: "Lumii",
         description:
