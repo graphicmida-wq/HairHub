@@ -1,6 +1,8 @@
-# HirHub — Gestionale Salone
+# Lumi — Gestionale Salone
 
-App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per saloni italiani. Il deploy finale è su hosting Netsons (cPanel + MySQL).
+App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per saloni italiani. Il prodotto si chiama **Lumi** (dominio `lumii.it`): ogni salone cliente viene pubblicato su un proprio sottodominio (es. `nomecliente.lumii.it`), con il nome del salone configurabile dalle Impostazioni. Il deploy finale è su hosting Netsons (cPanel + MySQL).
+
+> Nota branding: lo slug interno del pacchetto è ancora `@workspace/hirhub` e i percorsi `artifacts/hirhub/` restano invariati (identificatori tecnici, non visibili agli utenti). Il nome utente del prodotto è **Lumi**.
 
 ## Run & Operate
 

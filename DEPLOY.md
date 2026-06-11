@@ -1,6 +1,11 @@
 # Guida al Deploy su Netsons (cPanel + MySQL)
 
-Questa guida descrive come preparare e caricare HirHub su un hosting Netsons con cPanel e MySQL 8.
+Questa guida descrive come preparare e caricare **Lumi** su un hosting Netsons con cPanel e MySQL 8.
+
+Lumi viene pubblicato per ogni cliente su un **sottodominio** di `lumii.it`
+(es. `capellievanita.lumii.it`). Il nome del salone mostrato nell'app
+(es. "Capelli&Vanità") si configura dalle **Impostazioni** dopo il primo accesso,
+quindi una stessa build serve qualsiasi cliente.
 
 ---
 
@@ -25,8 +30,8 @@ Questa guida descrive come preparare e caricare HirHub su un hosting Netsons con
 ## Step 1 — Creare il database MySQL su Netsons
 
 1. Accedi a cPanel → **Database MySQL**
-2. Crea un nuovo database (es. `u12345_hirhub`)
-3. Crea un nuovo utente MySQL (es. `u12345_hirhub`) con una password sicura
+2. Crea un nuovo database (es. `u12345_lumi`)
+3. Crea un nuovo utente MySQL (es. `u12345_lumi`) con una password sicura
 4. Assegna all'utente **tutti i privilegi** sul database appena creato
 5. Annota:
    - **DB_HOST**: solitamente `localhost`
@@ -42,15 +47,25 @@ Questa guida descrive come preparare e caricare HirHub su un hosting Netsons con
 Dalla directory del progetto su Replit (o sulla tua macchina locale):
 
 ```bash
-VITE_API_URL=https://TUO-DOMINIO.it/api \
+BASE_PATH=/ pnpm --filter @workspace/hirhub run build
+```
+
+> **Consigliato (stesso sottodominio):** tieni frontend e API sullo **stesso
+> sottodominio** del cliente, con l'API su `/api` (es. frontend su
+> `https://capellievanita.lumii.it` e API su `https://capellievanita.lumii.it/api`).
+> In questo caso **ometti `VITE_API_URL`**: il frontend chiama `/api` in modo
+> relativo e i cookie di sessione funzionano senza configurazioni extra. Questa è la
+> configurazione più semplice e la raccomandata per ogni cliente.
+
+Solo se l'API è su un host/sottodominio **diverso** dal frontend, indica l'URL completo:
+
+```bash
+VITE_API_URL=https://api.lumii.it \
 BASE_PATH=/ \
 pnpm --filter @workspace/hirhub run build
 ```
 
-Sostituisci `https://TUO-DOMINIO.it/api` con l'URL reale della tua API su Netsons.
-
-> **Nota:** Se il frontend e il backend sono sullo stesso dominio e l'API è raggiungibile
-> su `/api`, puoi omettere `VITE_API_URL` e usare solo `BASE_PATH=/`.
+In quel caso ricordati di impostare anche `CORS_ORIGIN` lato backend (vedi Step 6).
 
 La build produce la cartella: `artifacts/hirhub/dist/public/`
 
@@ -58,9 +73,12 @@ La build produce la cartella: `artifacts/hirhub/dist/public/`
 
 ## Step 3 — Upload del frontend su Netsons
 
-1. Accedi a cPanel → **File Manager** (oppure usa un client FTP come FileZilla)
-2. Naviga nella cartella `public_html/`
-3. Carica **il contenuto** di `artifacts/hirhub/dist/public/` direttamente in `public_html/`
+1. In cPanel crea prima il **sottodominio** del cliente (cPanel → **Domini/Sottodomini**),
+   es. `capellievanita` su `lumii.it`. cPanel crea una cartella radice dedicata
+   (document root), tipicamente `public_html/capellievanita/`.
+2. Accedi a cPanel → **File Manager** (oppure usa un client FTP come FileZilla)
+3. Naviga nella **document root del sottodominio** (es. `public_html/capellievanita/`)
+4. Carica **il contenuto** di `artifacts/hirhub/dist/public/` direttamente in quella cartella
    - Include il file `.htaccess` (già configurato per il routing SPA)
    - Include `index.html`, `assets/`, ecc.
 
@@ -94,8 +112,11 @@ La build produce la cartella: `artifacts/api-server/dist/`
 2. Configura:
    - **Node.js version**: 20.x o superiore
    - **Application mode**: Production
-   - **Application root**: percorso alla cartella dell'app (es. `/home/u12345/hirhub-api`)
-   - **Application URL**: (opzionale, se vuoi un sottodominio tipo `api.tuodominio.it`)
+   - **Application root**: percorso alla cartella dell'app (es. `/home/u12345/lumi-api`)
+   - **Application URL**: imposta il **sottodominio del cliente + `/api`**
+     (es. `capellievanita.lumii.it/api`). Così l'API risponde sullo stesso
+     sottodominio del frontend, sotto `/api`, e i cookie di sessione funzionano
+     senza CORS né `SameSite=None`.
    - **Application startup file**: `server.js`
 3. Carica i seguenti file/cartelle nella Application root:
    - `artifacts/api-server/dist/` → `dist/`
@@ -122,8 +143,8 @@ Imposta queste variabili nel **Node.js Selector → Environment Variables**:
 | `PORT` | Porta su cui gira il server Express | `3000` |
 | `DB_HOST` | Host del database MySQL | `localhost` |
 | `DB_PORT` | Porta MySQL | `3306` |
-| `DB_NAME` | Nome del database | `u12345_hirhub` |
-| `DB_USER` | Utente MySQL | `u12345_hirhub` |
+| `DB_NAME` | Nome del database | `u12345_lumi` |
+| `DB_USER` | Utente MySQL | `u12345_lumi` |
 | `DB_PASS` | Password MySQL | `password-sicura` |
 | `CORS_ORIGIN` | Origini consentite per CORS (dominio del frontend) | `https://tuodominio.it` |
 | `NODE_ENV` | Modalità produzione | `production` |
@@ -174,7 +195,7 @@ Utenti, voce visibile solo agli amministratori).
 Se vuoi applicare lo schema Drizzle manualmente:
 
 ```bash
-DB_HOST=localhost DB_NAME=u12345_hirhub DB_USER=u12345_hirhub DB_PASS=password \
+DB_HOST=localhost DB_NAME=u12345_lumi DB_USER=u12345_lumi DB_PASS=password \
 pnpm --filter @workspace/db run push
 ```
 
@@ -191,7 +212,7 @@ pnpm --filter @workspace/db run push
 
 ## Verifica del deploy
 
-1. Apri `https://tuodominio.it` → deve caricare la dashboard HirHub
+1. Apri `https://nomecliente.lumii.it` → deve caricare la schermata di login Lumi
 2. Naviga tra le pagine (Agenda, Clienti, ecc.) → il routing SPA deve funzionare
 3. Crea un nuovo cliente → deve salvare correttamente via API
 4. Controlla i log del server in cPanel → Node.js Selector → Logs
