@@ -43,3 +43,11 @@ CORS/cookie tra domini diversi.
   icone/manifest sono file statici serviti da `express.static` (esistono fisicamente in public).
   autoUpdate + skipWaiting + clientsClaim ⇒ dopo `git pull` + Restart il nuovo SW si attiva
   entro 1-2 refresh (l'utente può vedere la versione vecchia per un solo caricamento).
+
+## Push su GitHub: lo fa l'utente, non l'agente
+
+Il push a `origin` (github.com/graphicmida-wq/HairHub) NON è eseguibile dall'ambiente agente/task: manca la credenziale GitHub, quindi `git push` via CLI fallisce ("Password authentication is not supported"). In main agent i comandi git distruttivi/lock sono pure bloccati dal sandbox (anche `git fetch` può inciampare su `objects/maintenance.lock`).
+
+**Why:** GitHub richiede OAuth/token; l'ambiente isolato non porta con sé la connessione GitHub dell'utente.
+
+**How to apply:** non ri-tentare il push automatico né riproporre l'integrazione GitHub se l'utente l'ha già rifiutata — l'utente pubblica dal **pannello Git di Replit** (flusso normale, vedi DEPLOY.md). Per verificare l'allineamento del remoto in sola lettura usa `git ls-remote --heads origin main` (niente lock, ma richiede comunque rete/credenziali: può fallire dall'ambiente isolato). Poi lato Netsons: `git pull` + Restart.
