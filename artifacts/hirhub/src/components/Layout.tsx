@@ -200,8 +200,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </aside>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative rounded-l-2xl" style={{ backgroundColor: '#f8f8f7' }}>
         <header
-          className="md:hidden px-6 min-h-[65px] pt-safe flex items-center justify-between shrink-0"
-          style={{ backgroundColor: SIDEBAR_BG }}
+          className="md:hidden px-5 flex items-center justify-between shrink-0"
+          style={{
+            backgroundColor: SIDEBAR_BG,
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.875rem)',
+            paddingBottom: '0.875rem',
+          }}
         >
           <div className="flex items-center gap-2">
             {logoUrl ? (
@@ -255,7 +259,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 bg-[#61533e21]">
+        <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 pb-mobile-nav bg-[#61533e21]">
           <div className="max-w-5xl mx-auto">
             {children}
           </div>

@@ -49,6 +49,12 @@ body {
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+/* Leave room under scrollable content for the fixed mobile bottom nav (72px)
+   + the floating + button + iOS home indicator, so nothing stays hidden. */
+@media (max-width: 767px) {
+  .pb-mobile-nav { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 2.5rem); }
+}
+
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }

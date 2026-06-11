@@ -56285,7 +56285,7 @@ var DeleteUserParams = objectType({
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
-var BUILD_VERSION = "pwa-update-2026-06-11";
+var BUILD_VERSION = "ios-safearea-2026-06-12";
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
   res.json(data);

@@ -4,3 +4,4 @@
 - [Brand color theming](brand-color-theming.md) — palette/navy default, normalizzazione del vecchio default lato API, anti-flash di BrandColorSync, e regola brand icona-app vs logo-salone
 - [Netsons prod logging](netsons-prod-logging.md) — Passenger cattura solo stderr; pino scrive su stdout in prod ⇒ errori gestiti invisibili; stderr.log vuoto ≠ nessun errore
 - [List validation fragility](api-list-validation-fragility.md) — i list endpoint safeParse-ano l'intero array: 1 riga fuori-schema = 500 totale; lo schema di risposta deve tollerare i dati legacy
+- [iOS PWA safe-area layout](ios-pwa-safe-area-layout.md) — mobile <main> deve riservare spazio sotto la bottom-nav fissa (.pb-mobile-nav) e l'header serve safe-area-inset-top + extra; tieni la costante in sync con l'altezza nav
