@@ -11,7 +11,7 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - `pnpm run typecheck` — typecheck completo su tutti i pacchetti
 - `pnpm run build` — typecheck + build
 - `pnpm --filter @workspace/api-spec run codegen` — rigenera hook React Query e schemi Zod dall'OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push schema DB (solo produzione MySQL)
+- Deploy Netsons (app unica pre-buildata in `lumii-app/`): vedi `DEPLOY.md`. Le tabelle MySQL si creano da sole al primo avvio (`initMysql`), quindi `pnpm --filter @workspace/db run push` NON è necessario.
 
 ## Stack
 
@@ -44,7 +44,8 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 
 - **Contract-first API**: OpenAPI spec → Orval codegen → React Query hooks. Non scrivere fetch manualmente.
 - **In-memory store per dev**: Il server usa un DataStore in-memory con dati seed. Non serve MySQL in Replit.
-- **MySQL solo per produzione**: lib/db usa drizzle-orm/mysql-core per Netsons. Configurare DB_HOST, DB_USER, DB_PASS, DB_NAME prima del deploy.
+- **MySQL solo per produzione**: lib/db usa drizzle-orm/mysql-core per Netsons. Configurare DB_HOST, DB_USER, DB_PASS, DB_NAME prima del deploy. `initMysql()` crea tutte le tabelle (`CREATE TABLE IF NOT EXISTS`, in ordine FK) al primo avvio: nessun `drizzle push` richiesto.
+- **Deploy come app unica (Netsons)**: in produzione lo stesso processo Express serve sia l'API su `/api` sia le schermate buildate. Se accanto al bundle esiste `../public/index.html` (o `STATIC_DIR`), `app.ts` monta `express.static` + fallback SPA; in dev Replit non c'è `public`, quindi resta API-only e Vite serve la UI. L'artefatto deployabile pre-buildato vive in `lumii-app/` alla root (server in `lumii-app/server/`, UI in `lumii-app/public/`, avvio `server.js`); non è un pacchetto del workspace. Same-origin ⇒ `CORS_ORIGIN` non serve. Vedi `DEPLOY.md`.
 - **React Query per tutto**: nessun Zustand/Redux. Il frontend legge/scrive solo via hook generati.
 - **Modal state separato**: `ModalStore` è un semplice pub/sub leggero, non fa parte del server state.
 - **Auth self-contained** (no Replit Auth/Clerk, deploy Netsons): login username/password → JWT in cookie httpOnly firmato con `SESSION_SECRET` (~7gg). Guardie `requireAuth`/`requireAdmin` in `middlewares/auth.ts`; le rotte dati richiedono auth, `/users` e `PUT /settings` richiedono admin, `GET /settings` resta pubblica (branding login). Primo admin via `ensureAdminUser()` al primo avvio (env `ADMIN_USERNAME`/`ADMIN_PASSWORD`, fallback `admin`/`admin123` con warning).

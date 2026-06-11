@@ -1,4 +1,2 @@
-- [CORS produzione](cors-production.md) — in prod (Netsons) default sicuro: CORS_ORIGIN non impostato ⇒ blocca cross-origin (origin:false); in dev resta true
-- [API base URL](api-base-url.md) — mai usare localhost hardcoded in main.tsx; URL relativi funzionano via proxy Replit sia in dev che in prod
-- [Lib stale types](lib-stale-types.md) — errori TypeScript su campi presenti negli schemi → eseguire pnpm run typecheck:libs per ricostruire .d.ts
+- [Netsons single-app deploy](netsons-single-app-deploy.md) — Lumii si pubblica come UN Node app pre-buildato (lumii-app/) che serve API + SPA; mysql2 è external (import statico) quindi va installato; nessun dato demo in prod.
 - [Auth guard DB re-check](auth-guard-db-recheck.md) — requireAuth ricarica l'utente dal DB ad ogni richiesta, non si fida solo del JWT (token vive ~7gg)

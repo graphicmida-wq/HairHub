@@ -1,0 +1,13 @@
+{
+  "name": "lumii-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --enable-source-maps server.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.22.3"
+  }
+}

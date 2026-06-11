@@ -242,9 +242,105 @@ function getMysqlDb(): MysqlDb {
 async function initMysql() {
   const { getDb } = await import("@workspace/db");
   _mysqlDb = await getDb();
-  // Ensure the users table exists on first boot (production). Other tables are
-  // expected to already exist (created via drizzle push or earlier seeds).
-  await _mysqlDb.execute(sql`
+  const db = _mysqlDb;
+  // Create every table on first boot so a fresh MySQL database (e.g. a brand-new
+  // Netsons cPanel DB) works with no manual migration step. CREATE TABLE IF NOT
+  // EXISTS is idempotent, so running this on every startup is safe. Tables are
+  // created in foreign-key order (parents before children).
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS clients (
+      id CHAR(12) PRIMARY KEY,
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      phone VARCHAR(30) NOT NULL,
+      email VARCHAR(255) NOT NULL DEFAULT '',
+      dob VARCHAR(10),
+      notes TEXT,
+      allergies TEXT,
+      hair_specs TEXT
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS services (
+      id CHAR(12) PRIMARY KEY,
+      name VARCHAR(200) NOT NULL,
+      category VARCHAR(100) NOT NULL,
+      color VARCHAR(9) NOT NULL DEFAULT '#94a3b8',
+      duration_mins INT NOT NULL,
+      price DECIMAL(8,2) NOT NULL,
+      notes TEXT
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS products (
+      id CHAR(12) PRIMARY KEY,
+      name VARCHAR(200) NOT NULL,
+      category VARCHAR(100) NOT NULL,
+      brand VARCHAR(100) NOT NULL,
+      price DECIMAL(10,2) NOT NULL DEFAULT '0',
+      quantity INT NOT NULL DEFAULT 0,
+      min_threshold INT NOT NULL DEFAULT 5,
+      supplier VARCHAR(200),
+      notes TEXT,
+      unit_size DECIMAL(10,2),
+      unit_type VARCHAR(2),
+      stock_grams DECIMAL(10,2)
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS staff_members (
+      id CHAR(12) PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      role VARCHAR(100),
+      color VARCHAR(20) NOT NULL DEFAULT '#6b7280'
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS appointments (
+      id CHAR(12) PRIMARY KEY,
+      client_id CHAR(12) NOT NULL,
+      service_ids JSON NOT NULL,
+      service_prices JSON,
+      service_list_prices JSON,
+      sold_products JSON,
+      staff_id CHAR(12),
+      date VARCHAR(10) NOT NULL,
+      time VARCHAR(5) NOT NULL,
+      duration_mins INT NOT NULL,
+      status ENUM('prenotato','completato','annullato','no-show') NOT NULL DEFAULT 'prenotato',
+      notes TEXT,
+      used_product_ids JSON,
+      used_products JSON,
+      CONSTRAINT fk_appointments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+      CONSTRAINT fk_appointments_staff FOREIGN KEY (staff_id) REFERENCES staff_members(id) ON DELETE SET NULL
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS client_formulas (
+      id CHAR(12) PRIMARY KEY,
+      client_id CHAR(12) NOT NULL,
+      name VARCHAR(200) NOT NULL,
+      service_id CHAR(12),
+      products JSON NOT NULL,
+      notes TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_formulas_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+      CONSTRAINT fk_formulas_service FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS salon_settings (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      salon_name VARCHAR(200) NOT NULL DEFAULT 'L''Atelier',
+      logo_url TEXT,
+      show_salon_name INT NOT NULL DEFAULT 1,
+      address VARCHAR(500),
+      phone VARCHAR(30),
+      email VARCHAR(255),
+      brand_color VARCHAR(20)
+    )
+  `);
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS users (
       id CHAR(12) PRIMARY KEY,
       username VARCHAR(100) NOT NULL UNIQUE,
@@ -254,15 +350,27 @@ async function initMysql() {
       created_at VARCHAR(40) NOT NULL
     )
   `);
-  logger.info("MySQL database initialized");
+  logger.info("MySQL database initialized (all tables ensured)");
 }
 
 async function mysqlSeedIfEmpty() {
   const { clientsTable, servicesTable, productsTable, appointmentsTable, salonSettingsTable } = await import("@workspace/db");
   const db = getMysqlDb();
+
+  // Always ensure a salon_settings row exists — the login/branding screen reads it.
+  const settingsRows = await db.select().from(salonSettingsTable).execute();
+  if (settingsRows.length === 0) {
+    await db.insert(salonSettingsTable).values({ salonName: "L'Atelier", address: null, phone: null, email: null });
+  }
+
+  // Demo business data (fake clients/services/products/appointments) is for
+  // development only. A real production salon (Netsons MySQL) must start with an
+  // empty book, so never insert demo records when NODE_ENV=production.
+  if (process.env["NODE_ENV"] === "production") return;
+
   const existing = await db.select().from(clientsTable).execute();
   if (existing.length > 0) return;
-  logger.info("Seeding MySQL database with initial data");
+  logger.info("Seeding MySQL database with demo data (development only)");
   const today = new Date().toISOString().split("T")[0]!;
   const c1id = uid(); const c2id = uid(); const c3id = uid();
   await db.insert(clientsTable).values([
@@ -287,8 +395,7 @@ async function mysqlSeedIfEmpty() {
     { id: uid(), clientId: c2id, serviceIds: [s4id], servicePrices: [20], serviceListPrices: [20], date: today, time: "11:15", durationMins: 30, status: "prenotato", notes: null, usedProductIds: null },
     { id: uid(), clientId: c3id, serviceIds: [s1id], servicePrices: [35], serviceListPrices: [35], date: today, time: "14:00", durationMins: 45, status: "prenotato", notes: null, usedProductIds: null },
   ]);
-  await db.insert(salonSettingsTable).values({ salonName: "L'Atelier", address: null, phone: null, email: null });
-  logger.info("MySQL seed complete");
+  logger.info("MySQL demo seed complete");
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
