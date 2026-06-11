@@ -55930,7 +55930,7 @@ var listAppointmentsResponseSoldProductsItemUnitPriceMin = 0;
 var ListAppointmentsResponseItem = objectType({
   id: stringType(),
   clientId: stringType(),
-  serviceIds: arrayType(stringType()).min(1),
+  serviceIds: arrayType(stringType()),
   servicePrices: arrayType(numberType().min(listAppointmentsResponseServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(listAppointmentsResponseServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -55961,7 +55961,7 @@ var createAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 var createAppointmentBodySoldProductsItemUnitPriceMin = 0;
 var CreateAppointmentBody = objectType({
   clientId: stringType(),
-  serviceIds: arrayType(stringType()).min(1),
+  serviceIds: arrayType(stringType()),
   servicePrices: arrayType(numberType().min(createAppointmentBodyServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(createAppointmentBodyServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -55995,7 +55995,7 @@ var getAppointmentResponseSoldProductsItemUnitPriceMin = 0;
 var GetAppointmentResponse = objectType({
   id: stringType(),
   clientId: stringType(),
-  serviceIds: arrayType(stringType()).min(1),
+  serviceIds: arrayType(stringType()),
   servicePrices: arrayType(numberType().min(getAppointmentResponseServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(getAppointmentResponseServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -56028,7 +56028,7 @@ var updateAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 var updateAppointmentBodySoldProductsItemUnitPriceMin = 0;
 var UpdateAppointmentBody = objectType({
   clientId: stringType().optional(),
-  serviceIds: arrayType(stringType()).min(1).optional(),
+  serviceIds: arrayType(stringType()).optional(),
   servicePrices: arrayType(numberType().min(updateAppointmentBodyServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(updateAppointmentBodyServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -56059,7 +56059,7 @@ var updateAppointmentResponseSoldProductsItemUnitPriceMin = 0;
 var UpdateAppointmentResponse = objectType({
   id: stringType(),
   clientId: stringType(),
-  serviceIds: arrayType(stringType()).min(1),
+  serviceIds: arrayType(stringType()),
   servicePrices: arrayType(numberType().min(updateAppointmentResponseServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(updateAppointmentResponseServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),

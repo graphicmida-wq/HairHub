@@ -340,7 +340,6 @@ export const DeleteProductParams = zod.object({
 /**
  * @summary List all appointments
  */
-
 export const listAppointmentsResponseServicePricesItemMin = 0;
 
 export const listAppointmentsResponseServiceListPricesItemMin = 0;
@@ -352,7 +351,7 @@ export const listAppointmentsResponseSoldProductsItemUnitPriceMin = 0;
 export const ListAppointmentsResponseItem = zod.object({
   id: zod.string(),
   clientId: zod.string(),
-  serviceIds: zod.array(zod.string()).min(1),
+  serviceIds: zod.array(zod.string()),
   servicePrices: zod
     .array(zod.number().min(listAppointmentsResponseServicePricesItemMin))
     .nullish(),
@@ -397,7 +396,6 @@ export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 /**
  * @summary Create a new appointment
  */
-
 export const createAppointmentBodyServicePricesItemMin = 0;
 
 export const createAppointmentBodyServiceListPricesItemMin = 0;
@@ -408,7 +406,7 @@ export const createAppointmentBodySoldProductsItemUnitPriceMin = 0;
 
 export const CreateAppointmentBody = zod.object({
   clientId: zod.string(),
-  serviceIds: zod.array(zod.string()).min(1),
+  serviceIds: zod.array(zod.string()),
   servicePrices: zod
     .array(zod.number().min(createAppointmentBodyServicePricesItemMin))
     .nullish(),
@@ -464,7 +462,7 @@ export const getAppointmentResponseSoldProductsItemUnitPriceMin = 0;
 export const GetAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
-  serviceIds: zod.array(zod.string()).min(1),
+  serviceIds: zod.array(zod.string()),
   servicePrices: zod
     .array(zod.number().min(getAppointmentResponseServicePricesItemMin))
     .nullish(),
@@ -522,7 +520,7 @@ export const updateAppointmentBodySoldProductsItemUnitPriceMin = 0;
 
 export const UpdateAppointmentBody = zod.object({
   clientId: zod.string().optional(),
-  serviceIds: zod.array(zod.string()).min(1).optional(),
+  serviceIds: zod.array(zod.string()).optional(),
   servicePrices: zod
     .array(zod.number().min(updateAppointmentBodyServicePricesItemMin))
     .nullish(),
@@ -576,7 +574,7 @@ export const updateAppointmentResponseSoldProductsItemUnitPriceMin = 0;
 export const UpdateAppointmentResponse = zod.object({
   id: zod.string(),
   clientId: zod.string(),
-  serviceIds: zod.array(zod.string()).min(1),
+  serviceIds: zod.array(zod.string()),
   servicePrices: zod
     .array(zod.number().min(updateAppointmentResponseServicePricesItemMin))
     .nullish(),

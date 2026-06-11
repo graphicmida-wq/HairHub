@@ -2,3 +2,5 @@
 - [Auth guard DB re-check](auth-guard-db-recheck.md) — requireAuth ricarica l'utente dal DB ad ogni richiesta, non si fida solo del JWT (token vive ~7gg)
 - [DB schema dual-migration](db-schema-dual-migration.md) — ogni nuova colonna va migrata in DUE posti (SQLite dev + initMysql migrate()) o i DB Netsons live si rompono in silenzio
 - [Brand color theming](brand-color-theming.md) — palette/navy default, normalizzazione del vecchio default lato API, anti-flash di BrandColorSync, e regola brand icona-app vs logo-salone
+- [Netsons prod logging](netsons-prod-logging.md) — Passenger cattura solo stderr; pino scrive su stdout in prod ⇒ errori gestiti invisibili; stderr.log vuoto ≠ nessun errore
+- [List validation fragility](api-list-validation-fragility.md) — i list endpoint fanno safeParse dell'intero array: 1 riga fuori-schema fa 500 tutto; i vincoli di risposta devono tollerare ciò che le migrazioni producono
