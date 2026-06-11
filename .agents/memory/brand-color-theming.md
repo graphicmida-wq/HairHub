@@ -22,3 +22,11 @@ The brand palette drives the CSS custom properties `--color-brand-*` (login back
 **Why:** `main.tsx` calls `applyBrandPalette(loadBrandPalette())` at boot from localStorage to prevent a color flash before the settings query resolves. If `BrandColorSync` applies+saves the default while `settings` is still `undefined`, it clobbers that cached palette and a custom-color salon flashes the default on every load.
 
 **How to apply:** only act once settings have loaded; then apply the saved/derived palette, or reset to `DEFAULT_PALETTE` only when `settings.brandColor` is genuinely empty (this also clears any stale inline override left in the DOM during an in-session color change).
+
+## Icona app (prodotto) vs logo salone (cliente)
+
+**Regola:** l'icona dell'app installata (PWA) e la favicon del browser sono SEMPRE il marchio ufficiale Lumii (branding di prodotto, fisso, non cambia per salone). Il logo mostrato DENTRO l'app (login + sidebar + header mobile) segue invece il salone: se `settings.logoUrl` è presente vince il logo del salone, altrimenti si mostra il marchio Lumii come segnaposto.
+
+**Why:** Lumii è il prodotto SaaS; ogni salone cliente personalizza il proprio logo dalle Impostazioni. L'icona installabile identifica il prodotto, il logo in-app identifica il salone.
+
+**How to apply:** le icone PWA/favicon si generano dal marchio Lumii con il suo sfondo navy quadrato (self-contained). Il logo in-app usa una versione a sfondo TRASPARENTE (il navy piatto del marchio reso trasparente + trim): tutti e tre i punti logo in-app stanno su sfondo `--color-brand-dark`, quindi un PNG trasparente si integra a prescindere dall'esatto navy del tema. Mantieni intatto il ramo `logoUrl ? <img salon> : <img lumii>`.

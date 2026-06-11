@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useLogin, useGetSettings, getGetCurrentUserQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Lock } from 'lucide-react';
+import lumiiLogo from '../assets/lumii-logo.png';
 
 const inputClass =
   'w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300 placeholder:text-stone-400 transition';
@@ -42,12 +43,7 @@ export const Login = () => {
           {logoUrl ? (
             <img src={logoUrl} alt="Logo salone" className="w-20 h-20 rounded-2xl object-contain mb-4" />
           ) : (
-            <span
-              style={{ color: 'var(--color-brand-muted)', fontSize: '2.5rem', lineHeight: 1 }}
-              className="mb-4"
-            >
-              ♥
-            </span>
+            <img src={lumiiLogo} alt="Lumii" className="w-20 h-20 object-contain mb-4" />
           )}
           <h1
             className="text-2xl font-semibold text-[#F5F0E3]"

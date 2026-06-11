@@ -12,6 +12,7 @@ import { NewProductModal } from './NewProductModal';
 import { NewServiceModal } from './NewServiceModal';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import lumiiLogo from '../assets/lumii-logo.png';
 
 const SIDEBAR_BG = 'var(--color-brand-dark)';
 const SIDEBAR_BORDER = 'rgba(245,240,227,0.06)';
@@ -58,7 +59,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="w-28 h-28 rounded-xl object-contain mb-3"
             />
           ) : (
-            <span style={{ color: 'var(--color-brand-muted)', fontSize: '2.5rem', lineHeight: 1 }} className="mb-3">♥</span>
+            <img src={lumiiLogo} alt="Lumii" className="w-24 h-24 object-contain mb-3" />
           )}
           {showName ? (
             <h1
@@ -207,7 +208,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 className="w-7 h-7 rounded-lg object-contain bg-white/10"
               />
             ) : (
-              <span style={{ color: 'var(--color-brand-muted)' }}>♥</span>
+              <img src={lumiiLogo} alt="Lumii" className="w-7 h-7 object-contain" />
             )}
             {showName ? (
               <h1
