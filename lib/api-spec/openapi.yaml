@@ -1224,6 +1224,7 @@ components:
           type: array
           items:
             type: string
+          minItems: 1
         servicePrices:
           type: array
           items:
@@ -1282,6 +1283,7 @@ components:
           type: array
           items:
             type: string
+          minItems: 1
         servicePrices:
           type: array
           items:

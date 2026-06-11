@@ -396,6 +396,7 @@ export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 /**
  * @summary Create a new appointment
  */
+
 export const createAppointmentBodyServicePricesItemMin = 0;
 
 export const createAppointmentBodyServiceListPricesItemMin = 0;
@@ -406,7 +407,7 @@ export const createAppointmentBodySoldProductsItemUnitPriceMin = 0;
 
 export const CreateAppointmentBody = zod.object({
   clientId: zod.string(),
-  serviceIds: zod.array(zod.string()),
+  serviceIds: zod.array(zod.string()).min(1),
   servicePrices: zod
     .array(zod.number().min(createAppointmentBodyServicePricesItemMin))
     .nullish(),
@@ -520,7 +521,7 @@ export const updateAppointmentBodySoldProductsItemUnitPriceMin = 0;
 
 export const UpdateAppointmentBody = zod.object({
   clientId: zod.string().optional(),
-  serviceIds: zod.array(zod.string()).optional(),
+  serviceIds: zod.array(zod.string()).min(1).optional(),
   servicePrices: zod
     .array(zod.number().min(updateAppointmentBodyServicePricesItemMin))
     .nullish(),

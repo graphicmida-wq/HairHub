@@ -11,6 +11,7 @@ import type { UsedProductEntry } from "./usedProductEntry";
 
 export interface UpdateAppointmentInput {
   clientId?: string;
+  /** @minItems 1 */
   serviceIds?: string[];
   servicePrices?: number[] | null;
   serviceListPrices?: number[] | null;

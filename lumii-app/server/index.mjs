@@ -55961,7 +55961,7 @@ var createAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 var createAppointmentBodySoldProductsItemUnitPriceMin = 0;
 var CreateAppointmentBody = objectType({
   clientId: stringType(),
-  serviceIds: arrayType(stringType()),
+  serviceIds: arrayType(stringType()).min(1),
   servicePrices: arrayType(numberType().min(createAppointmentBodyServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(createAppointmentBodyServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -56028,7 +56028,7 @@ var updateAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 var updateAppointmentBodySoldProductsItemUnitPriceMin = 0;
 var UpdateAppointmentBody = objectType({
   clientId: stringType().optional(),
-  serviceIds: arrayType(stringType()).optional(),
+  serviceIds: arrayType(stringType()).min(1).optional(),
   servicePrices: arrayType(numberType().min(updateAppointmentBodyServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(updateAppointmentBodyServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),

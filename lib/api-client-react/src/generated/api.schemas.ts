@@ -280,6 +280,7 @@ export interface Appointment {
 
 export interface CreateAppointmentInput {
   clientId: string;
+  /** @minItems 1 */
   serviceIds: string[];
   servicePrices?: number[] | null;
   serviceListPrices?: number[] | null;
@@ -296,6 +297,7 @@ export interface CreateAppointmentInput {
 
 export interface UpdateAppointmentInput {
   clientId?: string;
+  /** @minItems 1 */
   serviceIds?: string[];
   servicePrices?: number[] | null;
   serviceListPrices?: number[] | null;
