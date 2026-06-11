@@ -23,13 +23,34 @@ const router: IRouter = Router();
 
 router.get("/appointments", async (req, res) => {
   const data = await dbGetAppointments();
-  const parsed = ListAppointmentsResponse.safeParse(data);
-  if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /appointments");
-    res.status(500).json({ message: "Internal server error" });
-    return;
+  const rows = Array.isArray(data) ? data : [];
+
+  // Resilient read: validate each appointment on its own so a single malformed
+  // row (e.g. legacy data left over from a migration) can never blank the whole
+  // Agenda + Dashboard. Valid rows are always returned; bad rows are skipped and
+  // logged instead of turning into a 500 for the entire list.
+  const valid = [] as ReturnType<typeof ListAppointmentsResponse.parse>;
+  let skipped = 0;
+  for (const row of rows) {
+    const r = ListAppointmentsResponse.safeParse([row]);
+    if (r.success) {
+      valid.push(...r.data);
+    } else {
+      skipped += 1;
+      const id = (row as { id?: unknown } | null)?.id;
+      req.log.error(
+        { err: r.error, appointmentId: id },
+        "Skipping invalid appointment row on GET /appointments",
+      );
+    }
   }
-  res.json(parsed.data);
+  if (skipped > 0) {
+    req.log.warn(
+      { skipped, total: rows.length },
+      "Some appointment rows failed validation and were skipped",
+    );
+  }
+  res.json(valid);
 });
 
 router.post("/appointments", async (req, res) => {

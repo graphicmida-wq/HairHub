@@ -52,6 +52,24 @@ CORS/cookie tra domini diversi.
   autoUpdate + skipWaiting + clientsClaim ⇒ dopo `git pull` + Restart il nuovo SW si attiva
   entro 1-2 refresh (l'utente può vedere la versione vecchia per un solo caricamento).
 
+## Verificare che un deploy sia DAVVERO andato live
+
+L'utente è non-tecnico e a volte crede di aver pubblicato ma il processo non si è
+aggiornato (Passenger non ricaricato, pull nel path sbagliato, push fatto prima del
+commit del fix). Per togliere ogni dubbio esiste un endpoint **pubblico** `GET /api/version`
+che restituisce un marker di build (`{"version":"..."}`). Dopo `git pull` + Restart su
+Netsons, `curl https://<dominio>/api/version` deve restituire il marker della build nuova;
+se restituisce quello vecchio (o 404), l'aggiornamento NON è andato live e il problema è il
+deploy, non il codice.
+
+**Why:** non si può curl-are `/api/appointments` per verificare (richiede login) e i log
+pino di prod vanno su stdout, invisibili a Passenger. Un marker pubblico è l'unico modo
+remoto per distinguere "deploy non preso" da "bug residuo".
+
+**How to apply:** quando spedisci una correzione che l'utente deve pubblicare, aggiorna la
+costante `BUILD_VERSION` in `artifacts/api-server/src/routes/health.ts`, rebuilda `lumii-app/`,
+e dopo il redeploy verifica con curl prima di cercare altri bug.
+
 ## Push su GitHub: lo fa l'utente, non l'agente
 
 Il push a `origin` (github.com/graphicmida-wq/HairHub) NON è eseguibile dall'ambiente agente/task: manca la credenziale GitHub, quindi `git push` via CLI fallisce ("Password authentication is not supported"). In main agent i comandi git distruttivi/lock sono pure bloccati dal sandbox (anche `git fetch` può inciampare su `objects/maintenance.lock`).

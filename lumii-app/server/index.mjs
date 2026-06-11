@@ -56285,9 +56285,13 @@ var DeleteUserParams = objectType({
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
+var BUILD_VERSION = "agenda-resiliente-2026-06-11";
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
   res.json(data);
+});
+router.get("/version", (_req, res) => {
+  res.json({ version: BUILD_VERSION });
 });
 var health_default = router;
 
@@ -60324,13 +60328,29 @@ var import_express7 = __toESM(require_express2(), 1);
 var router7 = (0, import_express7.Router)();
 router7.get("/appointments", async (req, res) => {
   const data = await dbGetAppointments();
-  const parsed = ListAppointmentsResponse.safeParse(data);
-  if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /appointments");
-    res.status(500).json({ message: "Internal server error" });
-    return;
+  const rows = Array.isArray(data) ? data : [];
+  const valid = [];
+  let skipped = 0;
+  for (const row of rows) {
+    const r = ListAppointmentsResponse.safeParse([row]);
+    if (r.success) {
+      valid.push(...r.data);
+    } else {
+      skipped += 1;
+      const id = row?.id;
+      req.log.error(
+        { err: r.error, appointmentId: id },
+        "Skipping invalid appointment row on GET /appointments"
+      );
+    }
   }
-  res.json(parsed.data);
+  if (skipped > 0) {
+    req.log.warn(
+      { skipped, total: rows.length },
+      "Some appointment rows failed validation and were skipped"
+    );
+  }
+  res.json(valid);
 });
 router7.post("/appointments", async (req, res) => {
   const body = CreateAppointmentBody.safeParse(req.body);
