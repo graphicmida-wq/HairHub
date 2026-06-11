@@ -59,7 +59,18 @@ router.post("/appointments", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const created = await dbCreateAppointment(body.data);
+  let created: Awaited<ReturnType<typeof dbCreateAppointment>>;
+  try {
+    created = await dbCreateAppointment(body.data);
+  } catch (err) {
+    // Surface the real DB reason (e.g. a legacy NOT NULL column on an older MySQL
+    // table) instead of a generic 500, so the failure is diagnosable from the UI.
+    req.log.error({ err }, "DB error on POST /appointments");
+    res.status(500).json({
+      message: `Salvataggio non riuscito (database): ${(err as Error).message}`,
+    });
+    return;
+  }
   const parsed = GetAppointmentResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
@@ -134,7 +145,16 @@ router.put("/appointments/:id", async (req, res) => {
     }
   }
 
-  const updated = await dbUpdateAppointment(params.data.id, body.data);
+  let updated: Awaited<ReturnType<typeof dbUpdateAppointment>>;
+  try {
+    updated = await dbUpdateAppointment(params.data.id, body.data);
+  } catch (err) {
+    req.log.error({ err }, "DB error on PUT /appointments/:id");
+    res.status(500).json({
+      message: `Salvataggio non riuscito (database): ${(err as Error).message}`,
+    });
+    return;
+  }
   if (!updated) {
     res.status(404).json({ message: "Appointment not found" });
     return;

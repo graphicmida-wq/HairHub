@@ -56285,7 +56285,7 @@ var DeleteUserParams = objectType({
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
-var BUILD_VERSION = "agenda-resiliente-2026-06-11";
+var BUILD_VERSION = "salva-appuntamento-2026-06-11";
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
   res.json(data);
@@ -59181,7 +59181,7 @@ async function initMysql() {
       await db.execute(sql.raw(statement));
     } catch (err) {
       const errno = err.errno;
-      const expected = errno === 1060 || errno === 1054;
+      const expected = errno === 1060 || errno === 1054 || errno === 1091;
       if (expected) {
         logger.debug(
           { statement, err: err.message },
@@ -59224,7 +59224,27 @@ async function initMysql() {
     "UPDATE appointments SET service_ids = JSON_ARRAY(service_id) WHERE (service_ids IS NULL OR JSON_LENGTH(service_ids) = 0) AND service_id IS NOT NULL"
   );
   await migrate("UPDATE appointments SET service_ids = JSON_ARRAY() WHERE service_ids IS NULL");
-  await migrate("ALTER TABLE appointments MODIFY service_id CHAR(12) NULL");
+  try {
+    const fkResult = await db.execute(sql`
+      SELECT CONSTRAINT_NAME AS name
+      FROM information_schema.KEY_COLUMN_USAGE
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'appointments'
+        AND COLUMN_NAME = 'service_id'
+        AND REFERENCED_TABLE_NAME IS NOT NULL
+    `);
+    const fkRows = Array.isArray(fkResult) && Array.isArray(fkResult[0]) ? fkResult[0] : Array.isArray(fkResult) ? fkResult : [];
+    for (const row of fkRows) {
+      const name = row.name ?? row.CONSTRAINT_NAME;
+      if (name) await migrate(`ALTER TABLE appointments DROP FOREIGN KEY \`${name}\``);
+    }
+  } catch (err) {
+    logger.warn(
+      { err: err.message },
+      "Could not inspect/drop the legacy service_id foreign key"
+    );
+  }
+  await migrate("ALTER TABLE appointments DROP COLUMN service_id");
   logger.info("MySQL database initialized (all tables ensured)");
 }
 async function mysqlSeedIfEmpty() {
@@ -60358,7 +60378,16 @@ router7.post("/appointments", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const created = await dbCreateAppointment(body.data);
+  let created;
+  try {
+    created = await dbCreateAppointment(body.data);
+  } catch (err) {
+    req.log.error({ err }, "DB error on POST /appointments");
+    res.status(500).json({
+      message: `Salvataggio non riuscito (database): ${err.message}`
+    });
+    return;
+  }
   const parsed = GetAppointmentResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
@@ -60423,7 +60452,16 @@ router7.put("/appointments/:id", async (req, res) => {
       }
     }
   }
-  const updated = await dbUpdateAppointment(params.data.id, body.data);
+  let updated;
+  try {
+    updated = await dbUpdateAppointment(params.data.id, body.data);
+  } catch (err) {
+    req.log.error({ err }, "DB error on PUT /appointments/:id");
+    res.status(500).json({
+      message: `Salvataggio non riuscito (database): ${err.message}`
+    });
+    return;
+  }
   if (!updated) {
     res.status(404).json({ message: "Appointment not found" });
     return;

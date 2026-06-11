@@ -366,11 +366,12 @@ async function initMysql() {
       await db.execute(sql.raw(statement));
     } catch (err) {
       // 1060 = ER_DUP_FIELDNAME (column already added), 1054 = ER_BAD_FIELD_ERROR
-      // (column doesn't exist — e.g. a legacy-only step running on a fresh DB).
-      // Both are expected, idempotent no-ops. Anything else is a real failure and
+      // (column doesn't exist — e.g. a legacy-only step running on a fresh DB),
+      // 1091 = ER_CANT_DROP_FIELD_OR_KEY (dropping a column/FK that isn't there).
+      // All are expected, idempotent no-ops. Anything else is a real failure and
       // must stay visible in production logs (pino's default level is "info").
       const errno = (err as { errno?: number }).errno;
-      const expected = errno === 1060 || errno === 1054;
+      const expected = errno === 1060 || errno === 1054 || errno === 1091;
       if (expected) {
         logger.debug(
           { statement, err: (err as Error).message },
@@ -424,14 +425,51 @@ async function initMysql() {
   await migrate("ALTER TABLE appointments ADD COLUMN staff_id CHAR(12)");
   await migrate("ALTER TABLE appointments ADD COLUMN used_product_ids JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN used_products JSON");
-  // Backfill the new array column from the legacy single value, guarantee it is
-  // never NULL, then relax the old NOT NULL column so inserts that omit
-  // service_id (all current inserts) succeed.
+  // Backfill the new array column from the legacy single value and guarantee it is
+  // never NULL BEFORE we get rid of the old column.
   await migrate(
     "UPDATE appointments SET service_ids = JSON_ARRAY(service_id) WHERE (service_ids IS NULL OR JSON_LENGTH(service_ids) = 0) AND service_id IS NOT NULL",
   );
   await migrate("UPDATE appointments SET service_ids = JSON_ARRAY() WHERE service_ids IS NULL");
-  await migrate("ALTER TABLE appointments MODIFY service_id CHAR(12) NULL");
+
+  // The legacy `service_id` column was created NOT NULL with a foreign key to
+  // services(id). The current model replaced it with service_ids[] (backfilled
+  // above) and never writes service_id again, so on a real (older) MySQL table
+  // every INSERT is rejected with "Field 'service_id' doesn't have a default
+  // value" — which is exactly the "non posso salvare appuntamento" failure.
+  // We can't simply relax it: MySQL refuses `MODIFY ... NULL` while the column is
+  // referenced by a foreign key (ER_FK_CANNOT_CHANGE_COLUMN) and that ALTER fails
+  // silently. So drop the FK first (its name is auto-generated and unknown, hence
+  // the information_schema lookup) and then drop the column outright. Fully
+  // idempotent: on a fresh DB the column/FK don't exist and every step no-ops.
+  try {
+    const fkResult = await db.execute(sql`
+      SELECT CONSTRAINT_NAME AS name
+      FROM information_schema.KEY_COLUMN_USAGE
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'appointments'
+        AND COLUMN_NAME = 'service_id'
+        AND REFERENCED_TABLE_NAME IS NOT NULL
+    `);
+    // drizzle/mysql2 returns [rows, fields]; be defensive about both shapes.
+    const fkRows = (
+      Array.isArray(fkResult) && Array.isArray(fkResult[0])
+        ? fkResult[0]
+        : Array.isArray(fkResult)
+          ? fkResult
+          : []
+    ) as Array<{ name?: string; CONSTRAINT_NAME?: string }>;
+    for (const row of fkRows) {
+      const name = row.name ?? row.CONSTRAINT_NAME;
+      if (name) await migrate(`ALTER TABLE appointments DROP FOREIGN KEY \`${name}\``);
+    }
+  } catch (err) {
+    logger.warn(
+      { err: (err as Error).message },
+      "Could not inspect/drop the legacy service_id foreign key",
+    );
+  }
+  await migrate("ALTER TABLE appointments DROP COLUMN service_id");
 
   logger.info("MySQL database initialized (all tables ensured)");
 }
