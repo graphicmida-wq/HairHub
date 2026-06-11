@@ -10,6 +10,7 @@ import { NewClientModal } from './NewClientModal';
 import { NewAppointmentModal } from './NewAppointmentModal';
 import { NewProductModal } from './NewProductModal';
 import { NewServiceModal } from './NewServiceModal';
+import { InstallAppButton } from './InstallAppButton';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import lumiiLogo from '../assets/lumii-logo.png';
@@ -109,6 +110,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         <div className="px-3 pb-6 flex flex-col gap-0.5">
+          <InstallAppButton />
+
           {isAdmin && (
             <Link
               to="/utenti"
@@ -220,6 +223,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             ) : null}
           </div>
           <div className="flex items-center gap-1 -mr-2">
+            <InstallAppButton variant="mobile" />
             {isAdmin && (
               <Link
                 to="/utenti"
