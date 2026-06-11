@@ -205,10 +205,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <img
                 src={logoUrl}
                 alt="Logo salone"
-                className="w-7 h-7 rounded-lg object-contain bg-white/10"
+                className="w-10 h-10 rounded-lg object-contain bg-white/10"
               />
             ) : (
-              <img src={lumiiLogo} alt="Lumii" className="w-7 h-7 object-contain" />
+              <img src={lumiiLogo} alt="Lumii" className="w-10 h-10 object-contain" />
             )}
             {showName ? (
               <h1
