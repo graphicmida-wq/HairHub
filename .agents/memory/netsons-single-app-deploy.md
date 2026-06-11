@@ -36,3 +36,10 @@ CORS/cookie tra domini diversi.
   avvio: idempotente, nessun `drizzle push` su un DB Netsons nuovo.
 - **Cookie Secure ⇒ serve HTTPS**: senza SSL attivo sul sottodominio il login non salva
   la sessione (cookie viaggia solo su https).
+- **La SPA è una PWA (vite-plugin-pwa)**: `sw.js` + `manifest.webmanifest` + `registerSW.js`
+  + il precache manifest dentro `sw.js` devono restare allineati con `index.html` (hash degli
+  asset). Quindi ad ogni deploy ricopia TUTTO `dist/public` in `lumii-app/public`, mai singoli
+  file, altrimenti il service worker serve una versione stale. `mysql2` resta external, ma le
+  icone/manifest sono file statici serviti da `express.static` (esistono fisicamente in public).
+  autoUpdate + skipWaiting + clientsClaim ⇒ dopo `git pull` + Restart il nuovo SW si attiva
+  entro 1-2 refresh (l'utente può vedere la versione vecchia per un solo caricamento).

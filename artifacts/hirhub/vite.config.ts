@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { VitePWA } from "vite-plugin-pwa";
 
 const isBuild = process.argv.some(a => a === "build");
 
@@ -23,6 +24,58 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      includeAssets: [
+        "favicon.svg",
+        "favicon-32x32.png",
+        "favicon-16x16.png",
+        "apple-touch-icon.png",
+      ],
+      manifest: {
+        name: "Lumii — Gestione Salone",
+        short_name: "Lumii",
+        description:
+          "Gestionale salone: clienti, agenda, servizi e magazzino.",
+        lang: "it",
+        dir: "ltr",
+        theme_color: "#3a3748",
+        background_color: "#3a3748",
+        display: "standalone",
+        orientation: "portrait",
+        start_url: ".",
+        scope: basePath,
+        icons: [
+          {
+            src: "pwa-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+      workbox: {
+        navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/api/],
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+      },
+      devOptions: {
+        enabled: false,
+      },
+    }),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [

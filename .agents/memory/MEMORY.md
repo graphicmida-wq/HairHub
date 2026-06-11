@@ -1,2 +1,2 @@
-- [Netsons single-app deploy](netsons-single-app-deploy.md) — Lumii si pubblica come UN Node app pre-buildato (lumii-app/) che serve API + SPA; mysql2 è external (import statico) quindi va installato; nessun dato demo in prod.
+- [Netsons single-app deploy](netsons-single-app-deploy.md) — Lumii gira come UN Node app pre-buildato (lumii-app/) che serve API + SPA; ogni deploy va ri-pacchettizzato per intero da dist/public.
 - [Auth guard DB re-check](auth-guard-db-recheck.md) — requireAuth ricarica l'utente dal DB ad ogni richiesta, non si fida solo del JWT (token vive ~7gg)
