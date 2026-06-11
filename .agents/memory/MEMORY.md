@@ -1,3 +1,4 @@
 - [Netsons single-app deploy](netsons-single-app-deploy.md) — Lumii gira come UN Node app pre-buildato (lumii-app/) che serve API + SPA; ogni deploy va ri-pacchettizzato per intero da dist/public.
 - [Auth guard DB re-check](auth-guard-db-recheck.md) — requireAuth ricarica l'utente dal DB ad ogni richiesta, non si fida solo del JWT (token vive ~7gg)
+- [DB schema dual-migration](db-schema-dual-migration.md) — ogni nuova colonna va migrata in DUE posti (SQLite dev + initMysql migrate()) o i DB Netsons live si rompono in silenzio
 - [Brand color theming](brand-color-theming.md) — palette/navy default, normalizzazione del vecchio default lato API, anti-flash di BrandColorSync, e regola brand icona-app vs logo-salone

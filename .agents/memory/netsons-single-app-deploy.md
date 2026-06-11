@@ -32,8 +32,10 @@ CORS/cookie tra domini diversi.
 - **API base URL same-origin**: il frontend buildato senza `VITE_API_URL` usa percorsi
   relativi `/api/...` (custom-fetch ritorna l'input quando `_baseUrl` è null; i fallback
   nei componenti danno base `""` in prod). Servito dallo stesso dominio ⇒ funziona senza CORS.
-- **initMysql crea tutte le tabelle** (`CREATE TABLE IF NOT EXISTS`, ordine FK) ad ogni
-  avvio: idempotente, nessun `drizzle push` su un DB Netsons nuovo.
+- **initMysql crea tabelle + migra colonne** ad ogni avvio: prima `CREATE TABLE IF NOT
+  EXISTS` (ordine FK), poi un blocco `migrate()` di `ALTER TABLE ... ADD COLUMN` idempotenti.
+  Tutto idempotente, nessun `drizzle push` su un DB Netsons. Per il vincolo critico vedi
+  [db-schema-dual-migration](db-schema-dual-migration.md).
 - **Cookie Secure ⇒ serve HTTPS**: senza SSL attivo sul sottodominio il login non salva
   la sessione (cookie viaggia solo su https).
 - **La SPA è una PWA (vite-plugin-pwa)**: `sw.js` + `manifest.webmanifest` + `registerSW.js`

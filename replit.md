@@ -19,7 +19,7 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - Frontend: React 19 + Vite 6 + TailwindCSS v4 (`artifacts/hirhub`)
 - API: Express 5 + Pino logger (`artifacts/api-server`)
 - DB schema: Drizzle ORM MySQL (`lib/db`) — solo per produzione Netsons
-- Dev backend: in-memory DataStore (nessun DB necessario in Replit)
+- Dev backend: SQLite (better-sqlite3, file `dev.db`) — nessun MySQL necessario in Replit
 - Validazione API: Zod + drizzle-zod
 - Codegen: Orval (OpenAPI spec → React Query hooks + Zod schemas)
 - State: `@tanstack/react-query` per server state, `ModalStore` minimo per UI locale
@@ -31,7 +31,7 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - `lib/api-client-react/src/generated/` — hook React Query generati (non editare)
 - `lib/api-zod/src/generated/` — schemi Zod generati (non editare)
 - `lib/db/src/schema/` — schema Drizzle MySQL per produzione
-- `artifacts/api-server/src/data/store.ts` — DataStore in-memory (dev seed data)
+- `artifacts/api-server/src/data/db.ts` — data layer (SQLite in dev, MySQL in prod); `sqlite-schema.ts` = schema SQLite dev
 - `artifacts/api-server/src/routes/` — route Express (clients, services, products, appointments, settings)
 - `artifacts/hirhub/src/pages/` — Dashboard, Agenda, Clienti, Magazzino
 - `artifacts/hirhub/src/components/` — Layout, Modal*, tutti i form modali
@@ -43,7 +43,7 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 ## Architecture decisions
 
 - **Contract-first API**: OpenAPI spec → Orval codegen → React Query hooks. Non scrivere fetch manualmente.
-- **In-memory store per dev**: Il server usa un DataStore in-memory con dati seed. Non serve MySQL in Replit.
+- **SQLite per dev**: Il server usa un file SQLite (`dev.db`) con dati seed. Non serve MySQL in Replit. Lo switch dev/prod è su `process.env.DB_HOST`.
 - **MySQL solo per produzione**: lib/db usa drizzle-orm/mysql-core per Netsons. Configurare DB_HOST, DB_USER, DB_PASS, DB_NAME prima del deploy. `initMysql()` crea tutte le tabelle (`CREATE TABLE IF NOT EXISTS`, in ordine FK) al primo avvio: nessun `drizzle push` richiesto.
 - **Deploy come app unica (Netsons)**: in produzione lo stesso processo Express serve sia l'API su `/api` sia le schermate buildate. Se accanto al bundle esiste `../public/index.html` (o `STATIC_DIR`), `app.ts` monta `express.static` + fallback SPA; in dev Replit non c'è `public`, quindi resta API-only e Vite serve la UI. L'artefatto deployabile pre-buildato vive in `lumii-app/` alla root (server in `lumii-app/server/`, UI in `lumii-app/public/`, avvio `server.js`); non è un pacchetto del workspace. Same-origin ⇒ `CORS_ORIGIN` non serve. Vedi `DEPLOY.md`.
 - **React Query per tutto**: nessun Zustand/Redux. Il frontend legge/scrive solo via hook generati.

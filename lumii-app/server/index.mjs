@@ -59172,6 +59172,55 @@ async function initMysql() {
       created_at VARCHAR(40) NOT NULL
     )
   `);
+  const migrate = async (statement) => {
+    try {
+      await db.execute(sql.raw(statement));
+    } catch (err) {
+      const errno = err.errno;
+      const expected = errno === 1060 || errno === 1054;
+      if (expected) {
+        logger.debug(
+          { statement, err: err.message },
+          "MySQL migration step skipped (already applied or not applicable)"
+        );
+      } else {
+        logger.warn(
+          { statement, err: err.message },
+          "MySQL migration step failed unexpectedly"
+        );
+      }
+    }
+  };
+  await migrate("ALTER TABLE clients ADD COLUMN email VARCHAR(255) NOT NULL DEFAULT ''");
+  await migrate("ALTER TABLE clients ADD COLUMN dob VARCHAR(10)");
+  await migrate("ALTER TABLE clients ADD COLUMN notes TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN allergies TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN hair_specs TEXT");
+  await migrate("ALTER TABLE services ADD COLUMN color VARCHAR(9) NOT NULL DEFAULT '#94a3b8'");
+  await migrate("ALTER TABLE products ADD COLUMN price DECIMAL(10,2) NOT NULL DEFAULT 0");
+  await migrate("ALTER TABLE products ADD COLUMN unit_size DECIMAL(10,2)");
+  await migrate("ALTER TABLE products ADD COLUMN unit_type VARCHAR(2)");
+  await migrate("ALTER TABLE products ADD COLUMN stock_grams DECIMAL(10,2)");
+  await migrate("ALTER TABLE staff_members ADD COLUMN role VARCHAR(100)");
+  await migrate("ALTER TABLE staff_members ADD COLUMN color VARCHAR(20) NOT NULL DEFAULT '#6b7280'");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN logo_url MEDIUMTEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN show_salon_name INT NOT NULL DEFAULT 1");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN address VARCHAR(500)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN phone VARCHAR(30)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN email VARCHAR(255)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
+  await migrate("ALTER TABLE appointments ADD COLUMN service_ids JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN service_prices JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN service_list_prices JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN sold_products JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN staff_id CHAR(12)");
+  await migrate("ALTER TABLE appointments ADD COLUMN used_product_ids JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN used_products JSON");
+  await migrate(
+    "UPDATE appointments SET service_ids = JSON_ARRAY(service_id) WHERE (service_ids IS NULL OR JSON_LENGTH(service_ids) = 0) AND service_id IS NOT NULL"
+  );
+  await migrate("UPDATE appointments SET service_ids = JSON_ARRAY() WHERE service_ids IS NULL");
+  await migrate("ALTER TABLE appointments MODIFY service_id CHAR(12) NULL");
   logger.info("MySQL database initialized (all tables ensured)");
 }
 async function mysqlSeedIfEmpty() {

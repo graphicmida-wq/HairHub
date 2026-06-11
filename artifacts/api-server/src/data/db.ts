@@ -352,6 +352,87 @@ async function initMysql() {
       created_at VARCHAR(40) NOT NULL
     )
   `);
+
+  // ── Schema migrations for pre-existing MySQL databases ─────────────────────
+  // CREATE TABLE IF NOT EXISTS (above) covers brand-new databases and brand-new
+  // *tables*, but it never adds newly-introduced *columns* to a table an older
+  // build of the app already created (e.g. an existing Netsons salon DB upgraded
+  // to a newer release). MySQL 8 has no "ADD COLUMN IF NOT EXISTS", so we attempt
+  // each change and swallow the resulting duplicate-/unknown-column error when it
+  // has already been applied. This mirrors the SQLite dev migrations so an
+  // upgraded production DB ends up with exactly the same shape as a fresh one.
+  const migrate = async (statement: string) => {
+    try {
+      await db.execute(sql.raw(statement));
+    } catch (err) {
+      // 1060 = ER_DUP_FIELDNAME (column already added), 1054 = ER_BAD_FIELD_ERROR
+      // (column doesn't exist — e.g. a legacy-only step running on a fresh DB).
+      // Both are expected, idempotent no-ops. Anything else is a real failure and
+      // must stay visible in production logs (pino's default level is "info").
+      const errno = (err as { errno?: number }).errno;
+      const expected = errno === 1060 || errno === 1054;
+      if (expected) {
+        logger.debug(
+          { statement, err: (err as Error).message },
+          "MySQL migration step skipped (already applied or not applicable)",
+        );
+      } else {
+        logger.warn(
+          { statement, err: (err as Error).message },
+          "MySQL migration step failed unexpectedly",
+        );
+      }
+    }
+  };
+
+  // clients
+  await migrate("ALTER TABLE clients ADD COLUMN email VARCHAR(255) NOT NULL DEFAULT ''");
+  await migrate("ALTER TABLE clients ADD COLUMN dob VARCHAR(10)");
+  await migrate("ALTER TABLE clients ADD COLUMN notes TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN allergies TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN hair_specs TEXT");
+
+  // services: per-service colour
+  await migrate("ALTER TABLE services ADD COLUMN color VARCHAR(9) NOT NULL DEFAULT '#94a3b8'");
+
+  // products: pricing + gram/ml stock tracking
+  await migrate("ALTER TABLE products ADD COLUMN price DECIMAL(10,2) NOT NULL DEFAULT 0");
+  await migrate("ALTER TABLE products ADD COLUMN unit_size DECIMAL(10,2)");
+  await migrate("ALTER TABLE products ADD COLUMN unit_type VARCHAR(2)");
+  await migrate("ALTER TABLE products ADD COLUMN stock_grams DECIMAL(10,2)");
+
+  // staff_members: role + colour
+  await migrate("ALTER TABLE staff_members ADD COLUMN role VARCHAR(100)");
+  await migrate("ALTER TABLE staff_members ADD COLUMN color VARCHAR(20) NOT NULL DEFAULT '#6b7280'");
+
+  // salon_settings: branding/contact fields
+  await migrate("ALTER TABLE salon_settings ADD COLUMN logo_url MEDIUMTEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN show_salon_name INT NOT NULL DEFAULT 1");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN address VARCHAR(500)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN phone VARCHAR(30)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN email VARCHAR(255)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
+
+  // appointments: the multi-service upgrade (single service_id → service_ids[])
+  // plus staff assignment, pricing snapshots and product usage. This is the
+  // change most likely to break INSERTs on an older DB, because the current code
+  // no longer writes the legacy service_id column.
+  await migrate("ALTER TABLE appointments ADD COLUMN service_ids JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN service_prices JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN service_list_prices JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN sold_products JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN staff_id CHAR(12)");
+  await migrate("ALTER TABLE appointments ADD COLUMN used_product_ids JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN used_products JSON");
+  // Backfill the new array column from the legacy single value, guarantee it is
+  // never NULL, then relax the old NOT NULL column so inserts that omit
+  // service_id (all current inserts) succeed.
+  await migrate(
+    "UPDATE appointments SET service_ids = JSON_ARRAY(service_id) WHERE (service_ids IS NULL OR JSON_LENGTH(service_ids) = 0) AND service_id IS NOT NULL",
+  );
+  await migrate("UPDATE appointments SET service_ids = JSON_ARRAY() WHERE service_ids IS NULL");
+  await migrate("ALTER TABLE appointments MODIFY service_id CHAR(12) NULL");
+
   logger.info("MySQL database initialized (all tables ensured)");
 }
 
