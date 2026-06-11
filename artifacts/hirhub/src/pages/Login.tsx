@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useLogin, useGetSettings, getGetCurrentUserQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Lock } from 'lucide-react';
-import lumiiLogo from '../assets/lumii-logo.png';
+import lumiiLogoFull from '../assets/lumii-logo-full.png';
 
 const inputClass =
   'w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300 placeholder:text-stone-400 transition';
@@ -41,22 +41,24 @@ export const Login = () => {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-8">
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo salone" className="w-20 h-20 rounded-2xl object-contain mb-4" />
+            <>
+              <img src={logoUrl} alt="Logo salone" className="w-20 h-20 rounded-2xl object-contain mb-4" />
+              <h1
+                className="text-2xl font-semibold text-[#F5F0E3]"
+                style={{ fontFamily: '"Playfair Display", serif' }}
+              >
+                {salonName}
+              </h1>
+              <p
+                className="text-[11px] uppercase tracking-[0.2em] mt-1"
+                style={{ color: 'var(--color-brand-muted)' }}
+              >
+                Gestione Salone
+              </p>
+            </>
           ) : (
-            <img src={lumiiLogo} alt="Lumii" className="w-20 h-20 object-contain mb-4" />
+            <img src={lumiiLogoFull} alt="Lumii Manager" className="w-60 object-contain" />
           )}
-          <h1
-            className="text-2xl font-semibold text-[#F5F0E3]"
-            style={{ fontFamily: '"Playfair Display", serif' }}
-          >
-            {salonName}
-          </h1>
-          <p
-            className="text-[11px] uppercase tracking-[0.2em] mt-1"
-            style={{ color: 'var(--color-brand-muted)' }}
-          >
-            Gestione Salone
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-4">

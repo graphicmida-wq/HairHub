@@ -6,7 +6,7 @@ const router: IRouter = Router();
 // Build marker — bump when shipping a deploy you need to confirm went live.
 // Public (no auth) so it can be checked with a simple GET after a deploy:
 //   curl https://<dominio>/api/version
-const BUILD_VERSION = "agenda-link-2026-06-11";
+const BUILD_VERSION = "logo-login-2026-06-11";
 
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
