@@ -1,8 +1,8 @@
 # Guida al Deploy su Netsons (cPanel + MySQL)
 
-Questa guida descrive come preparare e caricare **Lumi** su un hosting Netsons con cPanel e MySQL 8.
+Questa guida descrive come preparare e caricare **Lumii** su un hosting Netsons con cPanel e MySQL 8.
 
-Lumi viene pubblicato per ogni cliente su un **sottodominio** di `lumii.it`
+Lumii viene pubblicato per ogni cliente su un **sottodominio** di `lumii.it`
 (es. `capellievanita.lumii.it`). Il nome del salone mostrato nell'app
 (es. "Capelli&Vanità") si configura dalle **Impostazioni** dopo il primo accesso,
 quindi una stessa build serve qualsiasi cliente.
@@ -84,15 +84,27 @@ La build produce la cartella: `artifacts/hirhub/dist/public/`
 
 > **Attenzione:** Carica il *contenuto* della cartella, non la cartella stessa.
 
-Il file `.htaccess` incluso reindirizza tutte le route a `index.html` (necessario per React Router):
+Il file `.htaccess` incluso reindirizza tutte le route a `index.html` (necessario per
+React Router) **escludendo** le chiamate API su `/api` (gestite dall'app Node.js):
 
 ```apache
 Options -MultiViews
 RewriteEngine On
+# Non intercettare le chiamate API (gestite dall'app Node.js / Passenger su /api)
+RewriteCond %{REQUEST_URI} !^/api
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [QSA,L]
 ```
+
+> **⚠️ Importante (Passenger/Node.js Selector):** quando crei l'app Node.js (Step 5)
+> con Application URL `nomecliente.lumii.it/api`, cPanel **aggiunge automaticamente
+> alcune righe `Passenger…` nello stesso `.htaccess`** della document root del
+> sottodominio. Se carichi il `.htaccess` del frontend **dopo** aver creato l'app
+> Node.js, **non sovrascrivere quelle righe**: aprilo nel File Manager e **unisci** il
+> contenuto (mantieni sia le righe `Passenger…` di cPanel sia le righe `RewriteRule`
+> qui sopra). In alternativa, carica prima il frontend e crea l'app Node.js dopo.
+> Se `/api` smette di rispondere dopo l'upload, è quasi sempre questa la causa.
 
 ---
 
@@ -212,7 +224,7 @@ pnpm --filter @workspace/db run push
 
 ## Verifica del deploy
 
-1. Apri `https://nomecliente.lumii.it` → deve caricare la schermata di login Lumi
+1. Apri `https://nomecliente.lumii.it` → deve caricare la schermata di login Lumii
 2. Naviga tra le pagine (Agenda, Clienti, ecc.) → il routing SPA deve funzionare
 3. Crea un nuovo cliente → deve salvare correttamente via API
 4. Controlla i log del server in cPanel → Node.js Selector → Logs

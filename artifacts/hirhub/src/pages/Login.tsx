@@ -22,7 +22,7 @@ export const Login = () => {
     },
   });
 
-  const salonName = settings?.salonName ?? 'Lumi';
+  const salonName = settings?.salonName ?? 'Lumii';
   const logoUrl = settings?.logoUrl ?? null;
 
   const handleSubmit = (e: FormEvent) => {
