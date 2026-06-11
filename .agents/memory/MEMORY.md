@@ -1,2 +1,3 @@
 - [Netsons single-app deploy](netsons-single-app-deploy.md) — Lumii gira come UN Node app pre-buildato (lumii-app/) che serve API + SPA; ogni deploy va ri-pacchettizzato per intero da dist/public.
 - [Auth guard DB re-check](auth-guard-db-recheck.md) — requireAuth ricarica l'utente dal DB ad ogni richiesta, non si fida solo del JWT (token vive ~7gg)
+- [Brand color theming](brand-color-theming.md) — palette default = BRAND_PRESETS[0]/DEFAULT_PALETTE; normalizza il vecchio default→null lato API; BrandColorSync deve attendere i settings (`if(!settings)return`) per non sovrascrivere la cache anti-flash di main.tsx

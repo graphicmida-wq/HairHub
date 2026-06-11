@@ -1,11 +1,11 @@
-import { mysqlTable, varchar, int, text } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, int, mediumtext } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const salonSettingsTable = mysqlTable("salon_settings", {
   id: int("id").primaryKey().autoincrement(),
   salonName: varchar("salon_name", { length: 200 }).notNull().default("L'Atelier"),
-  logoUrl: text("logo_url"),
+  logoUrl: mediumtext("logo_url"),
   showSalonName: int("show_salon_name").notNull().default(1),
   address: varchar("address", { length: 500 }),
   phone: varchar("phone", { length: 30 }),

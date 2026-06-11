@@ -51290,7 +51290,7 @@ var init_settings = __esm({
     salonSettingsTable = mysqlTable("salon_settings", {
       id: int("id").primaryKey().autoincrement(),
       salonName: varchar("salon_name", { length: 200 }).notNull().default("L'Atelier"),
-      logoUrl: text2("logo_url"),
+      logoUrl: mediumtext("logo_url"),
       showSalonName: int("show_salon_name").notNull().default(1),
       address: varchar("address", { length: 500 }),
       phone: varchar("phone", { length: 30 }),
@@ -59150,7 +59150,7 @@ async function initMysql() {
     CREATE TABLE IF NOT EXISTS salon_settings (
       id INT PRIMARY KEY AUTO_INCREMENT,
       salon_name VARCHAR(200) NOT NULL DEFAULT 'L''Atelier',
-      logo_url TEXT,
+      logo_url MEDIUMTEXT,
       show_salon_name INT NOT NULL DEFAULT 1,
       address VARCHAR(500),
       phone VARCHAR(30),
@@ -59158,6 +59158,10 @@ async function initMysql() {
       brand_color VARCHAR(20)
     )
   `);
+  try {
+    await db.execute(sql`ALTER TABLE salon_settings MODIFY logo_url MEDIUMTEXT`);
+  } catch {
+  }
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS users (
       id CHAR(12) PRIMARY KEY,
@@ -59783,7 +59787,8 @@ async function dbGetSettings() {
     }
     return {
       ...row,
-      showSalonName: row.showSalonName ? true : false
+      showSalonName: row.showSalonName ? true : false,
+      brandColor: normalizeBrandColor(row.brandColor)
     };
   }
   let s = getSqliteDb().select().from(salonSettings).get();
@@ -59793,8 +59798,14 @@ async function dbGetSettings() {
   }
   return Promise.resolve({
     ...s,
-    showSalonName: s.showSalonName ? true : false
+    showSalonName: s.showSalonName ? true : false,
+    brandColor: normalizeBrandColor(s.brandColor)
   });
+}
+var LEGACY_DEFAULT_BRAND = "#5c5870";
+function normalizeBrandColor(value) {
+  if (!value) return null;
+  return value.toLowerCase() === LEGACY_DEFAULT_BRAND ? null : value;
 }
 async function dbUpdateSettings(data) {
   const current = await dbGetSettings();

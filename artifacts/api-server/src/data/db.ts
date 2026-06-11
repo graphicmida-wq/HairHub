@@ -332,7 +332,7 @@ async function initMysql() {
     CREATE TABLE IF NOT EXISTS salon_settings (
       id INT PRIMARY KEY AUTO_INCREMENT,
       salon_name VARCHAR(200) NOT NULL DEFAULT 'L''Atelier',
-      logo_url TEXT,
+      logo_url MEDIUMTEXT,
       show_salon_name INT NOT NULL DEFAULT 1,
       address VARCHAR(500),
       phone VARCHAR(30),
@@ -340,6 +340,8 @@ async function initMysql() {
       brand_color VARCHAR(20)
     )
   `);
+  // Widen logo_url on pre-existing tables (originally TEXT = 64KB, too small for a base64 logo).
+  try { await db.execute(sql`ALTER TABLE salon_settings MODIFY logo_url MEDIUMTEXT`); } catch { /* already MEDIUMTEXT */ }
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS users (
       id CHAR(12) PRIMARY KEY,
@@ -1135,6 +1137,7 @@ export async function dbGetSettings() {
     return {
       ...row,
       showSalonName: row.showSalonName ? true : false,
+      brandColor: normalizeBrandColor(row.brandColor),
     };
   }
   let s = getSqliteDb().select().from(sqliteSalon).get();
@@ -1145,7 +1148,16 @@ export async function dbGetSettings() {
   return Promise.resolve({
     ...s,
     showSalonName: s.showSalonName ? true : false,
+    brandColor: normalizeBrandColor(s.brandColor),
   });
+}
+
+// The retired default brand color (old purple "pergamena"). Treat it as "unset"
+// so the current Blu Notte default palette applies instead of the legacy purple.
+const LEGACY_DEFAULT_BRAND = "#5c5870";
+function normalizeBrandColor(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value.toLowerCase() === LEGACY_DEFAULT_BRAND ? null : value;
 }
 
 export async function dbUpdateSettings(data: Partial<{

@@ -14,15 +14,15 @@
   --color-stone-800: #292524;
   --color-stone-900: #1c1917;
 
-  /* Brand palette — Pergamena Scura */
-  --color-brand-light:      #f3f3f2;
-  --color-brand-primary:    #5c5870;
-  --color-brand-dark:       #3a3748;
-  --color-brand-muted:      #c8c4d4;
-  --color-brand-icon-bg:    #e2e1e5;
-  --color-brand-icon-color: #5c5870;
-  --color-brand-gold:       #5c5870;
-  --color-brand-gold-bg:    #e2e1e5;
+  /* Brand palette — Blu Notte */
+  --color-brand-light:      #eef1f8;
+  --color-brand-primary:    #3a4d7a;
+  --color-brand-dark:       #20304f;
+  --color-brand-muted:      #b8c2db;
+  --color-brand-icon-bg:    #dde2ee;
+  --color-brand-icon-color: #3a4d7a;
+  --color-brand-gold:       #3a4d7a;
+  --color-brand-gold-bg:    #dde2ee;
 
   --color-background: #ffffff;
   --color-foreground: var(--color-stone-900);

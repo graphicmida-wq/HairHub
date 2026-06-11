@@ -9,12 +9,12 @@ export interface BrandPalette {
 
 export const BRAND_PRESETS: BrandPalette[] = [
   {
-    key: 'pergamena',
-    label: 'Pergamena',
-    primary: '#5c5870',
-    dark: '#3a3748',
-    muted: '#c8c4d4',
-    light: '#f3f3f2',
+    key: 'blunotte',
+    label: 'Blu Notte',
+    primary: '#3a4d7a',
+    dark: '#20304f',
+    muted: '#b8c2db',
+    light: '#eef1f8',
   },
   {
     key: 'viola',
@@ -74,7 +74,7 @@ export const BRAND_PRESETS: BrandPalette[] = [
   },
 ];
 
-const DEFAULT_PALETTE = BRAND_PRESETS[0]!;
+export const DEFAULT_PALETTE = BRAND_PRESETS[0]!;
 const LS_KEY = 'hirhub_brand_color';
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {

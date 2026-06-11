@@ -14,7 +14,7 @@ import { Users } from './pages/Users';
 import { Login } from './pages/Login';
 import { Toaster } from './components/Toast';
 import { AuthProvider, useAuth } from './lib/auth-context';
-import { BRAND_PRESETS, paletteFromCustomColor, applyBrandPalette, saveBrandPalette } from './lib/brand-color';
+import { BRAND_PRESETS, DEFAULT_PALETTE, paletteFromCustomColor, applyBrandPalette, saveBrandPalette } from './lib/brand-color';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +28,14 @@ const queryClient = new QueryClient({
 function BrandColorSync() {
   const { data: settings } = useGetSettings();
   useEffect(() => {
-    if (!settings?.brandColor) return;
+    // Wait for settings to load; main.tsx already applied the cached palette to avoid flash.
+    if (!settings) return;
+    if (!settings.brandColor) {
+      // No saved color → ensure the default palette wins (clears any stale override).
+      applyBrandPalette(DEFAULT_PALETTE);
+      saveBrandPalette(DEFAULT_PALETTE);
+      return;
+    }
     const preset = BRAND_PRESETS.find(p => p.primary.toLowerCase() === settings.brandColor!.toLowerCase());
     const palette = preset ?? paletteFromCustomColor(settings.brandColor);
     applyBrandPalette(palette);
