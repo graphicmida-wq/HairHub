@@ -44,7 +44,7 @@ export default defineConfig({
         background_color: "#20304f",
         display: "standalone",
         orientation: "portrait",
-        start_url: ".",
+        start_url: basePath,
         scope: basePath,
         icons: [
           {
@@ -68,9 +68,28 @@ export default defineConfig({
       workbox: {
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/api/],
-        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2,jpg,jpeg}"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "google-fonts-stylesheets",
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-webfonts",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
       devOptions: {
         enabled: false,
@@ -109,6 +128,12 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
     },
   },
   preview: {
