@@ -436,7 +436,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-stone-900 truncate">{p.name}</div>
                     <div className="text-xs text-stone-500">
-                      {p.brand}
+                      <span className="uppercase">{p.brand}</span>
                       {hasWeight && p.stockGrams != null
                         ? ` · ${p.stockGrams % 1 === 0 ? p.stockGrams : p.stockGrams.toFixed(1)} ${unit} rimanenti`
                         : ` · ${p.quantity} pz rimanenti`}
@@ -507,7 +507,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
                 <div key={p.id} className="p-3 border-b border-stone-50 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-stone-900 truncate">{p.name}</div>
-                    <div className="text-xs text-stone-500">{p.brand} · {p.quantity} pz rimanenti</div>
+                    <div className="text-xs text-stone-500"><span className="uppercase">{p.brand}</span> · {p.quantity} pz rimanenti</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <input

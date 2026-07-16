@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { CategoryInput } from './CategoryInput';
+import { BrandInput } from './BrandInput';
 import { useListProducts, useUpdateProduct, useDeleteProduct, getListProductsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
@@ -152,9 +153,11 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Marca</label>
-            <input required type="text" value={formData.brand}
-              onChange={e => setFormData(pr => ({ ...pr, brand: e.target.value }))}
-              className={INPUT} />
+            <BrandInput
+              required
+              value={formData.brand}
+              onChange={val => setFormData(pr => ({ ...pr, brand: val }))}
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Categoria</label>

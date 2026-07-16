@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { CategoryInput } from './CategoryInput';
+import { BrandInput } from './BrandInput';
 import { useCreateProduct, getListProductsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
@@ -106,9 +107,11 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Marca</label>
-            <input required type="text" value={formData.brand}
-              onChange={e => setFormData(p => ({ ...p, brand: e.target.value }))}
-              className={INPUT} />
+            <BrandInput
+              required
+              value={formData.brand}
+              onChange={val => setFormData(p => ({ ...p, brand: val }))}
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Categoria</label>

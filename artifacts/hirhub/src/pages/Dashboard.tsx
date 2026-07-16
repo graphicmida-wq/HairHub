@@ -325,7 +325,7 @@ export const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>{p.name}</p>
-                          <p className="text-xs" style={{ color: TEXT_MUTED }}>{p.brand}</p>
+                          <p className="text-xs uppercase" style={{ color: TEXT_MUTED }}>{p.brand}</p>
                         </div>
                         <span className="text-sm font-medium text-red-600 shrink-0">{p.quantity} pz</span>
                       </div>

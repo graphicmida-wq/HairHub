@@ -60,7 +60,7 @@ const ProductCard = ({ product, onClick }: { product: Product; onClick: () => vo
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-stone-900 truncate">{product.name}</h3>
-        <p className="text-sm text-stone-500 truncate">{product.brand} &bull; {product.category}</p>
+        <p className="text-sm text-stone-500 truncate"><span className="uppercase">{product.brand}</span> &bull; {product.category}</p>
       </div>
       <div className="flex flex-col items-end shrink-0">
         {formatStock(product)}
@@ -180,7 +180,7 @@ export const Inventory = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="min-w-0">
-            <h2 className="text-xl font-medium text-stone-900 truncate">{selectedBrandName}</h2>
+            <h2 className="text-xl font-medium text-stone-900 truncate uppercase">{selectedBrandName}</h2>
             <p className="text-xs text-stone-500">
               {brandProducts.length} {brandProducts.length === 1 ? 'prodotto' : 'prodotti'}
             </p>
@@ -192,7 +192,7 @@ export const Inventory = () => {
         <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
         <input
           type="text"
-          placeholder={selectedBrand ? `Cerca in ${selectedBrandName}...` : 'Cerca prodotto o marca...'}
+          placeholder={selectedBrand ? `Cerca in ${selectedBrandName.toUpperCase()}...` : 'Cerca prodotto o marca...'}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-white border border-stone-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark transition-all shadow-sm"
@@ -282,7 +282,7 @@ export const Inventory = () => {
                 <Tag className="w-6 h-6" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-stone-900 truncate">{brand.name}</h3>
+                <h3 className="font-medium text-stone-900 truncate uppercase">{brand.name}</h3>
                 <p className="text-sm text-stone-500 whitespace-nowrap">
                   {brand.count} {brand.count === 1 ? 'prodotto' : 'prodotti'}
                 </p>
