@@ -28045,7 +28045,7 @@ var require_pino = __commonJS({
     function pinoBundlerAbsolutePath(p) {
       try {
         const path3 = __require("path");
-        const outputDir = "/home/runner/workspace/artifacts/api-server/dist";
+        const outputDir = "/Users/davidenavacchi/Documents/Clienti/App/hairhub_capellievanita/artifacts/api-server/dist";
         return path3.resolve(outputDir, p.replace(/^\.\//, ""));
       } catch (e) {
         const f = new Function("p", "return new URL(p, import.meta.url).pathname");
@@ -50891,7 +50891,7 @@ var init_v4 = __esm({
   }
 });
 
-// ../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_2766053853dd7a2e539b396bcf747176/node_modules/drizzle-zod/index.mjs
+// ../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql_xkpxtd3tprm36mbctydnhmfrqa/node_modules/drizzle-zod/index.mjs
 function isColumnType(column, columnTypes) {
   return columnTypes.includes(column.columnType);
 }
@@ -51107,7 +51107,7 @@ function handleEnum(enum_, factory) {
 }
 var CONSTANTS, isPgEnum2, literalSchema, jsonSchema, bufferSchema, selectConditions, insertConditions, createSelectSchema, createInsertSchema;
 var init_drizzle_zod = __esm({
-  "../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_2766053853dd7a2e539b396bcf747176/node_modules/drizzle-zod/index.mjs"() {
+  "../../node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql_xkpxtd3tprm36mbctydnhmfrqa/node_modules/drizzle-zod/index.mjs"() {
     init_v4();
     init_drizzle_orm();
     CONSTANTS = {
