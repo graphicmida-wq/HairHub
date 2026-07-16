@@ -81,26 +81,58 @@ export const Inventory = () => {
   const [editProductId, setEditProductId] = useState<string | null>(null);
   const { data: products = [], isLoading, isError } = useListProducts();
 
-  const brands = Array.from(new Set(products.map(p => p.brand).filter(Boolean)))
-    .sort((a, b) => a.localeCompare(b, 'it'))
-    .map(brand => {
-      const brandProducts = products.filter(p => p.brand === brand);
-      return {
-        name: brand,
-        count: brandProducts.length,
-        hasLowStock: brandProducts.some(isLowStock),
-      };
-    });
+  // Brands/categories are free text: group them ignoring case and surrounding
+  // spaces so "artego", "Artego " and "ARTEGO" collapse into one card.
+  const normalize = (s: string) => s.trim().toLowerCase();
+
+  // Most frequent spelling wins as the display name of a group
+  const groupBy = (values: string[]): Map<string, string> => {
+    const variants = new Map<string, Map<string, number>>();
+    for (const raw of values) {
+      const key = normalize(raw);
+      if (!key) continue;
+      const display = raw.trim();
+      const counts = variants.get(key) ?? new Map<string, number>();
+      counts.set(display, (counts.get(display) ?? 0) + 1);
+      variants.set(key, counts);
+    }
+    const result = new Map<string, string>();
+    for (const [key, counts] of variants) {
+      let best = '';
+      let bestCount = -1;
+      for (const [display, count] of counts) {
+        if (count > bestCount) { best = display; bestCount = count; }
+      }
+      result.set(key, best);
+    }
+    return result;
+  };
+
+  const brandNames = groupBy(products.map(p => p.brand));
+  const brands = Array.from(brandNames, ([key, name]) => {
+    const group = products.filter(p => normalize(p.brand) === key);
+    return {
+      key,
+      name,
+      count: group.length,
+      hasLowStock: group.some(isLowStock),
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name, 'it'));
 
   const brandProducts = selectedBrand
-    ? products.filter(p => p.brand === selectedBrand)
+    ? products.filter(p => normalize(p.brand) === selectedBrand)
     : [];
 
-  const categories = Array.from(new Set(brandProducts.map(p => p.category).filter(Boolean)))
-    .sort((a, b) => a.localeCompare(b, 'it'));
+  const selectedBrandName = selectedBrand
+    ? (brandNames.get(selectedBrand) ?? selectedBrand)
+    : '';
+
+  const categoryNames = groupBy(brandProducts.map(p => p.category));
+  const categories = Array.from(categoryNames, ([key, name]) => ({ key, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'it'));
 
   // Ignore a stale category (e.g. after editing the last product of that category)
-  const activeCategory = selectedCategory && categories.includes(selectedCategory)
+  const activeCategory = selectedCategory && categoryNames.has(selectedCategory)
     ? selectedCategory
     : null;
 
@@ -125,7 +157,7 @@ export const Inventory = () => {
   );
 
   const visibleBrandProducts = brandProducts.filter(p =>
-    (!activeCategory || p.category === activeCategory) &&
+    (!activeCategory || normalize(p.category) === activeCategory) &&
     (!query || p.name.toLowerCase().includes(query))
   );
 
@@ -148,7 +180,7 @@ export const Inventory = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="min-w-0">
-            <h2 className="text-xl font-medium text-stone-900 truncate">{selectedBrand}</h2>
+            <h2 className="text-xl font-medium text-stone-900 truncate">{selectedBrandName}</h2>
             <p className="text-xs text-stone-500">
               {brandProducts.length} {brandProducts.length === 1 ? 'prodotto' : 'prodotti'}
             </p>
@@ -160,7 +192,7 @@ export const Inventory = () => {
         <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
         <input
           type="text"
-          placeholder={selectedBrand ? `Cerca in ${selectedBrand}...` : 'Cerca prodotto o marca...'}
+          placeholder={selectedBrand ? `Cerca in ${selectedBrandName}...` : 'Cerca prodotto o marca...'}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-white border border-stone-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark transition-all shadow-sm"
@@ -182,16 +214,16 @@ export const Inventory = () => {
           </button>
           {categories.map(cat => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              key={cat.key}
+              onClick={() => setSelectedCategory(cat.key)}
               className={cn(
                 "shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all active:scale-95",
-                activeCategory === cat
+                activeCategory === cat.key
                   ? "btn-brand text-white border-transparent"
                   : "bg-white text-stone-600 border-stone-200 hover:border-brand-dark/30"
               )}
             >
-              {cat}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -239,8 +271,8 @@ export const Inventory = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {brands.map(brand => (
             <div
-              key={brand.name}
-              onClick={() => openBrand(brand.name)}
+              key={brand.key}
+              onClick={() => openBrand(brand.key)}
               className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 cursor-pointer hover:border-brand-dark/30 hover:shadow-md transition-all active:scale-[0.98]"
             >
               <div

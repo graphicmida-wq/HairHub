@@ -116,9 +116,9 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     e.preventDefault();
     if (!productId) return;
     const payload: Parameters<typeof updateProduct>[0]['data'] = {
-      name: formData.name,
-      category: formData.category,
-      brand: formData.brand,
+      name: formData.name.trim(),
+      category: formData.category.trim(),
+      brand: formData.brand.trim(),
       price: formData.price,
       quantity: formData.quantity,
       minThreshold: formData.minThreshold,

@@ -77,9 +77,9 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload: Parameters<typeof createProduct>[0]['data'] = {
-      name: formData.name,
-      category: formData.category,
-      brand: formData.brand,
+      name: formData.name.trim(),
+      category: formData.category.trim(),
+      brand: formData.brand.trim(),
       price: formData.price,
       quantity: formData.quantity,
       minThreshold: formData.minThreshold,
