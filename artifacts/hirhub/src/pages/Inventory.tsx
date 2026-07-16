@@ -59,16 +59,16 @@ const ProductCard = ({ product, onClick }: { product: Product; onClick: () => vo
         <Box className="w-6 h-6" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-stone-900 truncate">{product.name}</h3>
+        <h3 className="font-medium text-stone-900 uppercase break-words">{product.name}</h3>
         <p className="text-sm text-stone-500 truncate"><span className="uppercase">{product.brand}</span> &bull; {product.category}</p>
       </div>
-      <div className="flex flex-col items-end shrink-0">
-        {formatStock(product)}
+      <div className="flex items-center gap-2 shrink-0">
         {low && (
-          <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-red-600 mt-1 bg-red-50 px-2 py-0.5 rounded-sm">
-            <AlertCircle className="w-3 h-3" /> Scorta scarsa
+          <span className="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center" title="Scorta scarsa">
+            <AlertCircle className="w-4 h-4" />
           </span>
         )}
+        {formatStock(product)}
       </div>
     </div>
   );

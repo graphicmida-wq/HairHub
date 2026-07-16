@@ -324,7 +324,7 @@ export const Dashboard = () => {
                           <Package2 className="w-4 h-4 text-red-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>{p.name}</p>
+                          <p className="font-medium text-sm uppercase" style={{ color: TEXT_HEADING }}>{p.name}</p>
                           <p className="text-xs uppercase" style={{ color: TEXT_MUTED }}>{p.brand}</p>
                         </div>
                         <span className="text-sm font-medium text-red-600 shrink-0">{p.quantity} pz</span>
