@@ -59,7 +59,7 @@ const ProductCard = ({ product, onClick }: { product: Product; onClick: () => vo
         <Box className="w-6 h-6" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-stone-900 uppercase break-words">{product.name}</h3>
+        <h3 className="font-medium text-stone-900 uppercase break-words leading-tight">{product.name}</h3>
         <p className="text-sm text-stone-500 truncate"><span className="uppercase">{product.brand}</span> &bull; {product.category}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
