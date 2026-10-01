@@ -3,6 +3,7 @@ import App from "./App";
 import "./index.css";
 import { setBaseUrl } from "@workspace/api-client-react";
 import { loadBrandPalette, applyBrandPalette } from "./lib/brand-color";
+import { loadPageBackground, applyPageBackground } from "./lib/page-background";
 import "./lib/pwa-install";
 
 const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
@@ -12,5 +13,6 @@ if (apiUrl) {
 }
 
 applyBrandPalette(loadBrandPalette());
+applyPageBackground(loadPageBackground());
 
 createRoot(document.getElementById("root")!).render(<App />);

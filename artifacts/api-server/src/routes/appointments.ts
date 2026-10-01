@@ -5,8 +5,6 @@ import {
   dbCreateAppointment,
   dbUpdateAppointment,
   dbDeleteAppointment,
-  dbGetProduct,
-  dbUpdateProduct,
 } from "../data/db";
 import {
   CreateAppointmentBody,
@@ -18,6 +16,7 @@ import {
   GetAppointmentResponse,
   UpdateAppointmentResponse,
 } from "@workspace/api-zod";
+import { actorFrom, syncAppointmentStock } from "../lib/stock";
 
 const router: IRouter = Router();
 
@@ -71,6 +70,13 @@ router.post("/appointments", async (req, res) => {
     });
     return;
   }
+  if (created.status === "completato") {
+    try {
+      await syncAppointmentStock(created, await actorFrom(req));
+    } catch (err) {
+      req.log.error({ err }, "Stock sync failed on POST /appointments");
+    }
+  }
   const parsed = GetAppointmentResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
@@ -121,33 +127,6 @@ router.put("/appointments/:id", async (req, res) => {
     return;
   }
 
-  // Deduct stock when completing with usedProducts.
-  // Intentional: deduction fires only on first transition to "completato".
-  // Post-completion edits (e.g. changing usedProducts on an already-completed appointment)
-  // do NOT re-reconcile stock. This avoids double-deduction and keeps the logic simple.
-  const isCompletingNow = body.data.status === "completato" && existing.status !== "completato";
-  if (isCompletingNow && body.data.usedProducts && body.data.usedProducts.length > 0) {
-    // Aggregate quantities by productId to avoid duplicate-entry race conditions
-    const aggregated = new Map<string, number>();
-    for (const { productId, quantityUsed } of body.data.usedProducts) {
-      if (quantityUsed > 0) {
-        aggregated.set(productId, (aggregated.get(productId) ?? 0) + quantityUsed);
-      }
-    }
-    for (const [productId, totalUsed] of aggregated) {
-      const product = await dbGetProduct(productId);
-      if (!product) continue;
-      if (product.stockGrams != null) {
-        const newStock = Math.max(0, Number(product.stockGrams) - totalUsed);
-        const patch: Parameters<typeof dbUpdateProduct>[1] = { stockGrams: newStock };
-        if (product.unitSize != null && Number(product.unitSize) > 0) {
-          patch.quantity = Math.max(0, Math.floor(newStock / Number(product.unitSize)));
-        }
-        await dbUpdateProduct(productId, patch);
-      }
-    }
-  }
-
   let updated: Awaited<ReturnType<typeof dbUpdateAppointment>>;
   try {
     updated = await dbUpdateAppointment(params.data.id, body.data);
@@ -160,6 +139,18 @@ router.put("/appointments/:id", async (req, res) => {
   }
   if (!updated) {
     res.status(404).json({ message: "Appointment not found" });
+    return;
+  }
+  // Products sold/used count only once the appointment is completed; any later
+  // edit (products, status) books the difference. Idempotent, so saving again
+  // after a failure here heals the stock.
+  try {
+    await syncAppointmentStock(updated, await actorFrom(req));
+  } catch (err) {
+    req.log.error({ err }, "Stock sync failed on PUT /appointments/:id");
+    res.status(500).json({
+      message: `Appuntamento salvato ma magazzino non aggiornato: ${(err as Error).message}. Riprova a salvare.`,
+    });
     return;
   }
   const parsed = UpdateAppointmentResponse.safeParse(updated);
@@ -185,6 +176,8 @@ router.delete("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
+  // Whatever the appointment took out of the stock goes back, with a trace.
+  await syncAppointmentStock(existing, await actorFrom(req), { removed: true });
   await dbDeleteAppointment(params.data.id);
   res.status(204).send();
 });

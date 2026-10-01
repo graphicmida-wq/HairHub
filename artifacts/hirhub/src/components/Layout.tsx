@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Home, Package2, Plus, Scissors, Settings, UserCog, LogOut } from 'lucide-react';
+import { Calendar, Users, Home, Package2, Plus, Scissors, Settings, UserCog, LogOut, ShoppingBag, Wallet } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { store, useModalStore } from '../lib/store';
@@ -10,6 +10,7 @@ import { NewClientModal } from './NewClientModal';
 import { NewAppointmentModal } from './NewAppointmentModal';
 import { NewProductModal } from './NewProductModal';
 import { NewServiceModal } from './NewServiceModal';
+import { NewSaleModal } from './NewSaleModal';
 import { InstallAppButton } from './InstallAppButton';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -39,6 +40,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { icon: Calendar, label: 'Agenda', path: '/agenda' },
     { icon: Users, label: 'Clienti', path: '/clienti' },
     { icon: Scissors, label: 'Servizi', path: '/servizi' },
+    { icon: ShoppingBag, label: 'Vendite', path: '/vendite' },
+    { icon: Wallet, label: 'Incassi', path: '/incassi' },
     { icon: Package2, label: 'Magazzino', path: '/magazzino' },
   ];
 
@@ -198,7 +201,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </aside>
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative rounded-l-2xl" style={{ backgroundColor: '#f8f8f7' }}>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative rounded-l-2xl bg-page-bg">
         <header
           className="md:hidden px-5 flex items-center justify-between shrink-0"
           style={{
@@ -259,7 +262,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 pb-mobile-nav bg-[#61533e21]">
+        <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 pb-mobile-nav">
           <div className="max-w-5xl mx-auto">
             {children}
           </div>
@@ -274,6 +277,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               exit={{ opacity: 0, y: 15, scale: 0.9 }}
               className="flex flex-col gap-2 mb-2"
             >
+              <button
+                onClick={() => { setIsFabOpen(false); store.openModal('isNewSaleOpen'); }}
+                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
+                style={{ borderColor: '#E8E3D8' }}
+              >
+                Nuova Vendita
+              </button>
               <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewProductOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
@@ -319,6 +329,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <NewAppointmentModal isOpen={modalState.isNewAppointmentOpen} onClose={() => store.closeModal('isNewAppointmentOpen')} />
       <NewProductModal isOpen={modalState.isNewProductOpen} onClose={() => store.closeModal('isNewProductOpen')} />
       <NewServiceModal isOpen={modalState.isNewServiceOpen} onClose={() => store.closeModal('isNewServiceOpen')} />
+      <NewSaleModal isOpen={modalState.isNewSaleOpen} onClose={() => store.closeModal('isNewSaleOpen')} />
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 border-t pb-safe z-30"
         style={{ backgroundColor: SIDEBAR_BG, borderColor: SIDEBAR_BORDER }}

@@ -25,4 +25,6 @@ export interface Product {
   unitType?: ProductUnitType;
   /** Total remaining stock in g or ml (quantity * unitSize, decremented on use) */
   stockGrams?: number | null;
+  /** Optional sub-categories of the main category (free text, like tags) */
+  subcategories?: string[];
 }

@@ -16,6 +16,7 @@ import {
   GetProductResponse,
   UpdateProductResponse,
 } from "@workspace/api-zod";
+import { actorFrom, logInitialStock, logProductStockChange } from "../lib/stock";
 
 const router: IRouter = Router();
 
@@ -37,6 +38,7 @@ router.post("/products", async (req, res) => {
     return;
   }
   const created = await dbCreateProduct(body.data);
+  await logInitialStock(created, await actorFrom(req));
   const parsed = GetProductResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /products");
@@ -77,11 +79,14 @@ router.put("/products/:id", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = await dbUpdateProduct(params.data.id, body.data);
-  if (!updated) {
+  const { stockChangeReason, stockChangeNote, ...changes } = body.data;
+  const before = await dbGetProduct(params.data.id);
+  const updated = await dbUpdateProduct(params.data.id, changes);
+  if (!before || !updated) {
     res.status(404).json({ message: "Product not found" });
     return;
   }
+  await logProductStockChange(before, updated, stockChangeReason, stockChangeNote, await actorFrom(req));
   const parsed = UpdateProductResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /products/:id");

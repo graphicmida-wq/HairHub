@@ -32,7 +32,8 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - `lib/api-zod/src/generated/` — schemi Zod generati (non editare)
 - `lib/db/src/schema/` — schema Drizzle MySQL per produzione
 - `artifacts/api-server/src/data/db.ts` — data layer (SQLite in dev, MySQL in prod); `sqlite-schema.ts` = schema SQLite dev
-- `artifacts/api-server/src/routes/` — route Express (clients, services, products, appointments, settings)
+- `artifacts/api-server/src/routes/` — route Express (clients, services, products, stock, appointments, settings)
+- `artifacts/api-server/src/lib/stock.ts` — movimenti di magazzino: ogni variazione di giacenza passa da qui e lascia una riga in `stock_movements`
 - `artifacts/hirhub/src/pages/` — Dashboard, Agenda, Clienti, Magazzino
 - `artifacts/hirhub/src/components/` — Layout, Modal*, tutti i form modali
 - `artifacts/hirhub/src/lib/store.ts` — solo stato modale (isNewClientOpen ecc.)
@@ -50,12 +51,16 @@ App web di gestione salone (clienti, agenda, servizi, magazzino) pensata per sal
 - **Modal state separato**: `ModalStore` è un semplice pub/sub leggero, non fa parte del server state.
 - **Auth self-contained** (no Replit Auth/Clerk, deploy Netsons): login username/password → JWT in cookie httpOnly firmato con `SESSION_SECRET` (~7gg). Guardie `requireAuth`/`requireAdmin` in `middlewares/auth.ts`; le rotte dati richiedono auth, `/users` e `PUT /settings` richiedono admin, `GET /settings` resta pubblica (branding login). Primo admin via `ensureAdminUser()` al primo avvio (env `ADMIN_USERNAME`/`ADMIN_PASSWORD`, fallback `admin`/`admin123` con warning).
 
+- **Movimenti di magazzino**: la tabella `stock_movements` (senza FK, nomi prodotto/cliente copiati sulla riga) è lo storico di ogni carico/scarico. Le vendite e gli usi di un appuntamento si registrano solo quando è `completato`; ogni modifica successiva (prodotti, stato, eliminazione) scrive la differenza (`syncAppointmentStock`, idempotente). Le vendite al banco hanno un `saleId` e si annullano con movimenti di storno, mai cancellando righe. Al primo avvio gli appuntamenti già completati vengono importati nello storico senza toccare le giacenze.
+
 ## Product
 
 - Dashboard: panoramica giornaliera (appuntamenti oggi, azioni rapide, scorte in esaurimento)
 - Agenda: vista giornaliera con timeline oraria, navigazione data, gestione stato appuntamento
 - Clienti: lista cercabile, scheda cliente con storico appuntamenti e allergie
-- Magazzino: inventario prodotti con alert scorta minima
+- Magazzino: inventario prodotti con alert scorta minima, raggruppato per marca → categoria → sottocategorie facoltative (più di una per prodotto, colonna `subcategories`, proposte in base a marca + categoria); ogni marca può avere un colore (tabella `brand_colors`, chiave = nome marca minuscolo senza spazi ai bordi) che si vede su icone e pallini in tutta l'app
+- Incassi: panoramica filtrabile per periodo (giorno/settimana/mese/anno/periodo) di servizi + prodotti in appuntamento + vendite al banco, con confronto col periodo precedente, per servizio, per operatore, giorni della settimana e migliori clienti; stessa regola di calcolo del Fatturato in Dashboard
+- Vendite: vendita al banco (carrello, cliente facoltativo) e panoramica venduto/usato nei servizi per giorno/settimana/mese/anno/periodo, filtrabile per prodotto, con registro di tutti i movimenti di magazzino
 - Servizi: CRUD completo via API (gestibile tramite modal)
 - Autenticazione: login username/password, due ruoli (admin/user); UI gating delle rotte; pulsante logout
 - Utenti: gestione utenti (CRUD) riservata agli admin; voci nav Utenti/Impostazioni visibili solo agli admin

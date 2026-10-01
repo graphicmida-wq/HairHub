@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, char, int, decimal } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, char, int, decimal, json } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,6 +15,7 @@ export const productsTable = mysqlTable("products", {
   unitSize: decimal("unit_size", { precision: 10, scale: 2 }),
   unitType: varchar("unit_type", { length: 2 }),
   stockGrams: decimal("stock_grams", { precision: 10, scale: 2 }),
+  subcategories: json("subcategories").$type<string[]>(),
 });
 
 export const insertProductSchema = createInsertSchema(productsTable).omit({ id: true });

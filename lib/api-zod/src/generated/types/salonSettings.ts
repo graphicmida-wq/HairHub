@@ -16,4 +16,6 @@ export interface SalonSettings {
   email?: string | null;
   /** Hex color string for the brand palette primary color, e.g. #5c5870 */
   brandColor?: string | null;
+  /** Hex color of the page background behind the cards; null = default warm grey */
+  backgroundColor?: string | null;
 }

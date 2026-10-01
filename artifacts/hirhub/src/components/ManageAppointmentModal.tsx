@@ -4,6 +4,7 @@ import { useListAppointments, useListClients, useListServices, useListProducts, 
 import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Calendar, Text, CheckCircle2, Edit2, Trash2, Box } from 'lucide-react';
 import { toast } from './Toast';
+import { invalidateStock } from '../lib/stock';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { addMinsToTime } from '../lib/utils';
@@ -33,6 +34,7 @@ export const ManageAppointmentModal = ({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        invalidateStock(queryClient);
         toast.show('Appuntamento eliminato');
         onClose();
       },
@@ -57,9 +59,14 @@ export const ManageAppointmentModal = ({
     }
   };
 
-  const usedProds = appointment.usedProductIds
-    ? appointment.usedProductIds.map(pid => products.find(p => p.id === pid)?.name).filter(Boolean)
-    : [];
+  // Quantities live in usedProducts; usedProductIds is the old names-only field
+  const usedProds = appointment.usedProducts?.length
+    ? appointment.usedProducts.map(up => {
+        const p = products.find(pr => pr.id === up.productId);
+        const unit = p?.unitSize != null ? (p.unitType ?? 'g') : 'pz';
+        return `${p?.name ?? 'Prodotto'} ${up.quantityUsed} ${unit}`;
+      })
+    : (appointment.usedProductIds ?? []).map(pid => products.find(p => p.id === pid)?.name).filter(Boolean);
 
   const servicesTotal = (appointment.serviceIds ?? []).reduce((sum, sid, i) => {
     const v = appointment.servicePrices?.[i];

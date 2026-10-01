@@ -1,36 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useListProducts } from '@workspace/api-client-react';
 import { Plus, Check } from 'lucide-react';
+import { BrandColorPicker, BrandDot } from '../lib/product-brand-colors';
 
-interface BrandInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-}
-
-/**
- * Free-text brand field with tag-style suggestions: existing brands (derived
- * from products, deduplicated ignoring case/spaces) are offered while typing;
- * picking one reuses its exact spelling so products group together.
- */
-export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
+/** Brands already used on products, one spelling each (the most frequent). */
+function useExistingBrands(): string[] {
   const { data: products = [] } = useListProducts();
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  // Unique brands, case-insensitive; the most frequent spelling wins
-  const brands = useMemo(() => {
+  return useMemo(() => {
     const variants = new Map<string, Map<string, number>>();
     for (const p of products) {
       const raw = (p.brand ?? '').trim();
@@ -49,6 +25,35 @@ export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
       return best;
     }).sort((a, b) => a.localeCompare(b, 'it'));
   }, [products]);
+}
+
+interface BrandInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}
+
+/**
+ * Free-text brand field with tag-style suggestions: existing brands (derived
+ * from products, deduplicated ignoring case/spaces) are offered while typing;
+ * picking one reuses its exact spelling so products group together.
+ */
+export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const brands = useExistingBrands();
 
   const query = value.trim().toLowerCase();
   const suggestions = query ? brands.filter(b => b.toLowerCase().includes(query)) : brands;
@@ -99,6 +104,7 @@ export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
                 className="w-3.5 h-3.5 mr-2.5 shrink-0"
                 style={{ color: 'var(--color-brand-dark)', opacity: exactMatch === brand ? 1 : 0 }}
               />
+              <BrandDot brand={brand} />
               <span className="flex-1 text-sm text-stone-800 truncate uppercase">{brand}</span>
             </div>
           ))}
@@ -115,6 +121,36 @@ export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+/**
+ * Optional colour for a brand typed for the first time; the product form saves
+ * it together with the product. Shows nothing for brands that already exist.
+ */
+export const NewBrandColorField = ({ brand, color, onChange }: {
+  brand: string;
+  color: string | null;
+  onChange: (color: string | null) => void;
+}) => {
+  const brands = useExistingBrands();
+  const key = brand.trim().toLowerCase();
+  const isNew = !!key && !brands.some(b => b.toLowerCase() === key);
+
+  // The colour only belongs to a new brand: drop it when an existing one is chosen
+  useEffect(() => {
+    if (!isNew && color) onChange(null);
+  }, [isNew, color, onChange]);
+
+  if (!isNew) return null;
+  return (
+    <div className="bg-stone-50 border border-stone-200 rounded-xl p-3">
+      <p className="text-xs text-stone-600 mb-2">
+        Colore della nuova marca <span className="uppercase font-medium">{brand.trim()}</span>{' '}
+        <span className="text-stone-400">(facoltativo)</span>
+      </p>
+      <BrandColorPicker value={color} onChange={onChange} size="sm" />
     </div>
   );
 };

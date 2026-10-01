@@ -35,6 +35,7 @@ export const products = sqliteTable("products", {
   unitSize: real("unit_size"),
   unitType: text("unit_type", { enum: ["g", "ml"] }),
   stockGrams: real("stock_grams"),
+  subcategories: text("subcategories"),
 });
 
 export const staffMembers = sqliteTable("staff_members", {
@@ -71,6 +72,35 @@ export const clientFormulas = sqliteTable("client_formulas", {
   createdAt: text("created_at").notNull(),
 });
 
+// One row per stock change. No foreign keys on purpose: the history must survive
+// the deletion of a product, client or appointment, so names are snapshotted.
+export const stockMovements = sqliteTable("stock_movements", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  productBrand: text("product_brand").notNull().default(""),
+  reason: text("reason").notNull(),
+  quantity: real("quantity").notNull(),
+  unit: text("unit").notNull(),
+  unitPrice: real("unit_price"),
+  date: text("date").notNull(),
+  time: text("time").notNull(),
+  clientId: text("client_id"),
+  clientName: text("client_name"),
+  appointmentId: text("appointment_id"),
+  saleId: text("sale_id"),
+  note: text("note"),
+  userId: text("user_id"),
+  userName: text("user_name"),
+  createdAt: text("created_at").notNull(),
+});
+
+// Brands are free text on products; their colour is keyed by the normalised name
+export const brandColors = sqliteTable("brand_colors", {
+  brand: text("brand").primaryKey(),
+  color: text("color").notNull(),
+});
+
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -89,6 +119,7 @@ export const salonSettings = sqliteTable("salon_settings", {
   phone: text("phone"),
   email: text("email"),
   brandColor: text("brand_color"),
+  backgroundColor: text("background_color"),
 });
 
 export type Client = typeof clients.$inferSelect;
@@ -105,4 +136,6 @@ export type ClientFormula = typeof clientFormulas.$inferSelect;
 export type InsertClientFormula = typeof clientFormulas.$inferInsert;
 export type SalonSettings = typeof salonSettings.$inferSelect;
 export type User = typeof users.$inferSelect;
+export type StockMovement = typeof stockMovements.$inferSelect;
+export type InsertStockMovement = typeof stockMovements.$inferInsert;
 export type InsertUser = typeof users.$inferInsert;

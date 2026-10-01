@@ -8,6 +8,8 @@ import { Dashboard } from './pages/Dashboard';
 import { Clients } from './pages/Clients';
 import { Appointments } from './pages/Appointments';
 import { Inventory } from './pages/Inventory';
+import { Sales } from './pages/Sales';
+import { Revenue } from './pages/Revenue';
 import { Services } from './pages/Services';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
@@ -16,6 +18,7 @@ import { Toaster } from './components/Toast';
 import { PwaReloadPrompt } from './components/PwaReloadPrompt';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { BRAND_PRESETS, DEFAULT_PALETTE, paletteFromCustomColor, applyBrandPalette, saveBrandPalette } from './lib/brand-color';
+import { applyPageBackground, savePageBackground } from './lib/page-background';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +45,11 @@ function BrandColorSync() {
     applyBrandPalette(palette);
     saveBrandPalette(palette);
   }, [settings?.brandColor]);
+  useEffect(() => {
+    if (!settings) return;
+    applyPageBackground(settings.backgroundColor);
+    savePageBackground(settings.backgroundColor);
+  }, [settings]);
   return null;
 }
 
@@ -70,6 +78,8 @@ function AppGate() {
         <Route path="/agenda" element={<Appointments />} />
         <Route path="/clienti" element={<Clients />} />
         <Route path="/servizi" element={<Services />} />
+        <Route path="/vendite" element={<Sales />} />
+        <Route path="/incassi" element={<Revenue />} />
         <Route path="/magazzino" element={<Inventory />} />
         {isAdmin && <Route path="/impostazioni" element={<Settings />} />}
         {isAdmin && <Route path="/utenti" element={<Users />} />}

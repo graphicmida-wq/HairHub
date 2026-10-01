@@ -115,9 +115,9 @@ export const Users = () => {
   return (
     <div className="flex flex-col gap-8 page-enter">
       <section>
-        <span className="text-stone-500 text-sm font-medium tracking-wide uppercase">Amministrazione</span>
+        <span className="text-on-page-muted text-sm font-medium tracking-wide uppercase">Amministrazione</span>
         <div className="flex items-center justify-between mt-1 mb-6">
-          <h1 className="text-3xl font-serif text-stone-900">Utenti</h1>
+          <h1 className="text-3xl font-serif text-on-page">Utenti</h1>
           {!adding && (
             <button
               onClick={() => setAdding(true)}
@@ -211,7 +211,7 @@ export const Users = () => {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-on-page-muted" />
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden divide-y divide-stone-100">

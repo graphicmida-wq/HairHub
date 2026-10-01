@@ -6,6 +6,7 @@ import {
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
+import { invalidateStock } from '../lib/stock';
 import { addMinsToTime, timeDiffMins } from '../lib/utils';
 import { X } from 'lucide-react';
 import { ClientInfoPanel } from './ClientInfoPanel';
@@ -26,6 +27,7 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        invalidateStock(queryClient);
         toast.show('Appuntamento aggiornato');
         onClose();
       },
@@ -40,6 +42,7 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        invalidateStock(queryClient);
         toast.show('Appuntamento eliminato');
         onClose();
       },

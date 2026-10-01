@@ -23,4 +23,6 @@ export interface CreateProductInput {
   unitType?: CreateProductInputUnitType;
   /** Total stock in g or ml (auto-computed as quantity * unitSize if not provided) */
   stockGrams?: number | null;
+  /** Optional sub-categories of the main category (free text, like tags) */
+  subcategories?: string[];
 }

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { CategoryInput } from './CategoryInput';
-import { BrandInput } from './BrandInput';
-import { useCreateProduct, getListProductsQueryKey } from '@workspace/api-client-react';
+import { BrandInput, NewBrandColorField } from './BrandInput';
+import { SubcategoryInput } from './SubcategoryInput';
+import { useSaveBrandColor } from '../lib/product-brand-colors';
+import { useCreateProduct } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
+import { invalidateStock } from '../lib/stock';
 
 const LABEL = "text-sm font-medium text-stone-700";
 const INPUT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full text-sm";
@@ -29,19 +32,23 @@ interface FormData {
   unitSize: number;
   unitType: UnitType;
   stockGrams: number;
+  subcategories: string[];
 }
 
 const emptyForm: FormData = {
   name: '', category: '', brand: '', price: 0, quantity: 0, minThreshold: 5,
-  trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
+  trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0, subcategories: [],
 };
 
 export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const queryClient = useQueryClient();
+  const { mutate: saveBrandColor } = useSaveBrandColor();
   const { mutate: createProduct, isPending } = useCreateProduct({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+      onSuccess: (created) => {
+        if (newBrandColor) saveBrandColor({ data: { brand: created.brand, color: newBrandColor } });
+        setNewBrandColor(null);
+        invalidateStock(queryClient);
         toast.show('Prodotto aggiunto');
         onClose();
         setFormData(emptyForm);
@@ -56,6 +63,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
 
   const [formData, setFormData] = useState<FormData>(emptyForm);
   const [stockGramsManual, setStockGramsManual] = useState(false);
+  const [newBrandColor, setNewBrandColor] = useState<string | null>(null);
 
   const handleQuantityChange = (val: number) => {
     setStockGramsManual(false);
@@ -81,6 +89,7 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
       name: formData.name.trim(),
       category: formData.category.trim(),
       brand: formData.brand.trim(),
+      subcategories: formData.subcategories,
       price: formData.price,
       quantity: formData.quantity,
       minThreshold: formData.minThreshold,
@@ -118,10 +127,21 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
             <CategoryInput
               required
               value={formData.category}
-              onChange={val => setFormData(p => ({ ...p, category: val }))}
+              onChange={val => setFormData(p => ({
+                ...p,
+                category: val,
+                subcategories: val.trim().toLowerCase() === p.category.trim().toLowerCase() ? p.subcategories : [],
+              }))}
             />
           </div>
         </div>
+        <NewBrandColorField brand={formData.brand} color={newBrandColor} onChange={setNewBrandColor} />
+        <SubcategoryInput
+          brand={formData.brand}
+          category={formData.category}
+          value={formData.subcategories}
+          onChange={subs => setFormData(p => ({ ...p, subcategories: subs }))}
+        />
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Prezzo base (€)</label>
           <input

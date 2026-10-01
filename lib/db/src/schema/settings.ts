@@ -11,6 +11,7 @@ export const salonSettingsTable = mysqlTable("salon_settings", {
   phone: varchar("phone", { length: 30 }),
   email: varchar("email", { length: 255 }),
   brandColor: varchar("brand_color", { length: 20 }),
+  backgroundColor: varchar("background_color", { length: 20 }),
 });
 
 export const insertSettingsSchema = createInsertSchema(salonSettingsTable).omit({ id: true });

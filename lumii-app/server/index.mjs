@@ -208,18 +208,18 @@ var require_common = __commonJS({
           if (typeof args[0] !== "string") {
             args.unshift("%O");
           }
-          let index = 0;
+          let index2 = 0;
           args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
             if (match === "%%") {
               return "%";
             }
-            index++;
+            index2++;
             const formatter = createDebug.formatters[format];
             if (typeof formatter === "function") {
-              const val = args[index];
+              const val = args[index2];
               match = formatter.call(self, val);
-              args.splice(index, 1);
-              index--;
+              args.splice(index2, 1);
+              index2--;
             }
             return match;
           });
@@ -454,15 +454,15 @@ var require_browser = __commonJS({
       }
       const c = "color: " + this.color;
       args.splice(1, 0, c, "color: inherit");
-      let index = 0;
+      let index2 = 0;
       let lastC = 0;
       args[0].replace(/%[a-zA-Z%]/g, (match) => {
         if (match === "%%") {
           return;
         }
-        index++;
+        index2++;
         if (match === "%c") {
-          lastC = index;
+          lastC = index2;
         }
       });
       args.splice(lastC, 0, c);
@@ -5685,22 +5685,22 @@ var require_content_type = __commonJS({
       if (typeof header !== "string") {
         throw new TypeError("argument string is required to be a string");
       }
-      var index = header.indexOf(";");
-      var type = index !== -1 ? header.slice(0, index).trim() : header.trim();
+      var index2 = header.indexOf(";");
+      var type = index2 !== -1 ? header.slice(0, index2).trim() : header.trim();
       if (!TYPE_REGEXP.test(type)) {
         throw new TypeError("invalid media type");
       }
       var obj = new ContentType(type.toLowerCase());
-      if (index !== -1) {
+      if (index2 !== -1) {
         var key;
         var match;
         var value;
-        PARAM_REGEXP.lastIndex = index;
+        PARAM_REGEXP.lastIndex = index2;
         while (match = PARAM_REGEXP.exec(header)) {
-          if (match.index !== index) {
+          if (match.index !== index2) {
             throw new TypeError("invalid parameter format");
           }
-          index += match[0].length;
+          index2 += match[0].length;
           key = match[1].toLowerCase();
           value = match[2];
           if (value.charCodeAt(0) === 34) {
@@ -5711,7 +5711,7 @@ var require_content_type = __commonJS({
           }
           obj.parameters[key] = value;
         }
-        if (index !== header.length) {
+        if (index2 !== header.length) {
           throw new TypeError("invalid parameter format");
         }
       }
@@ -15306,10 +15306,10 @@ var require_media_typer = __commonJS({
       var type = match[1];
       var subtype = match[2];
       var suffix;
-      var index = subtype.lastIndexOf("+");
-      if (index !== -1) {
-        suffix = subtype.substr(index + 1);
-        subtype = subtype.substr(0, index);
+      var index2 = subtype.lastIndexOf("+");
+      if (index2 !== -1) {
+        suffix = subtype.substr(index2 + 1);
+        subtype = subtype.substr(0, index2);
       }
       return new MediaType(type, subtype, suffix);
     }
@@ -15670,10 +15670,10 @@ var require_json = __commonJS({
       };
     }
     function createStrictSyntaxError(str, char2) {
-      var index = str.indexOf(char2);
+      var index2 = str.indexOf(char2);
       var partial2 = "";
-      if (index !== -1) {
-        partial2 = str.substring(0, index) + JSON_SYNTAX_CHAR.repeat(str.length - index);
+      if (index2 !== -1) {
+        partial2 = str.substring(0, index2) + JSON_SYNTAX_CHAR.repeat(str.length - index2);
       }
       try {
         JSON.parse(partial2);
@@ -15681,7 +15681,7 @@ var require_json = __commonJS({
       } catch (e) {
         return normalizeJsonSyntaxError(e, {
           message: e.message.replace(JSON_SYNTAX_REGEXP, function(placeholder) {
-            return str.substring(index, index + placeholder.length);
+            return str.substring(index2, index2 + placeholder.length);
           }),
           stack: e.stack
         });
@@ -18099,18 +18099,18 @@ var require_parse = __commonJS({
           obj = options.plainObjects ? { __proto__: null } : {};
           var cleanRoot = root.charAt(0) === "[" && root.charAt(root.length - 1) === "]" ? root.slice(1, -1) : root;
           var decodedRoot = options.decodeDotInKeys ? cleanRoot.replace(/%2E/g, ".") : cleanRoot;
-          var index = parseInt(decodedRoot, 10);
-          var isValidArrayIndex = !isNaN(index) && root !== decodedRoot && String(index) === decodedRoot && index >= 0 && options.parseArrays;
+          var index2 = parseInt(decodedRoot, 10);
+          var isValidArrayIndex = !isNaN(index2) && root !== decodedRoot && String(index2) === decodedRoot && index2 >= 0 && options.parseArrays;
           if (!options.parseArrays && decodedRoot === "") {
             obj = { 0: leaf };
-          } else if (isValidArrayIndex && index < options.arrayLimit) {
+          } else if (isValidArrayIndex && index2 < options.arrayLimit) {
             obj = [];
-            obj[index] = leaf;
+            obj[index2] = leaf;
           } else if (isValidArrayIndex && options.throwOnLimitExceeded) {
             throw new RangeError("Array limit exceeded. Only " + options.arrayLimit + " element" + (options.arrayLimit === 1 ? "" : "s") + " allowed in an array.");
           } else if (isValidArrayIndex) {
-            obj[index] = leaf;
-            utils.markOverflow(obj, index);
+            obj[index2] = leaf;
+            utils.markOverflow(obj, index2);
           } else if (decodedRoot !== "__proto__") {
             obj[decodedRoot] = leaf;
           }
@@ -18335,12 +18335,12 @@ var require_urlencoded = __commonJS({
     }
     function parameterCount(body, limit) {
       let count = 0;
-      let index = -1;
+      let index2 = -1;
       do {
         count++;
         if (count > limit) return void 0;
-        index = body.indexOf("&", index + 1);
-      } while (index !== -1);
+        index2 = body.indexOf("&", index2 + 1);
+      } while (index2 !== -1);
       return count;
     }
   }
@@ -18429,10 +18429,10 @@ var require_escape_html = __commonJS({
       }
       var escape2;
       var html = "";
-      var index = 0;
+      var index2 = 0;
       var lastIndex = 0;
-      for (index = match.index; index < str.length; index++) {
-        switch (str.charCodeAt(index)) {
+      for (index2 = match.index; index2 < str.length; index2++) {
+        switch (str.charCodeAt(index2)) {
           case 34:
             escape2 = "&quot;";
             break;
@@ -18451,13 +18451,13 @@ var require_escape_html = __commonJS({
           default:
             continue;
         }
-        if (lastIndex !== index) {
-          html += str.substring(lastIndex, index);
+        if (lastIndex !== index2) {
+          html += str.substring(lastIndex, index2);
         }
-        lastIndex = index + 1;
+        lastIndex = index2 + 1;
         html += escape2;
       }
-      return lastIndex !== index ? html + str.substring(lastIndex, index) : html;
+      return lastIndex !== index2 ? html + str.substring(lastIndex, index2) : html;
     }
   }
 });
@@ -19661,25 +19661,25 @@ var require_utils3 = __commonJS({
     function acceptParams(str) {
       var length = str.length;
       var colonIndex = str.indexOf(";");
-      var index = colonIndex === -1 ? length : colonIndex;
-      var ret = { value: str.slice(0, index).trim(), quality: 1, params: {} };
-      while (index < length) {
-        var splitIndex = str.indexOf("=", index);
+      var index2 = colonIndex === -1 ? length : colonIndex;
+      var ret = { value: str.slice(0, index2).trim(), quality: 1, params: {} };
+      while (index2 < length) {
+        var splitIndex = str.indexOf("=", index2);
         if (splitIndex === -1) break;
-        var colonIndex = str.indexOf(";", index);
+        var colonIndex = str.indexOf(";", index2);
         var endIndex = colonIndex === -1 ? length : colonIndex;
         if (splitIndex > endIndex) {
-          index = str.lastIndexOf(";", splitIndex - 1) + 1;
+          index2 = str.lastIndexOf(";", splitIndex - 1) + 1;
           continue;
         }
-        var key = str.slice(index, splitIndex).trim();
+        var key = str.slice(index2, splitIndex).trim();
         var value = str.slice(splitIndex + 1, endIndex).trim();
         if (key === "q") {
           ret.quality = parseFloat(value);
         } else {
           ret.params[key] = value;
         }
-        index = endIndex + 1;
+        index2 = endIndex + 1;
       }
       return ret;
     }
@@ -19905,51 +19905,51 @@ var require_dist = __commonJS({
       const { encodePath = NOOP_VALUE } = options;
       const chars = [...str];
       const tokens = [];
-      let index = 0;
+      let index2 = 0;
       let pos = 0;
       function name() {
         let value = "";
-        if (ID_START.test(chars[index])) {
+        if (ID_START.test(chars[index2])) {
           do {
-            value += chars[index++];
-          } while (ID_CONTINUE.test(chars[index]));
-        } else if (chars[index] === '"') {
-          let quoteStart = index;
-          while (index++ < chars.length) {
-            if (chars[index] === '"') {
-              index++;
+            value += chars[index2++];
+          } while (ID_CONTINUE.test(chars[index2]));
+        } else if (chars[index2] === '"') {
+          let quoteStart = index2;
+          while (index2++ < chars.length) {
+            if (chars[index2] === '"') {
+              index2++;
               quoteStart = 0;
               break;
             }
-            if (chars[index] === "\\")
-              index++;
-            value += chars[index];
+            if (chars[index2] === "\\")
+              index2++;
+            value += chars[index2];
           }
           if (quoteStart) {
             throw new PathError(`Unterminated quote at index ${quoteStart}`, str);
           }
         }
         if (!value) {
-          throw new PathError(`Missing parameter name at index ${index}`, str);
+          throw new PathError(`Missing parameter name at index ${index2}`, str);
         }
         return value;
       }
-      while (index < chars.length) {
-        const value = chars[index];
+      while (index2 < chars.length) {
+        const value = chars[index2];
         const type = SIMPLE_TOKENS[value];
         if (type) {
-          tokens.push({ type, index: index++, value });
+          tokens.push({ type, index: index2++, value });
         } else if (value === "\\") {
-          tokens.push({ type: "escape", index: index++, value: chars[index++] });
+          tokens.push({ type: "escape", index: index2++, value: chars[index2++] });
         } else if (value === ":") {
-          tokens.push({ type: "param", index: index++, value: name() });
+          tokens.push({ type: "param", index: index2++, value: name() });
         } else if (value === "*") {
-          tokens.push({ type: "wildcard", index: index++, value: name() });
+          tokens.push({ type: "wildcard", index: index2++, value: name() });
         } else {
-          tokens.push({ type: "char", index: index++, value });
+          tokens.push({ type: "char", index: index2++, value });
         }
       }
-      tokens.push({ type: "end", index, value: "" });
+      tokens.push({ type: "end", index: index2, value: "" });
       function consumeUntil(endType) {
         const output = [];
         while (true) {
@@ -20035,9 +20035,9 @@ var require_dist = __commonJS({
             throw new TypeError(`Expected "${token.name}" to be a non-empty array`);
           }
           return [
-            value.map((value2, index) => {
+            value.map((value2, index2) => {
               if (typeof value2 !== "string") {
-                throw new TypeError(`Expected "${token.name}/${index}" to be a string`);
+                throw new TypeError(`Expected "${token.name}/${index2}" to be a string`);
               }
               return encodeValue(value2);
             }).join(delimiter)
@@ -20107,19 +20107,19 @@ var require_dist = __commonJS({
       }
       return init;
     }
-    function* flatten(tokens, index, init) {
-      if (index === tokens.length) {
+    function* flatten(tokens, index2, init) {
+      if (index2 === tokens.length) {
         return yield init;
       }
-      const token = tokens[index];
+      const token = tokens[index2];
       if (token.type === "group") {
         for (const seq of flatten(token.tokens, 0, init.slice())) {
-          yield* flatten(tokens, index + 1, seq);
+          yield* flatten(tokens, index2 + 1, seq);
         }
       } else {
         init.push(token);
       }
-      yield* flatten(tokens, index + 1, init);
+      yield* flatten(tokens, index2 + 1, init);
     }
     function toRegExpSource(tokens, delimiter, keys, originalPath) {
       let result = "";
@@ -20488,27 +20488,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router12;
+    module.exports = Router14;
     module.exports.Route = Route;
-    function Router12(options) {
-      if (!(this instanceof Router12)) {
-        return new Router12(options);
+    function Router14(options) {
+      if (!(this instanceof Router14)) {
+        return new Router14(options);
       }
       const opts = options || {};
-      function router12(req, res, next) {
-        router12.handle(req, res, next);
+      function router14(req, res, next) {
+        router14.handle(req, res, next);
       }
-      Object.setPrototypeOf(router12, this);
-      router12.caseSensitive = opts.caseSensitive;
-      router12.mergeParams = opts.mergeParams;
-      router12.params = {};
-      router12.strict = opts.strict;
-      router12.stack = [];
-      return router12;
+      Object.setPrototypeOf(router14, this);
+      router14.caseSensitive = opts.caseSensitive;
+      router14.mergeParams = opts.mergeParams;
+      router14.params = {};
+      router14.strict = opts.strict;
+      router14.stack = [];
+      return router14;
     }
-    Router12.prototype = function() {
+    Router14.prototype = function() {
     };
-    Router12.prototype.param = function param(name, fn) {
+    Router14.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -20528,7 +20528,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router12.prototype.handle = function handle(req, res, callback) {
+    Router14.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20655,7 +20655,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router12.prototype.use = function use(handler) {
+    Router14.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -20688,7 +20688,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router12.prototype.route = function route(path3) {
+    Router14.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -20703,7 +20703,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router12.prototype[method] = function(path3) {
+      Router14.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20886,13 +20886,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once2 = require_once();
-    var Router12 = require_router();
+    var Router14 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router12 = null;
+      var router14 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20901,13 +20901,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router12 === null) {
-            router12 = new Router12({
+          if (router14 === null) {
+            router14 = new Router14({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router12;
+          return router14;
         }
       });
     };
@@ -20978,15 +20978,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router12 = this.router;
+      var router14 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router12.use(path3, fn2);
+          return router14.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router12.use(path3, function mounted_app(req, res, next) {
+        router14.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -21172,17 +21172,17 @@ var require_charset = __commonJS({
         i
       };
     }
-    function getCharsetPriority(charset, accepted, index) {
+    function getCharsetPriority(charset, accepted, index2) {
       var priority = { o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(charset, accepted[i], index);
+        var spec = specify(charset, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(charset, spec, index) {
+    function specify(charset, spec, index2) {
       var s = 0;
       if (spec.charset.toLowerCase() === charset.toLowerCase()) {
         s |= 1;
@@ -21190,7 +21190,7 @@ var require_charset = __commonJS({
         return null;
       }
       return {
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21201,8 +21201,8 @@ var require_charset = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(compareSpecs).map(getFullCharset);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getCharsetPriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getCharsetPriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(compareSpecs).map(function getCharset(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21270,17 +21270,17 @@ var require_encoding = __commonJS({
         i
       };
     }
-    function getEncodingPriority(encoding, accepted, index) {
+    function getEncodingPriority(encoding, accepted, index2) {
       var priority = { encoding, o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(encoding, accepted[i], index);
+        var spec = specify(encoding, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(encoding, spec, index) {
+    function specify(encoding, spec, index2) {
       var s = 0;
       if (spec.encoding.toLowerCase() === encoding.toLowerCase()) {
         s |= 1;
@@ -21289,7 +21289,7 @@ var require_encoding = __commonJS({
       }
       return {
         encoding,
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21314,8 +21314,8 @@ var require_encoding = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(comparator).map(getFullEncoding);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getEncodingPriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getEncodingPriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(comparator).map(function getEncoding(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21374,17 +21374,17 @@ var require_language = __commonJS({
         full
       };
     }
-    function getLanguagePriority(language, accepted, index) {
+    function getLanguagePriority(language, accepted, index2) {
       var priority = { o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(language, accepted[i], index);
+        var spec = specify(language, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(language, spec, index) {
+    function specify(language, spec, index2) {
       var p = parseLanguage(language);
       if (!p) return null;
       var s = 0;
@@ -21398,7 +21398,7 @@ var require_language = __commonJS({
         return null;
       }
       return {
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21409,8 +21409,8 @@ var require_language = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(compareSpecs).map(getFullLanguage);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getLanguagePriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getLanguagePriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(compareSpecs).map(function getLanguage(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21475,17 +21475,17 @@ var require_mediaType = __commonJS({
         i
       };
     }
-    function getMediaTypePriority(type, accepted, index) {
+    function getMediaTypePriority(type, accepted, index2) {
       var priority = { o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(type, accepted[i], index);
+        var spec = specify(type, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(type, spec, index) {
+    function specify(type, spec, index2) {
       var p = parseMediaType(type);
       var s = 0;
       if (!p) {
@@ -21512,7 +21512,7 @@ var require_mediaType = __commonJS({
         }
       }
       return {
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21523,8 +21523,8 @@ var require_mediaType = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(compareSpecs).map(getFullType);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getMediaTypePriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getMediaTypePriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(compareSpecs).map(function getType(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21541,22 +21541,22 @@ var require_mediaType = __commonJS({
     }
     function quoteCount(string4) {
       var count = 0;
-      var index = 0;
-      while ((index = string4.indexOf('"', index)) !== -1) {
+      var index2 = 0;
+      while ((index2 = string4.indexOf('"', index2)) !== -1) {
         count++;
-        index++;
+        index2++;
       }
       return count;
     }
     function splitKeyValuePair(str) {
-      var index = str.indexOf("=");
+      var index2 = str.indexOf("=");
       var key;
       var val;
-      if (index === -1) {
+      if (index2 === -1) {
         key = str;
       } else {
-        key = str.slice(0, index);
-        val = str.slice(index + 1);
+        key = str.slice(0, index2);
+        val = str.slice(index2 + 1);
       }
       return [key, val];
     }
@@ -21808,13 +21808,13 @@ var require_range_parser = __commonJS({
       if (typeof str !== "string") {
         throw new TypeError("argument str must be a string");
       }
-      var index = str.indexOf("=");
-      if (index === -1) {
+      var index2 = str.indexOf("=");
+      if (index2 === -1) {
         return -2;
       }
-      var arr = str.slice(index + 1).split(",");
+      var arr = str.slice(index2 + 1).split(",");
       var ranges = [];
-      ranges.type = str.slice(0, index);
+      ranges.type = str.slice(0, index2);
       for (var i = 0; i < arr.length; i++) {
         var range = arr[i].split("-");
         var start = parseInt(range[0], 10);
@@ -21858,11 +21858,11 @@ var require_range_parser = __commonJS({
       combined.type = ranges.type;
       return combined;
     }
-    function mapWithIndex(range, index) {
+    function mapWithIndex(range, index2) {
       return {
         start: range.start,
         end: range.end,
-        index
+        index: index2
       };
     }
     function mapWithoutIndex(range) {
@@ -21955,8 +21955,8 @@ var require_request = __commonJS({
         return proto;
       }
       var header = this.get("X-Forwarded-Proto") || proto;
-      var index = header.indexOf(",");
-      return index !== -1 ? header.substring(0, index).trim() : header.trim();
+      var index2 = header.indexOf(",");
+      return index2 !== -1 ? header.substring(0, index2).trim() : header.trim();
     });
     defineGetter(req, "secure", function secure() {
       return this.protocol === "https";
@@ -21995,8 +21995,8 @@ var require_request = __commonJS({
       var host = this.host;
       if (!host) return;
       var offset = host[0] === "[" ? host.indexOf("]") + 1 : 0;
-      var index = host.indexOf(":", offset);
-      return index !== -1 ? host.substring(0, index) : host;
+      var index2 = host.indexOf(":", offset);
+      return index2 !== -1 ? host.substring(0, index2) : host;
     });
     defineGetter(req, "fresh", function() {
       var method = this.method;
@@ -22132,18 +22132,18 @@ var require_content_disposition = __commonJS({
       if (!match) {
         throw new TypeError("invalid type format");
       }
-      var index = match[0].length;
+      var index2 = match[0].length;
       var type = match[1].toLowerCase();
       var key;
       var names = [];
       var params = {};
       var value;
-      index = PARAM_REGEXP.lastIndex = match[0].slice(-1) === ";" ? index - 1 : index;
+      index2 = PARAM_REGEXP.lastIndex = match[0].slice(-1) === ";" ? index2 - 1 : index2;
       while (match = PARAM_REGEXP.exec(string4)) {
-        if (match.index !== index) {
+        if (match.index !== index2) {
           throw new TypeError("invalid parameter format");
         }
-        index += match[0].length;
+        index2 += match[0].length;
         key = match[1].toLowerCase();
         value = match[2];
         if (names.indexOf(key) !== -1) {
@@ -22164,7 +22164,7 @@ var require_content_disposition = __commonJS({
         }
         params[key] = value;
       }
-      if (index !== -1 && index !== string4.length) {
+      if (index2 !== -1 && index2 !== string4.length) {
         throw new TypeError("invalid parameter format");
       }
       return new ContentDisposition(type, params);
@@ -22229,20 +22229,20 @@ var require_cookie = __commonJS({
       var len = str.length;
       if (len < 2) return obj;
       var dec = opt && opt.decode || decode;
-      var index = 0;
+      var index2 = 0;
       var eqIdx = 0;
       var endIdx = 0;
       do {
-        eqIdx = str.indexOf("=", index);
+        eqIdx = str.indexOf("=", index2);
         if (eqIdx === -1) break;
-        endIdx = str.indexOf(";", index);
+        endIdx = str.indexOf(";", index2);
         if (endIdx === -1) {
           endIdx = len;
         } else if (eqIdx > endIdx) {
-          index = str.lastIndexOf(";", eqIdx - 1) + 1;
+          index2 = str.lastIndexOf(";", eqIdx - 1) + 1;
           continue;
         }
-        var keyStartIdx = startIndex(str, index, eqIdx);
+        var keyStartIdx = startIndex(str, index2, eqIdx);
         var keyEndIdx = endIndex(str, eqIdx, keyStartIdx);
         var key = str.slice(keyStartIdx, keyEndIdx);
         if (!__hasOwnProperty.call(obj, key)) {
@@ -22255,21 +22255,21 @@ var require_cookie = __commonJS({
           var val = str.slice(valStartIdx, valEndIdx);
           obj[key] = tryDecode(val, dec);
         }
-        index = endIdx + 1;
-      } while (index < len);
+        index2 = endIdx + 1;
+      } while (index2 < len);
       return obj;
     }
-    function startIndex(str, index, max) {
+    function startIndex(str, index2, max) {
       do {
-        var code = str.charCodeAt(index);
-        if (code !== 32 && code !== 9) return index;
-      } while (++index < max);
+        var code = str.charCodeAt(index2);
+        if (code !== 32 && code !== 9) return index2;
+      } while (++index2 < max);
       return max;
     }
-    function endIndex(str, index, min) {
-      while (index > min) {
-        var code = str.charCodeAt(--index);
-        if (code !== 32 && code !== 9) return index + 1;
+    function endIndex(str, index2, min) {
+      while (index2 > min) {
+        var code = str.charCodeAt(--index2);
+        if (code !== 32 && code !== 9) return index2 + 1;
       }
       return min;
     }
@@ -23513,7 +23513,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router12 = require_router();
+    var Router14 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23535,8 +23535,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router12.Route;
-    exports.Router = Router12;
+    exports.Route = Router14.Route;
+    exports.Router = Router14;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -24874,8 +24874,8 @@ var require_redaction = __commonJS({
         if (o[ns] === null) {
           return o;
         }
-        const { index } = next;
-        const nextPath = `${str.substr(index, str.length - 1)}`;
+        const { index: index2 } = next;
+        const nextPath = `${str.substr(index2, str.length - 1)}`;
         o[ns] = o[ns] || [];
         if (ns !== wildcardFirstSym && o[ns].length === 0) {
           o[ns].push(...o[wildcardFirstSym] || []);
@@ -24981,8 +24981,8 @@ var require_quick_format_unescaped = __commonJS({
         if (len === 1) return f;
         var objects = new Array(len);
         objects[0] = ss(f);
-        for (var index = 1; index < len; index++) {
-          objects[index] = ss(args[index]);
+        for (var index2 = 1; index2 < len; index2++) {
+          objects[index2] = ss(args[index2]);
         }
         return objects.join(" ");
       }
@@ -25753,8 +25753,8 @@ var require_on_exit_leak_free = __commonJS({
     }
     function clear(ref) {
       for (const event of ["exit", "beforeExit"]) {
-        const index = refs[event].indexOf(ref);
-        refs[event].splice(index, index + 1);
+        const index2 = refs[event].indexOf(ref);
+        refs[event].splice(index2, index2 + 1);
         uninstall(event);
       }
     }
@@ -25864,9 +25864,9 @@ var require_wait = __commonJS({
   "../../node_modules/.pnpm/thread-stream@3.1.0/node_modules/thread-stream/lib/wait.js"(exports, module) {
     "use strict";
     var MAX_TIMEOUT = 1e3;
-    function wait(state, index, expected, timeout, done) {
+    function wait(state, index2, expected, timeout, done) {
       const max = Date.now() + timeout;
-      let current = Atomics.load(state, index);
+      let current = Atomics.load(state, index2);
       if (current === expected) {
         done(null, "ok");
         return;
@@ -25878,7 +25878,7 @@ var require_wait = __commonJS({
         } else {
           setTimeout(() => {
             prior = current;
-            current = Atomics.load(state, index);
+            current = Atomics.load(state, index2);
             if (current === prior) {
               check2(backoff >= MAX_TIMEOUT ? MAX_TIMEOUT : backoff * 2);
             } else {
@@ -25890,9 +25890,9 @@ var require_wait = __commonJS({
       };
       check2(1);
     }
-    function waitDiff(state, index, expected, timeout, done) {
+    function waitDiff(state, index2, expected, timeout, done) {
       const max = Date.now() + timeout;
-      let current = Atomics.load(state, index);
+      let current = Atomics.load(state, index2);
       if (current !== expected) {
         done(null, "ok");
         return;
@@ -25902,7 +25902,7 @@ var require_wait = __commonJS({
           done(null, "timed-out");
         } else {
           setTimeout(() => {
-            current = Atomics.load(state, index);
+            current = Atomics.load(state, index2);
             if (current !== expected) {
               done(null, "ok");
             } else {
@@ -27986,9 +27986,9 @@ var require_multistream = __commonJS({
       }
       function remove(id) {
         const { streams } = this;
-        const index = streams.findIndex((s) => s.id === id);
-        if (index >= 0) {
-          streams.splice(index, 1);
+        const index2 = streams.findIndex((s) => s.id === id);
+        if (index2 >= 0) {
+          streams.splice(index2, 1);
           streams.sort(compareByLevel);
           this.minLevel = streams.length > 0 ? streams[0].level : -1;
         }
@@ -30029,8 +30029,8 @@ function haveSameKeys(left, right) {
   if (leftKeys.length !== rightKeys.length) {
     return false;
   }
-  for (const [index, key] of leftKeys.entries()) {
-    if (key !== rightKeys[index]) {
+  for (const [index2, key] of leftKeys.entries()) {
+    if (key !== rightKeys[index2]) {
       return false;
     }
   }
@@ -31593,13 +31593,13 @@ var require_re = __commonJS({
     };
     var createToken = (name, value, isGlobal) => {
       const safe = makeSafeRegex(value);
-      const index = R++;
-      debug(name, index, value);
-      t[name] = index;
-      src[index] = value;
-      safeSrc[index] = safe;
-      re[index] = new RegExp(value, isGlobal ? "g" : void 0);
-      safeRe[index] = new RegExp(safe, isGlobal ? "g" : void 0);
+      const index2 = R++;
+      debug(name, index2, value);
+      t[name] = index2;
+      src[index2] = value;
+      safeSrc[index2] = safe;
+      re[index2] = new RegExp(value, isGlobal ? "g" : void 0);
+      safeRe[index2] = new RegExp(safe, isGlobal ? "g" : void 0);
     };
     createToken("NUMERICIDENTIFIER", "0|[1-9]\\d*");
     createToken("NUMERICIDENTIFIERLOOSE", "\\d+");
@@ -33761,17 +33761,17 @@ var require_lodash = __commonJS({
     var reIsUint = /^(?:0|[1-9]\d*)$/;
     var freeParseInt = parseInt;
     function arrayMap(array2, iteratee) {
-      var index = -1, length = array2 ? array2.length : 0, result = Array(length);
-      while (++index < length) {
-        result[index] = iteratee(array2[index], index, array2);
+      var index2 = -1, length = array2 ? array2.length : 0, result = Array(length);
+      while (++index2 < length) {
+        result[index2] = iteratee(array2[index2], index2, array2);
       }
       return result;
     }
     function baseFindIndex(array2, predicate, fromIndex, fromRight) {
-      var length = array2.length, index = fromIndex + (fromRight ? 1 : -1);
-      while (fromRight ? index-- : ++index < length) {
-        if (predicate(array2[index], index, array2)) {
-          return index;
+      var length = array2.length, index2 = fromIndex + (fromRight ? 1 : -1);
+      while (fromRight ? index2-- : ++index2 < length) {
+        if (predicate(array2[index2], index2, array2)) {
+          return index2;
         }
       }
       return -1;
@@ -33780,10 +33780,10 @@ var require_lodash = __commonJS({
       if (value !== value) {
         return baseFindIndex(array2, baseIsNaN, fromIndex);
       }
-      var index = fromIndex - 1, length = array2.length;
-      while (++index < length) {
-        if (array2[index] === value) {
-          return index;
+      var index2 = fromIndex - 1, length = array2.length;
+      while (++index2 < length) {
+        if (array2[index2] === value) {
+          return index2;
         }
       }
       return -1;
@@ -33792,9 +33792,9 @@ var require_lodash = __commonJS({
       return value !== value;
     }
     function baseTimes(n, iteratee) {
-      var index = -1, result = Array(n);
-      while (++index < n) {
-        result[index] = iteratee(index);
+      var index2 = -1, result = Array(n);
+      while (++index2 < n) {
+        result[index2] = iteratee(index2);
       }
       return result;
     }
@@ -36102,6 +36102,9 @@ var init_count = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql2@3.22.3_@types+node@25.3.5_/node_modules/drizzle-orm/mysql-core/indexes.js
+function index(name) {
+  return new IndexBuilderOn(name, false);
+}
 var IndexBuilderOn, IndexBuilder, Index;
 var init_indexes = __esm({
   "../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql2@3.22.3_@types+node@25.3.5_/node_modules/drizzle-orm/mysql-core/indexes.js"() {
@@ -36705,8 +36708,8 @@ var init_dialect = __esm({
         })();
         const joinsArray = [];
         if (joins) {
-          for (const [index, joinMeta] of joins.entries()) {
-            if (index === 0) {
+          for (const [index2, joinMeta] of joins.entries()) {
+            if (index2 === 0) {
               joinsArray.push(sql` `);
             }
             const table2 = joinMeta.table;
@@ -36745,7 +36748,7 @@ var init_dialect = __esm({
                 sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${table2}${onSql}`
               );
             }
-            if (index < joins.length - 1) {
+            if (index2 < joins.length - 1) {
               joinsArray.push(sql` `);
             }
           }
@@ -40844,11 +40847,11 @@ function isValidJWT2(token, algorithm = null) {
     return false;
   }
 }
-function handleArrayResult(result, final, index) {
+function handleArrayResult(result, final, index2) {
   if (result.issues.length) {
-    final.issues.push(...prefixIssues(index, result.issues));
+    final.issues.push(...prefixIssues(index2, result.issues));
   }
-  final.value[index] = result.value;
+  final.value[index2] = result.value;
 }
 function handleObjectResult(result, final, key) {
   if (result.issues.length) {
@@ -40917,14 +40920,14 @@ function mergeValues2(a, b) {
       return { valid: false, mergeErrorPath: [] };
     }
     const newArray = [];
-    for (let index = 0; index < a.length; index++) {
-      const itemA = a[index];
-      const itemB = b[index];
+    for (let index2 = 0; index2 < a.length; index2++) {
+      const itemA = a[index2];
+      const itemB = b[index2];
       const sharedValue = mergeValues2(itemA, itemB);
       if (!sharedValue.valid) {
         return {
           valid: false,
-          mergeErrorPath: [index, ...sharedValue.mergeErrorPath]
+          mergeErrorPath: [index2, ...sharedValue.mergeErrorPath]
         };
       }
       newArray.push(sharedValue.data);
@@ -40949,11 +40952,11 @@ function handleIntersectionResults(result, left, right) {
   result.value = merged.data;
   return result;
 }
-function handleTupleResult(result, final, index) {
+function handleTupleResult(result, final, index2) {
   if (result.issues.length) {
-    final.issues.push(...prefixIssues(index, result.issues));
+    final.issues.push(...prefixIssues(index2, result.issues));
   }
-  final.value[index] = result.value;
+  final.value[index2] = result.value;
 }
 function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
   if (keyResult.issues.length) {
@@ -51225,7 +51228,8 @@ var init_products = __esm({
       notes: text2("notes"),
       unitSize: decimal("unit_size", { precision: 10, scale: 2 }),
       unitType: varchar("unit_type", { length: 2 }),
-      stockGrams: decimal("stock_grams", { precision: 10, scale: 2 })
+      stockGrams: decimal("stock_grams", { precision: 10, scale: 2 }),
+      subcategories: json("subcategories").$type()
     });
     insertProductSchema = createInsertSchema(productsTable).omit({ id: true });
     selectProductSchema = createSelectSchema(productsTable);
@@ -51295,7 +51299,8 @@ var init_settings = __esm({
       address: varchar("address", { length: 500 }),
       phone: varchar("phone", { length: 30 }),
       email: varchar("email", { length: 255 }),
-      brandColor: varchar("brand_color", { length: 20 })
+      brandColor: varchar("brand_color", { length: 20 }),
+      backgroundColor: varchar("background_color", { length: 20 })
     });
     insertSettingsSchema = createInsertSchema(salonSettingsTable).omit({ id: true });
     selectSettingsSchema = createSelectSchema(salonSettingsTable);
@@ -51345,10 +51350,62 @@ var init_users = __esm({
   }
 });
 
+// ../../lib/db/src/schema/stock-movements.ts
+var stockMovementsTable;
+var init_stock_movements = __esm({
+  "../../lib/db/src/schema/stock-movements.ts"() {
+    "use strict";
+    init_mysql_core();
+    stockMovementsTable = mysqlTable(
+      "stock_movements",
+      {
+        id: char("id", { length: 12 }).primaryKey(),
+        productId: char("product_id", { length: 12 }).notNull(),
+        productName: varchar("product_name", { length: 200 }).notNull(),
+        productBrand: varchar("product_brand", { length: 100 }).notNull().default(""),
+        reason: varchar("reason", { length: 30 }).notNull(),
+        quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+        unit: varchar("unit", { length: 3 }).notNull(),
+        unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+        date: varchar("date", { length: 10 }).notNull(),
+        time: varchar("time", { length: 5 }).notNull(),
+        clientId: char("client_id", { length: 12 }),
+        clientName: varchar("client_name", { length: 200 }),
+        appointmentId: char("appointment_id", { length: 12 }),
+        saleId: char("sale_id", { length: 12 }),
+        note: text2("note"),
+        userId: char("user_id", { length: 12 }),
+        userName: varchar("user_name", { length: 100 }),
+        createdAt: varchar("created_at", { length: 40 }).notNull()
+      },
+      (t) => [
+        index("idx_stock_movements_date").on(t.date),
+        index("idx_stock_movements_product").on(t.productId),
+        index("idx_stock_movements_appointment").on(t.appointmentId),
+        index("idx_stock_movements_sale").on(t.saleId)
+      ]
+    );
+  }
+});
+
+// ../../lib/db/src/schema/brand-colors.ts
+var brandColorsTable;
+var init_brand_colors = __esm({
+  "../../lib/db/src/schema/brand-colors.ts"() {
+    "use strict";
+    init_mysql_core();
+    brandColorsTable = mysqlTable("brand_colors", {
+      brand: varchar("brand", { length: 100 }).primaryKey(),
+      color: varchar("color", { length: 9 }).notNull()
+    });
+  }
+});
+
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
   appointmentsTable: () => appointmentsTable,
+  brandColorsTable: () => brandColorsTable,
   clientFormulasTable: () => clientFormulasTable,
   clientsTable: () => clientsTable,
   insertAppointmentSchema: () => insertAppointmentSchema,
@@ -51371,6 +51428,7 @@ __export(schema_exports, {
   selectUserSchema: () => selectUserSchema,
   servicesTable: () => servicesTable,
   staffMembersTable: () => staffMembersTable,
+  stockMovementsTable: () => stockMovementsTable,
   usersTable: () => usersTable
 });
 var init_schema2 = __esm({
@@ -51384,6 +51442,8 @@ var init_schema2 = __esm({
     init_settings();
     init_client_formulas();
     init_users();
+    init_stock_movements();
+    init_brand_colors();
   }
 });
 
@@ -51764,6 +51824,7 @@ var init_mysql2 = __esm({
 var src_exports = {};
 __export(src_exports, {
   appointmentsTable: () => appointmentsTable,
+  brandColorsTable: () => brandColorsTable,
   clientFormulasTable: () => clientFormulasTable,
   clientsTable: () => clientsTable,
   getDb: () => getDb,
@@ -51787,6 +51848,7 @@ __export(src_exports, {
   selectUserSchema: () => selectUserSchema,
   servicesTable: () => servicesTable,
   staffMembersTable: () => staffMembersTable,
+  stockMovementsTable: () => stockMovementsTable,
   usersTable: () => usersTable
 });
 async function getDb() {
@@ -51812,7 +51874,7 @@ var init_src = __esm({
 });
 
 // src/app.ts
-var import_express12 = __toESM(require_express2(), 1);
+var import_express14 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
@@ -51821,7 +51883,7 @@ import path2 from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/routes/index.ts
-var import_express11 = __toESM(require_express2(), 1);
+var import_express13 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -54311,10 +54373,10 @@ var ZodObject = class _ZodObject extends ZodType {
   //   }) as any;
   //   return merged;
   // }
-  catchall(index) {
+  catchall(index2) {
     return new _ZodObject({
       ...this._def,
-      catchall: index
+      catchall: index2
     });
   }
   pick(mask) {
@@ -54632,9 +54694,9 @@ function mergeValues(a, b) {
       return { valid: false };
     }
     const newArray = [];
-    for (let index = 0; index < a.length; index++) {
-      const itemA = a[index];
-      const itemB = b[index];
+    for (let index2 = 0; index2 < a.length; index2++) {
+      const itemA = a[index2];
+      const itemB = b[index2];
       const sharedValue = mergeValues(itemA, itemB);
       if (!sharedValue.valid) {
         return { valid: false };
@@ -54840,10 +54902,10 @@ var ZodMap = class extends ZodType {
     }
     const keyType = this._def.keyType;
     const valueType = this._def.valueType;
-    const pairs = [...ctx.data.entries()].map(([key, value], index) => {
+    const pairs = [...ctx.data.entries()].map(([key, value], index2) => {
       return {
-        key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, [index, "key"])),
-        value: valueType._parse(new ParseInputLazyPath(ctx, value, ctx.path, [index, "value"]))
+        key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, [index2, "key"])),
+        value: valueType._parse(new ParseInputLazyPath(ctx, value, ctx.path, [index2, "value"]))
       };
     });
     if (ctx.common.async) {
@@ -55847,6 +55909,9 @@ var ListProductsResponseItem = objectType({
   unitType: enumType(["g", "ml"]).nullish().describe("Unit of measurement for weight/volume tracking"),
   stockGrams: numberType().nullish().describe(
     "Total remaining stock in g or ml (quantity * unitSize, decremented on use)"
+  ),
+  subcategories: arrayType(stringType()).optional().describe(
+    "Optional sub-categories of the main category (free text, like tags)"
   )
 });
 var ListProductsResponse = arrayType(ListProductsResponseItem);
@@ -55864,6 +55929,9 @@ var CreateProductBody = objectType({
   unitType: enumType(["g", "ml"]).nullish(),
   stockGrams: numberType().nullish().describe(
     "Total stock in g or ml (auto-computed as quantity * unitSize if not provided)"
+  ),
+  subcategories: arrayType(stringType()).optional().describe(
+    "Optional sub-categories of the main category (free text, like tags)"
   )
 });
 var GetProductParams = objectType({
@@ -55884,6 +55952,9 @@ var GetProductResponse = objectType({
   unitType: enumType(["g", "ml"]).nullish().describe("Unit of measurement for weight/volume tracking"),
   stockGrams: numberType().nullish().describe(
     "Total remaining stock in g or ml (quantity * unitSize, decremented on use)"
+  ),
+  subcategories: arrayType(stringType()).optional().describe(
+    "Optional sub-categories of the main category (free text, like tags)"
   )
 });
 var UpdateProductParams = objectType({
@@ -55901,7 +55972,25 @@ var UpdateProductBody = objectType({
   notes: stringType().nullish(),
   unitSize: numberType().nullish(),
   unitType: enumType(["g", "ml"]).nullish(),
-  stockGrams: numberType().nullish()
+  stockGrams: numberType().nullish(),
+  subcategories: arrayType(stringType()).optional().describe(
+    "Optional sub-categories of the main category (free text, like tags)"
+  ),
+  stockChangeReason: enumType([
+    "vendita",
+    "uso_servizio",
+    "rifornimento",
+    "giacenza_iniziale",
+    "reso",
+    "rettifica",
+    "danneggiato",
+    "altro"
+  ]).optional().describe(
+    "Causale. vendita and uso_servizio are generated by sales and completed appointments; the others are manual stock changes."
+  ),
+  stockChangeNote: stringType().nullish().describe(
+    "Note stored on the stock movement logged when quantity/stock changes"
+  )
 });
 var updateProductResponsePriceMin = 0;
 var UpdateProductResponse = objectType({
@@ -55918,11 +56007,133 @@ var UpdateProductResponse = objectType({
   unitType: enumType(["g", "ml"]).nullish().describe("Unit of measurement for weight/volume tracking"),
   stockGrams: numberType().nullish().describe(
     "Total remaining stock in g or ml (quantity * unitSize, decremented on use)"
+  ),
+  subcategories: arrayType(stringType()).optional().describe(
+    "Optional sub-categories of the main category (free text, like tags)"
   )
 });
 var DeleteProductParams = objectType({
   id: coerce.string()
 });
+var ListBrandColorsResponseItem = objectType({
+  brand: stringType().describe(
+    "Brand name trimmed and lower-cased (how products are grouped by brand)"
+  ),
+  color: stringType().describe("Hex colour, e.g. #2a78d6")
+});
+var ListBrandColorsResponse = arrayType(ListBrandColorsResponseItem);
+var SetBrandColorBody = objectType({
+  brand: stringType().describe("Brand name as written on the products (any case)"),
+  color: stringType().nullish().describe("Hex colour #rrggbb, or null to go back to no colour")
+});
+var SetBrandColorResponseItem = objectType({
+  brand: stringType().describe(
+    "Brand name trimmed and lower-cased (how products are grouped by brand)"
+  ),
+  color: stringType().describe("Hex colour, e.g. #2a78d6")
+});
+var SetBrandColorResponse = arrayType(SetBrandColorResponseItem);
+var ListStockMovementsQueryParams = objectType({
+  from: coerce.string().optional().describe("First day included, YYYY-MM-DD"),
+  to: coerce.string().optional().describe("Last day included, YYYY-MM-DD"),
+  productId: coerce.string().optional(),
+  clientId: coerce.string().optional(),
+  reason: enumType([
+    "vendita",
+    "uso_servizio",
+    "rifornimento",
+    "giacenza_iniziale",
+    "reso",
+    "rettifica",
+    "danneggiato",
+    "altro"
+  ]).optional()
+});
+var ListStockMovementsResponseItem = objectType({
+  id: stringType(),
+  productId: stringType(),
+  productName: stringType().describe("Product name at the time of the movement"),
+  productBrand: stringType(),
+  reason: enumType([
+    "vendita",
+    "uso_servizio",
+    "rifornimento",
+    "giacenza_iniziale",
+    "reso",
+    "rettifica",
+    "danneggiato",
+    "altro"
+  ]).describe(
+    "Causale. vendita and uso_servizio are generated by sales and completed appointments; the others are manual stock changes."
+  ),
+  quantity: numberType().describe(
+    "Signed change - negative leaves the stock (scarico), positive enters it (carico)"
+  ),
+  unit: enumType(["pz", "g", "ml"]),
+  unitPrice: numberType().nullish().describe("Sale price per piece (vendita only)"),
+  date: stringType().describe("YYYY-MM-DD"),
+  time: stringType().describe("HH:MM"),
+  clientId: stringType().nullish(),
+  clientName: stringType().nullish(),
+  appointmentId: stringType().nullish(),
+  saleId: stringType().nullish().describe("Groups the lines of one over-the-counter sale"),
+  note: stringType().nullish(),
+  userName: stringType().nullish(),
+  createdAt: stringType()
+});
+var ListStockMovementsResponse = arrayType(
+  ListStockMovementsResponseItem
+);
+var createSaleBodyItemsItemUnitPriceMin = 0;
+var CreateSaleBody = objectType({
+  date: stringType().describe("YYYY-MM-DD"),
+  time: stringType().describe("HH:MM"),
+  clientId: stringType().nullish(),
+  note: stringType().nullish(),
+  items: arrayType(
+    objectType({
+      productId: stringType(),
+      quantity: numberType().min(1),
+      unitPrice: numberType().min(createSaleBodyItemsItemUnitPriceMin)
+    })
+  ).min(1)
+});
+var CancelSaleParams = objectType({
+  saleId: coerce.string()
+});
+var CancelSaleResponseItem = objectType({
+  id: stringType(),
+  productId: stringType(),
+  productName: stringType().describe("Product name at the time of the movement"),
+  productBrand: stringType(),
+  reason: enumType([
+    "vendita",
+    "uso_servizio",
+    "rifornimento",
+    "giacenza_iniziale",
+    "reso",
+    "rettifica",
+    "danneggiato",
+    "altro"
+  ]).describe(
+    "Causale. vendita and uso_servizio are generated by sales and completed appointments; the others are manual stock changes."
+  ),
+  quantity: numberType().describe(
+    "Signed change - negative leaves the stock (scarico), positive enters it (carico)"
+  ),
+  unit: enumType(["pz", "g", "ml"]),
+  unitPrice: numberType().nullish().describe("Sale price per piece (vendita only)"),
+  date: stringType().describe("YYYY-MM-DD"),
+  time: stringType().describe("HH:MM"),
+  clientId: stringType().nullish(),
+  clientName: stringType().nullish(),
+  appointmentId: stringType().nullish(),
+  saleId: stringType().nullish().describe("Groups the lines of one over-the-counter sale"),
+  note: stringType().nullish(),
+  userName: stringType().nullish(),
+  createdAt: stringType()
+});
+var CancelSaleResponse = arrayType(CancelSaleResponseItem);
 var listAppointmentsResponseServicePricesItemMin = 0;
 var listAppointmentsResponseServiceListPricesItemMin = 0;
 var listAppointmentsResponseUsedProductsItemQuantityUsedMin = 0;
@@ -56209,6 +56420,9 @@ var GetSettingsResponse = objectType({
   email: stringType().nullish(),
   brandColor: stringType().nullish().describe(
     "Hex color string for the brand palette primary color, e.g. #5c5870"
+  ),
+  backgroundColor: stringType().nullish().describe(
+    "Hex color of the page background behind the cards; null = default warm grey"
   )
 });
 var UpdateSettingsBody = objectType({
@@ -56220,6 +56434,9 @@ var UpdateSettingsBody = objectType({
   email: stringType().nullish(),
   brandColor: stringType().nullish().describe(
     "Hex color string for the brand palette primary color, e.g. #5c5870"
+  ),
+  backgroundColor: stringType().nullish().describe(
+    "Hex color of the page background behind the cards; null = default warm grey"
   )
 });
 var UpdateSettingsResponse = objectType({
@@ -56231,6 +56448,9 @@ var UpdateSettingsResponse = objectType({
   email: stringType().nullish(),
   brandColor: stringType().nullish().describe(
     "Hex color string for the brand palette primary color, e.g. #5c5870"
+  ),
+  backgroundColor: stringType().nullish().describe(
+    "Hex color of the page background behind the cards; null = default warm grey"
   )
 });
 var LoginBody = objectType({
@@ -58109,12 +58329,14 @@ function authCookieOptions() {
 var sqlite_schema_exports = {};
 __export(sqlite_schema_exports, {
   appointments: () => appointments,
+  brandColors: () => brandColors,
   clientFormulas: () => clientFormulas,
   clients: () => clients,
   products: () => products,
   salonSettings: () => salonSettings,
   services: () => services,
   staffMembers: () => staffMembers,
+  stockMovements: () => stockMovements,
   users: () => users
 });
 
@@ -58781,7 +59003,8 @@ var products = sqliteTable("products", {
   notes: text("notes"),
   unitSize: real("unit_size"),
   unitType: text("unit_type", { enum: ["g", "ml"] }),
-  stockGrams: real("stock_grams")
+  stockGrams: real("stock_grams"),
+  subcategories: text("subcategories")
 });
 var staffMembers = sqliteTable("staff_members", {
   id: text("id").primaryKey(),
@@ -58814,6 +59037,30 @@ var clientFormulas = sqliteTable("client_formulas", {
   notes: text("notes"),
   createdAt: text("created_at").notNull()
 });
+var stockMovements = sqliteTable("stock_movements", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  productBrand: text("product_brand").notNull().default(""),
+  reason: text("reason").notNull(),
+  quantity: real("quantity").notNull(),
+  unit: text("unit").notNull(),
+  unitPrice: real("unit_price"),
+  date: text("date").notNull(),
+  time: text("time").notNull(),
+  clientId: text("client_id"),
+  clientName: text("client_name"),
+  appointmentId: text("appointment_id"),
+  saleId: text("sale_id"),
+  note: text("note"),
+  userId: text("user_id"),
+  userName: text("user_name"),
+  createdAt: text("created_at").notNull()
+});
+var brandColors = sqliteTable("brand_colors", {
+  brand: text("brand").primaryKey(),
+  color: text("color").notNull()
+});
 var users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -58830,7 +59077,8 @@ var salonSettings = sqliteTable("salon_settings", {
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
-  brandColor: text("brand_color")
+  brandColor: text("brand_color"),
+  backgroundColor: text("background_color")
 });
 
 // src/data/db.ts
@@ -58889,7 +59137,8 @@ function createSqliteTables(sqlite) {
       notes TEXT,
       unit_size REAL,
       unit_type TEXT,
-      stock_grams REAL
+      stock_grams REAL,
+      subcategories TEXT
     );
     CREATE TABLE IF NOT EXISTS staff_members (
       id TEXT PRIMARY KEY,
@@ -58930,7 +59179,8 @@ function createSqliteTables(sqlite) {
       address TEXT,
       phone TEXT,
       email TEXT,
-      brand_color TEXT
+      brand_color TEXT,
+      background_color TEXT
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -58941,8 +59191,42 @@ function createSqliteTables(sqlite) {
       created_at TEXT NOT NULL
     );
   `);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      product_brand TEXT NOT NULL DEFAULT '',
+      reason TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      unit TEXT NOT NULL,
+      unit_price REAL,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      client_id TEXT,
+      client_name TEXT,
+      appointment_id TEXT,
+      sale_id TEXT,
+      note TEXT,
+      user_id TEXT,
+      user_name TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_date ON stock_movements(date);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_appointment ON stock_movements(appointment_id);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_sale ON stock_movements(sale_id);
+    CREATE TABLE IF NOT EXISTS brand_colors (
+      brand TEXT PRIMARY KEY,
+      color TEXT NOT NULL
+    );
+  `);
   try {
     sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE salon_settings ADD COLUMN background_color TEXT");
   } catch {
   }
   try {
@@ -59003,6 +59287,10 @@ function createSqliteTables(sqlite) {
   }
   try {
     sqlite.exec("ALTER TABLE products ADD COLUMN stock_grams REAL");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE products ADD COLUMN subcategories TEXT");
   } catch {
   }
   try {
@@ -59106,7 +59394,8 @@ async function initMysql() {
       notes TEXT,
       unit_size DECIMAL(10,2),
       unit_type VARCHAR(2),
-      stock_grams DECIMAL(10,2)
+      stock_grams DECIMAL(10,2),
+      subcategories JSON
     )
   `);
   await db.execute(sql`
@@ -59159,7 +59448,8 @@ async function initMysql() {
       address VARCHAR(500),
       phone VARCHAR(30),
       email VARCHAR(255),
-      brand_color VARCHAR(20)
+      brand_color VARCHAR(20),
+      background_color VARCHAR(20)
     )
   `);
   try {
@@ -59174,6 +59464,38 @@ async function initMysql() {
       role ENUM('admin','user') NOT NULL DEFAULT 'user',
       name VARCHAR(100),
       created_at VARCHAR(40) NOT NULL
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id CHAR(12) PRIMARY KEY,
+      product_id CHAR(12) NOT NULL,
+      product_name VARCHAR(200) NOT NULL,
+      product_brand VARCHAR(100) NOT NULL DEFAULT '',
+      reason VARCHAR(30) NOT NULL,
+      quantity DECIMAL(10,2) NOT NULL,
+      unit VARCHAR(3) NOT NULL,
+      unit_price DECIMAL(10,2),
+      date VARCHAR(10) NOT NULL,
+      time VARCHAR(5) NOT NULL,
+      client_id CHAR(12),
+      client_name VARCHAR(200),
+      appointment_id CHAR(12),
+      sale_id CHAR(12),
+      note TEXT,
+      user_id CHAR(12),
+      user_name VARCHAR(100),
+      created_at VARCHAR(40) NOT NULL,
+      INDEX idx_stock_movements_date (date),
+      INDEX idx_stock_movements_product (product_id),
+      INDEX idx_stock_movements_appointment (appointment_id),
+      INDEX idx_stock_movements_sale (sale_id)
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS brand_colors (
+      brand VARCHAR(100) PRIMARY KEY,
+      color VARCHAR(9) NOT NULL
     )
   `);
   const migrate = async (statement) => {
@@ -59205,6 +59527,7 @@ async function initMysql() {
   await migrate("ALTER TABLE products ADD COLUMN unit_size DECIMAL(10,2)");
   await migrate("ALTER TABLE products ADD COLUMN unit_type VARCHAR(2)");
   await migrate("ALTER TABLE products ADD COLUMN stock_grams DECIMAL(10,2)");
+  await migrate("ALTER TABLE products ADD COLUMN subcategories JSON");
   await migrate("ALTER TABLE staff_members ADD COLUMN role VARCHAR(100)");
   await migrate("ALTER TABLE staff_members ADD COLUMN color VARCHAR(20) NOT NULL DEFAULT '#6b7280'");
   await migrate("ALTER TABLE salon_settings ADD COLUMN logo_url MEDIUMTEXT");
@@ -59213,6 +59536,7 @@ async function initMysql() {
   await migrate("ALTER TABLE salon_settings ADD COLUMN phone VARCHAR(30)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN email VARCHAR(255)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN background_color VARCHAR(20)");
   await migrate("ALTER TABLE appointments ADD COLUMN service_ids JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN service_prices JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN service_list_prices JSON");
@@ -59519,6 +59843,18 @@ function getTrackedQuantity(quantity, unitSize, stockGrams) {
   }
   return quantity;
 }
+function cleanSubcategories(list) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const raw of list ?? []) {
+    const text3 = raw.trim();
+    if (text3 && !seen.has(text3.toLowerCase())) {
+      seen.add(text3.toLowerCase());
+      out.push(text3);
+    }
+  }
+  return out;
+}
 function normalizeProduct(row) {
   const price = row["price"] != null ? Number(row["price"]) : 0;
   const unitSize = row["unitSize"] != null ? Number(row["unitSize"]) : null;
@@ -59529,15 +59865,19 @@ function normalizeProduct(row) {
     price,
     quantity,
     unitSize,
-    stockGrams
+    stockGrams,
+    // SQLite keeps it as JSON text, MySQL may return it parsed or as text
+    subcategories: coerceJson(row["subcategories"]) ?? []
   };
 }
+var productCollator = new Intl.Collator("it", { sensitivity: "base", numeric: true });
+var byProductName = (a, b) => productCollator.compare(a.name, b.name) || productCollator.compare(a.brand, b.brand);
 async function dbGetProducts() {
   if (_useMysql) {
     const { productsTable: productsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    return getMysqlDb().select().from(productsTable2).execute().then((rows) => rows.map(normalizeProduct));
+    return getMysqlDb().select().from(productsTable2).execute().then((rows) => rows.map(normalizeProduct).sort(byProductName));
   }
-  return Promise.resolve(getSqliteDb().select().from(products).all().map((row) => normalizeProduct(row)));
+  return Promise.resolve(getSqliteDb().select().from(products).all().map((row) => normalizeProduct(row)).sort(byProductName));
 }
 async function dbGetProduct(id) {
   if (_useMysql) {
@@ -59549,8 +59889,10 @@ async function dbGetProduct(id) {
   const row = getSqliteDb().select().from(products).where(eq(products.id, id)).get();
   return Promise.resolve(row ? normalizeProduct(row) : void 0);
 }
-async function dbCreateProduct(data) {
+async function dbCreateProduct(input) {
   const id = uid();
+  const { subcategories: rawSubcategories, ...data } = input;
+  const subcategories = cleanSubcategories(rawSubcategories);
   const stockGrams = data.stockGrams != null ? data.stockGrams : data.unitSize != null ? (data.quantity ?? 0) * data.unitSize : null;
   const quantity = getTrackedQuantity(data.quantity ?? 0, data.unitSize ?? null, stockGrams);
   const productData = { ...data, quantity, stockGrams };
@@ -59561,17 +59903,19 @@ async function dbCreateProduct(data) {
       id,
       price: String(productData.price ?? 0),
       unitSize: productData.unitSize != null ? String(productData.unitSize) : null,
-      stockGrams: productData.stockGrams != null ? String(productData.stockGrams) : null
+      stockGrams: productData.stockGrams != null ? String(productData.stockGrams) : null,
+      subcategories
     };
     await getMysqlDb().insert(productsTable2).values(mysqlData);
     return getMysqlDb().select().from(productsTable2).where(eq(productsTable2.id, id)).execute().then(
       (r) => normalizeProduct(r[0])
     );
   }
-  getSqliteDb().insert(products).values({ ...productData, id }).run();
+  getSqliteDb().insert(products).values({ ...productData, id, subcategories: JSON.stringify(subcategories) }).run();
   return Promise.resolve(normalizeProduct(getSqliteDb().select().from(products).where(eq(products.id, id)).get()));
 }
-async function dbUpdateProduct(id, data) {
+async function dbUpdateProduct(id, input) {
+  const { subcategories: rawSubcategories, ...data } = input;
   const existing = await dbGetProduct(id);
   if (!existing) {
     return void 0;
@@ -59588,12 +59932,16 @@ async function dbUpdateProduct(id, data) {
     if (normalizedData.price !== void 0) mysqlPatch["price"] = normalizedData.price != null ? String(normalizedData.price) : "0";
     if (normalizedData.unitSize !== void 0) mysqlPatch["unitSize"] = normalizedData.unitSize != null ? String(normalizedData.unitSize) : null;
     if (normalizedData.stockGrams !== void 0) mysqlPatch["stockGrams"] = normalizedData.stockGrams != null ? String(normalizedData.stockGrams) : null;
+    if (rawSubcategories !== void 0) mysqlPatch["subcategories"] = cleanSubcategories(rawSubcategories);
     await getMysqlDb().update(productsTable2).set(mysqlPatch).where(eq(productsTable2.id, id));
     return getMysqlDb().select().from(productsTable2).where(eq(productsTable2.id, id)).execute().then(
       (r) => r[0] ? normalizeProduct(r[0]) : void 0
     );
   }
-  getSqliteDb().update(products).set(normalizedData).where(eq(products.id, id)).run();
+  getSqliteDb().update(products).set({
+    ...normalizedData,
+    ...rawSubcategories !== void 0 ? { subcategories: JSON.stringify(cleanSubcategories(rawSubcategories)) } : {}
+  }).where(eq(products.id, id)).run();
   const updated = getSqliteDb().select().from(products).where(eq(products.id, id)).get();
   return Promise.resolve(updated ? normalizeProduct(updated) : void 0);
 }
@@ -59860,6 +60208,129 @@ async function dbDeleteAppointment(id) {
   }
   getSqliteDb().delete(appointments).where(eq(appointments.id, id)).run();
 }
+function newId() {
+  return uid();
+}
+function normalizeMovement(row) {
+  return {
+    ...row,
+    quantity: Number(row["quantity"]),
+    unitPrice: row["unitPrice"] != null ? Number(row["unitPrice"]) : null
+  };
+}
+async function dbInsertStockMovements(rows) {
+  if (rows.length === 0) return [];
+  const createdAt = (/* @__PURE__ */ new Date()).toISOString();
+  const values = rows.map((r) => ({
+    id: uid(),
+    productId: r.productId,
+    productName: r.productName,
+    productBrand: r.productBrand,
+    reason: r.reason,
+    // Two decimals is what MySQL stores; rounding here keeps both backends equal
+    quantity: Math.round(r.quantity * 100) / 100,
+    unit: r.unit,
+    unitPrice: r.unitPrice ?? null,
+    date: r.date,
+    time: r.time,
+    clientId: r.clientId ?? null,
+    clientName: r.clientName ?? null,
+    appointmentId: r.appointmentId ?? null,
+    saleId: r.saleId ?? null,
+    note: r.note ?? null,
+    userId: r.userId ?? null,
+    userName: r.userName ?? null,
+    createdAt
+  }));
+  const CHUNK = 500;
+  for (let i = 0; i < values.length; i += CHUNK) {
+    const chunk = values.slice(i, i + CHUNK);
+    if (_useMysql) {
+      const { stockMovementsTable: stockMovementsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+      await getMysqlDb().insert(stockMovementsTable2).values(chunk.map((v) => ({
+        ...v,
+        quantity: String(v.quantity),
+        unitPrice: v.unitPrice != null ? String(v.unitPrice) : null
+      })));
+    } else {
+      getSqliteDb().insert(stockMovements).values(chunk).run();
+    }
+  }
+  return values;
+}
+async function dbListStockMovements(filter = {}) {
+  if (_useMysql) {
+    const { stockMovementsTable: t2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const conds2 = [];
+    if (filter.from) conds2.push(gte(t2.date, filter.from));
+    if (filter.to) conds2.push(lte(t2.date, filter.to));
+    if (filter.productId) conds2.push(eq(t2.productId, filter.productId));
+    if (filter.clientId) conds2.push(eq(t2.clientId, filter.clientId));
+    if (filter.reason) conds2.push(eq(t2.reason, filter.reason));
+    if (filter.appointmentId) conds2.push(eq(t2.appointmentId, filter.appointmentId));
+    if (filter.saleId) conds2.push(eq(t2.saleId, filter.saleId));
+    const rows = await getMysqlDb().select().from(t2).where(conds2.length ? and(...conds2) : void 0).orderBy(desc(t2.date), desc(t2.time), desc(t2.createdAt)).execute();
+    return rows.map((r) => normalizeMovement(r));
+  }
+  const t = stockMovements;
+  const conds = [];
+  if (filter.from) conds.push(gte(t.date, filter.from));
+  if (filter.to) conds.push(lte(t.date, filter.to));
+  if (filter.productId) conds.push(eq(t.productId, filter.productId));
+  if (filter.clientId) conds.push(eq(t.clientId, filter.clientId));
+  if (filter.reason) conds.push(eq(t.reason, filter.reason));
+  if (filter.appointmentId) conds.push(eq(t.appointmentId, filter.appointmentId));
+  if (filter.saleId) conds.push(eq(t.saleId, filter.saleId));
+  return Promise.resolve(
+    getSqliteDb().select().from(t).where(conds.length ? and(...conds) : void 0).orderBy(desc(t.date), desc(t.time), desc(t.createdAt)).all().map((r) => normalizeMovement(r))
+  );
+}
+async function dbGetAppointmentIdsWithMovements() {
+  if (_useMysql) {
+    const { stockMovementsTable: t2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const rows2 = await getMysqlDb().selectDistinct({ id: t2.appointmentId }).from(t2).where(isNotNull(t2.appointmentId)).execute();
+    return new Set(rows2.map((r) => r.id));
+  }
+  const t = stockMovements;
+  const rows = getSqliteDb().selectDistinct({ id: t.appointmentId }).from(t).where(isNotNull(t.appointmentId)).all();
+  return new Set(rows.map((r) => r.id));
+}
+async function dbUpdateAppointmentMovementsMeta(appointmentId, data) {
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().update(t).set(data).where(eq(t.appointmentId, appointmentId));
+    return;
+  }
+  getSqliteDb().update(stockMovements).set(data).where(eq(stockMovements.appointmentId, appointmentId)).run();
+}
+function brandKey(brand) {
+  return brand.trim().toLowerCase();
+}
+async function dbGetBrandColors() {
+  if (_useMysql) {
+    const { brandColorsTable: brandColorsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    return getMysqlDb().select().from(brandColorsTable2).execute();
+  }
+  return Promise.resolve(getSqliteDb().select().from(brandColors).all());
+}
+async function dbSetBrandColor(brand, color) {
+  const key = brandKey(brand);
+  if (_useMysql) {
+    const { brandColorsTable: brandColorsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    if (color == null) {
+      await getMysqlDb().delete(brandColorsTable2).where(eq(brandColorsTable2.brand, key));
+    } else {
+      await getMysqlDb().insert(brandColorsTable2).values({ brand: key, color }).onDuplicateKeyUpdate({ set: { color } });
+    }
+    return dbGetBrandColors();
+  }
+  if (color == null) {
+    getSqliteDb().delete(brandColors).where(eq(brandColors.brand, key)).run();
+  } else {
+    getSqliteDb().insert(brandColors).values({ brand: key, color }).onConflictDoUpdate({ target: brandColors.brand, set: { color } }).run();
+  }
+  return dbGetBrandColors();
+}
 function parseFormulaRow(f) {
   return {
     ...f,
@@ -59981,6 +60452,7 @@ async function dbUpdateSettings(data) {
     if (data.phone !== void 0) patch2.phone = data.phone;
     if (data.email !== void 0) patch2.email = data.email;
     if (data.brandColor !== void 0) patch2.brandColor = data.brandColor;
+    if (data.backgroundColor !== void 0) patch2.backgroundColor = data.backgroundColor;
     await getMysqlDb().update(salonSettingsTable2).set(patch2).where(eq(salonSettingsTable2.id, current.id));
     return dbGetSettings();
   }
@@ -59992,6 +60464,7 @@ async function dbUpdateSettings(data) {
   if (data.phone !== void 0) patch.phone = data.phone;
   if (data.email !== void 0) patch.email = data.email;
   if (data.brandColor !== void 0) patch.brandColor = data.brandColor;
+  if (data.backgroundColor !== void 0) patch.backgroundColor = data.backgroundColor;
   getSqliteDb().update(salonSettings).set(patch).where(eq(salonSettings.id, current.id)).run();
   return dbGetSettings();
 }
@@ -60278,6 +60751,290 @@ var services_default = router4;
 
 // src/routes/products.ts
 var import_express5 = __toESM(require_express2(), 1);
+
+// src/lib/stock.ts
+var MANUAL_REASONS = [
+  "rifornimento",
+  "giacenza_iniziale",
+  "reso",
+  "rettifica",
+  "danneggiato",
+  "altro"
+];
+async function actorFrom(req) {
+  if (!req.user) return { userId: null, userName: null };
+  const user = await dbGetUser(req.user.sub);
+  return { userId: req.user.sub, userName: user?.name?.trim() || req.user.username };
+}
+function nowInSalon() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(/* @__PURE__ */ new Date());
+  const get = (type) => parts.find((p) => p.type === type)?.value ?? "00";
+  return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
+}
+var round2 = (n) => Math.round(n * 100) / 100;
+var isZero = (n) => Math.abs(n) < 5e-3;
+function isWeightTracked(p) {
+  return p.unitSize != null && p.unitSize > 0 && p.stockGrams != null;
+}
+function usageUnit(p) {
+  if (!isWeightTracked(p)) return "pz";
+  return p.unitType === "ml" ? "ml" : "g";
+}
+function stockSnapshot(p) {
+  return isWeightTracked(p) ? { amount: p.stockGrams, unit: usageUnit(p), pieces: p.quantity } : { amount: p.quantity, unit: "pz", pieces: p.quantity };
+}
+async function applyStockDelta(productId, quantity, unit) {
+  const p = await dbGetProduct(productId);
+  if (!p || isZero(quantity)) return;
+  if (isWeightTracked(p)) {
+    const amount = unit === "pz" ? quantity * p.unitSize : quantity;
+    await dbUpdateProduct(productId, { stockGrams: round2(Math.max(0, p.stockGrams + amount)) });
+  } else if (unit === "pz") {
+    await dbUpdateProduct(productId, { quantity: Math.max(0, Math.round(p.quantity + quantity)) });
+  }
+}
+async function recordMovements(rows, options) {
+  const inserted = await dbInsertStockMovements(rows);
+  if (options.applyStock) {
+    const totals = /* @__PURE__ */ new Map();
+    for (const r of rows) {
+      const key = `${r.productId}|${r.unit}`;
+      const t = totals.get(key) ?? { productId: r.productId, unit: r.unit, quantity: 0 };
+      t.quantity += r.quantity;
+      totals.set(key, t);
+    }
+    for (const t of totals.values()) await applyStockDelta(t.productId, t.quantity, t.unit);
+  }
+  return inserted;
+}
+var lineKey = (l) => `${l.productId}|${l.reason}|${l.unit}|${l.unitPrice ?? ""}`;
+function addLine(map2, line) {
+  const key = lineKey(line);
+  const existing = map2.get(key);
+  if (existing) existing.quantity += line.quantity;
+  else map2.set(key, { ...line });
+}
+async function appointmentTarget(appt, getProduct) {
+  const target = /* @__PURE__ */ new Map();
+  if (appt.status !== "completato") return target;
+  for (const used of appt.usedProducts ?? []) {
+    if (!(used.quantityUsed > 0)) continue;
+    const p = await getProduct(used.productId);
+    if (!p) continue;
+    addLine(target, { productId: used.productId, reason: "uso_servizio", unit: usageUnit(p), unitPrice: null, quantity: -used.quantityUsed });
+  }
+  for (const sold of appt.soldProducts ?? []) {
+    if (!(sold.quantity > 0)) continue;
+    addLine(target, { productId: sold.productId, reason: "vendita", unit: "pz", unitPrice: sold.unitPrice, quantity: -sold.quantity });
+  }
+  return target;
+}
+function productCache() {
+  const cache = /* @__PURE__ */ new Map();
+  return async (id) => {
+    if (!cache.has(id)) cache.set(id, await dbGetProduct(id));
+    return cache.get(id);
+  };
+}
+function clientLabel(c) {
+  return c ? `${c.firstName} ${c.lastName}`.trim() || null : null;
+}
+async function syncAppointmentStock(appt, actor, options = {}) {
+  const getProduct = productCache();
+  const existing = await dbListStockMovements({ appointmentId: appt.id });
+  const target = options.removed ? /* @__PURE__ */ new Map() : await appointmentTarget(appt, getProduct);
+  if (target.size === 0 && existing.length === 0) return;
+  const booked = /* @__PURE__ */ new Map();
+  const names = /* @__PURE__ */ new Map();
+  for (const m of existing) {
+    addLine(booked, {
+      productId: m.productId,
+      reason: m.reason,
+      unit: m.unit,
+      unitPrice: m.unitPrice,
+      quantity: m.quantity
+    });
+    names.set(m.productId, { name: m.productName, brand: m.productBrand });
+  }
+  const client = await dbGetClient(appt.clientId);
+  const clientName = clientLabel(client);
+  const note = existing.length === 0 ? null : options.removed ? "Storno: appuntamento eliminato" : appt.status !== "completato" ? "Storno: appuntamento non pi\xF9 completato" : "Correzione appuntamento";
+  const rows = [];
+  for (const key of /* @__PURE__ */ new Set([...target.keys(), ...booked.keys()])) {
+    const want = target.get(key);
+    const have = booked.get(key);
+    const diff = round2((want?.quantity ?? 0) - (have?.quantity ?? 0));
+    if (isZero(diff)) continue;
+    const line = want ?? have;
+    const p = await getProduct(line.productId);
+    const snapshot = p ? { name: p.name, brand: p.brand } : names.get(line.productId);
+    rows.push({
+      productId: line.productId,
+      productName: snapshot?.name ?? "Prodotto eliminato",
+      productBrand: snapshot?.brand ?? "",
+      reason: line.reason,
+      quantity: diff,
+      unit: line.unit,
+      unitPrice: line.unitPrice,
+      date: appt.date,
+      time: appt.time,
+      clientId: appt.clientId,
+      clientName,
+      appointmentId: appt.id,
+      note,
+      userId: actor.userId,
+      userName: actor.userName
+    });
+  }
+  if (rows.length > 0) await recordMovements(rows, { applyStock: true });
+  const stale = existing.some((m) => m.date !== appt.date || m.time !== appt.time || m.clientId !== appt.clientId);
+  if (stale && !options.removed) {
+    await dbUpdateAppointmentMovementsMeta(appt.id, { date: appt.date, time: appt.time, clientId: appt.clientId, clientName });
+  }
+}
+async function backfillAppointmentMovements() {
+  const done = await dbGetAppointmentIdsWithMovements();
+  const appointments2 = (await dbGetAppointments()).filter((a) => a.status === "completato" && !done.has(a.id));
+  if (appointments2.length === 0) return;
+  const products2 = new Map((await dbGetProducts()).map((p) => [p.id, p]));
+  const getProduct = async (id) => products2.get(id);
+  const clients2 = new Map((await dbGetClients()).map((c) => [c.id, c]));
+  const rows = [];
+  for (const appt of appointments2) {
+    const target = await appointmentTarget(appt, getProduct);
+    for (const line of target.values()) {
+      const p = products2.get(line.productId);
+      if (!p) continue;
+      rows.push({
+        productId: line.productId,
+        productName: p.name,
+        productBrand: p.brand,
+        reason: line.reason,
+        quantity: line.quantity,
+        unit: line.unit,
+        unitPrice: line.unitPrice,
+        date: appt.date,
+        time: appt.time,
+        clientId: appt.clientId,
+        clientName: clientLabel(clients2.get(appt.clientId)),
+        appointmentId: appt.id
+      });
+    }
+  }
+  await recordMovements(rows, { applyStock: false });
+  logger.info({ appointments: appointments2.length, movements: rows.length }, "Backfilled stock movements from completed appointments");
+}
+var StockError = class extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+};
+async function createSale(input, actor) {
+  const client = input.clientId ? await dbGetClient(input.clientId) : void 0;
+  if (input.clientId && !client) throw new StockError(400, "Cliente non trovato");
+  const saleId = newId();
+  const rows = [];
+  for (const item of input.items) {
+    const p = await dbGetProduct(item.productId);
+    if (!p) throw new StockError(400, "Prodotto non trovato");
+    rows.push({
+      productId: p.id,
+      productName: p.name,
+      productBrand: p.brand,
+      reason: "vendita",
+      quantity: -item.quantity,
+      unit: "pz",
+      unitPrice: item.unitPrice,
+      date: input.date,
+      time: input.time,
+      clientId: client?.id ?? null,
+      clientName: clientLabel(client),
+      saleId,
+      note: input.note?.trim() || null,
+      userId: actor.userId,
+      userName: actor.userName
+    });
+  }
+  return recordMovements(rows, { applyStock: true });
+}
+async function cancelSale(saleId, actor) {
+  const lines = await dbListStockMovements({ saleId });
+  if (lines.length === 0) throw new StockError(404, "Vendita non trovata");
+  const net = /* @__PURE__ */ new Map();
+  for (const m of lines) {
+    const key = `${m.productId}|${m.unitPrice ?? ""}`;
+    const n = net.get(key);
+    if (n) n.quantity += m.quantity;
+    else net.set(key, { productId: m.productId, reason: "vendita", unit: m.unit, unitPrice: m.unitPrice, quantity: m.quantity, first: m });
+  }
+  const open = [...net.values()].filter((n) => !isZero(n.quantity));
+  if (open.length === 0) throw new StockError(409, "Questa vendita \xE8 gi\xE0 stata annullata");
+  const now = nowInSalon();
+  const [y, mo, d] = now.date.split("-");
+  const rows = open.map((n) => ({
+    productId: n.productId,
+    productName: n.first.productName,
+    productBrand: n.first.productBrand,
+    reason: "vendita",
+    quantity: round2(-n.quantity),
+    unit: n.unit,
+    unitPrice: n.unitPrice,
+    date: n.first.date,
+    time: n.first.time,
+    clientId: n.first.clientId,
+    clientName: n.first.clientName,
+    saleId,
+    note: `Annullata il ${d}/${mo}/${y} alle ${now.time}`,
+    userId: actor.userId,
+    userName: actor.userName
+  }));
+  return recordMovements(rows, { applyStock: true });
+}
+async function logInitialStock(p, actor) {
+  const s = stockSnapshot(p);
+  if (isZero(s.amount)) return;
+  await recordMovements([{
+    productId: p.id,
+    productName: p.name,
+    productBrand: p.brand,
+    reason: "giacenza_iniziale",
+    quantity: s.amount,
+    unit: s.unit,
+    ...nowInSalon(),
+    userId: actor.userId,
+    userName: actor.userName
+  }], { applyStock: false });
+}
+async function logProductStockChange(before, after, reason, note, actor) {
+  const b = stockSnapshot(before);
+  const a = stockSnapshot(after);
+  const sameUnit = a.unit === b.unit;
+  const diff = round2(sameUnit ? a.amount - b.amount : a.pieces - b.pieces);
+  if (isZero(diff)) return;
+  await recordMovements([{
+    productId: after.id,
+    productName: after.name,
+    productBrand: after.brand,
+    reason: reason && MANUAL_REASONS.includes(reason) ? reason : "rettifica",
+    quantity: diff,
+    unit: sameUnit ? a.unit : "pz",
+    ...nowInSalon(),
+    note: note?.trim() || null,
+    userId: actor.userId,
+    userName: actor.userName
+  }], { applyStock: false });
+}
+
+// src/routes/products.ts
 var router5 = (0, import_express5.Router)();
 router5.get("/products", async (req, res) => {
   const data = await dbGetProducts();
@@ -60296,6 +61053,7 @@ router5.post("/products", async (req, res) => {
     return;
   }
   const created = await dbCreateProduct(body.data);
+  await logInitialStock(created, await actorFrom(req));
   const parsed = GetProductResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /products");
@@ -60334,11 +61092,14 @@ router5.put("/products/:id", async (req, res) => {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
     return;
   }
-  const updated = await dbUpdateProduct(params.data.id, body.data);
-  if (!updated) {
+  const { stockChangeReason, stockChangeNote, ...changes } = body.data;
+  const before = await dbGetProduct(params.data.id);
+  const updated = await dbUpdateProduct(params.data.id, changes);
+  if (!before || !updated) {
     res.status(404).json({ message: "Product not found" });
     return;
   }
+  await logProductStockChange(before, updated, stockChangeReason, stockChangeNote, await actorFrom(req));
   const parsed = UpdateProductResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /products/:id");
@@ -60363,10 +61124,110 @@ router5.delete("/products/:id", async (req, res) => {
 });
 var products_default = router5;
 
-// src/routes/staff.ts
+// src/routes/stock.ts
 var import_express6 = __toESM(require_express2(), 1);
 var router6 = (0, import_express6.Router)();
-router6.get("/staff", async (req, res) => {
+var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+var TIME_RE = /^\d{2}:\d{2}$/;
+router6.get("/stock-movements", async (req, res) => {
+  const query = ListStockMovementsQueryParams.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ message: query.error.issues[0]?.message ?? "Invalid query" });
+    return;
+  }
+  const { from, to, productId, clientId, reason } = query.data;
+  if (from && !DATE_RE.test(from) || to && !DATE_RE.test(to)) {
+    res.status(400).json({ message: "Date nel formato AAAA-MM-GG" });
+    return;
+  }
+  const data = await dbListStockMovements({ from, to, productId, clientId, reason });
+  const parsed = ListStockMovementsResponse.safeParse(data);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /stock-movements");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
+});
+router6.post("/sales", async (req, res) => {
+  const body = CreateSaleBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  if (!DATE_RE.test(body.data.date) || !TIME_RE.test(body.data.time)) {
+    res.status(400).json({ message: "Data o ora non valide" });
+    return;
+  }
+  try {
+    const created = await createSale(body.data, await actorFrom(req));
+    res.status(201).json(ListStockMovementsResponse.parse(created));
+  } catch (err) {
+    if (err instanceof StockError) {
+      res.status(err.status).json({ message: err.message });
+      return;
+    }
+    req.log.error({ err }, "Error on POST /sales");
+    res.status(500).json({ message: `Vendita non registrata: ${err.message}` });
+  }
+});
+router6.post("/sales/:saleId/cancel", async (req, res) => {
+  const params = CancelSaleParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  try {
+    const created = await cancelSale(params.data.saleId, await actorFrom(req));
+    res.json(ListStockMovementsResponse.parse(created));
+  } catch (err) {
+    if (err instanceof StockError) {
+      res.status(err.status).json({ message: err.message });
+      return;
+    }
+    req.log.error({ err }, "Error on POST /sales/:saleId/cancel");
+    res.status(500).json({ message: `Annullamento non riuscito: ${err.message}` });
+  }
+});
+var stock_default = router6;
+
+// src/routes/brands.ts
+var import_express7 = __toESM(require_express2(), 1);
+var router7 = (0, import_express7.Router)();
+var HEX_RE = /^#[0-9a-f]{6}$/i;
+router7.get("/brand-colors", async (req, res) => {
+  const parsed = ListBrandColorsResponse.safeParse(await dbGetBrandColors());
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /brand-colors");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
+});
+router7.put("/brand-colors", async (req, res) => {
+  const body = SetBrandColorBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  const { brand, color } = body.data;
+  if (!brand.trim()) {
+    res.status(400).json({ message: "Marca mancante" });
+    return;
+  }
+  if (color != null && !HEX_RE.test(color)) {
+    res.status(400).json({ message: "Colore non valido" });
+    return;
+  }
+  const data = await dbSetBrandColor(brand, color ? color.toLowerCase() : null);
+  res.json(ListBrandColorsResponse.parse(data));
+});
+var brands_default = router7;
+
+// src/routes/staff.ts
+var import_express8 = __toESM(require_express2(), 1);
+var router8 = (0, import_express8.Router)();
+router8.get("/staff", async (req, res) => {
   const data = await dbGetStaff();
   const parsed = ListStaffResponse.safeParse(data);
   if (!parsed.success) {
@@ -60376,7 +61237,7 @@ router6.get("/staff", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router6.post("/staff", async (req, res) => {
+router8.post("/staff", async (req, res) => {
   const body = CreateStaffMemberBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -60391,7 +61252,7 @@ router6.post("/staff", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router6.put("/staff/:id", async (req, res) => {
+router8.put("/staff/:id", async (req, res) => {
   const params = UpdateStaffMemberParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60416,7 +61277,7 @@ router6.put("/staff/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router6.delete("/staff/:id", async (req, res) => {
+router8.delete("/staff/:id", async (req, res) => {
   const params = DeleteStaffMemberParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60430,12 +61291,12 @@ router6.delete("/staff/:id", async (req, res) => {
   await dbDeleteStaffMember(params.data.id);
   res.status(204).send();
 });
-var staff_default = router6;
+var staff_default = router8;
 
 // src/routes/appointments.ts
-var import_express7 = __toESM(require_express2(), 1);
-var router7 = (0, import_express7.Router)();
-router7.get("/appointments", async (req, res) => {
+var import_express9 = __toESM(require_express2(), 1);
+var router9 = (0, import_express9.Router)();
+router9.get("/appointments", async (req, res) => {
   const data = await dbGetAppointments();
   const rows = Array.isArray(data) ? data : [];
   const valid = [];
@@ -60461,7 +61322,7 @@ router7.get("/appointments", async (req, res) => {
   }
   res.json(valid);
 });
-router7.post("/appointments", async (req, res) => {
+router9.post("/appointments", async (req, res) => {
   const body = CreateAppointmentBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -60477,6 +61338,13 @@ router7.post("/appointments", async (req, res) => {
     });
     return;
   }
+  if (created.status === "completato") {
+    try {
+      await syncAppointmentStock(created, await actorFrom(req));
+    } catch (err) {
+      req.log.error({ err }, "Stock sync failed on POST /appointments");
+    }
+  }
   const parsed = GetAppointmentResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointments");
@@ -60488,7 +61356,7 @@ router7.post("/appointments", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router7.get("/appointments/:id", async (req, res) => {
+router9.get("/appointments/:id", async (req, res) => {
   const params = GetAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60507,7 +61375,7 @@ router7.get("/appointments/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router7.put("/appointments/:id", async (req, res) => {
+router9.put("/appointments/:id", async (req, res) => {
   const params = UpdateAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60523,27 +61391,6 @@ router7.put("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
-  const isCompletingNow = body.data.status === "completato" && existing.status !== "completato";
-  if (isCompletingNow && body.data.usedProducts && body.data.usedProducts.length > 0) {
-    const aggregated = /* @__PURE__ */ new Map();
-    for (const { productId, quantityUsed } of body.data.usedProducts) {
-      if (quantityUsed > 0) {
-        aggregated.set(productId, (aggregated.get(productId) ?? 0) + quantityUsed);
-      }
-    }
-    for (const [productId, totalUsed] of aggregated) {
-      const product = await dbGetProduct(productId);
-      if (!product) continue;
-      if (product.stockGrams != null) {
-        const newStock = Math.max(0, Number(product.stockGrams) - totalUsed);
-        const patch = { stockGrams: newStock };
-        if (product.unitSize != null && Number(product.unitSize) > 0) {
-          patch.quantity = Math.max(0, Math.floor(newStock / Number(product.unitSize)));
-        }
-        await dbUpdateProduct(productId, patch);
-      }
-    }
-  }
   let updated;
   try {
     updated = await dbUpdateAppointment(params.data.id, body.data);
@@ -60558,6 +61405,15 @@ router7.put("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
+  try {
+    await syncAppointmentStock(updated, await actorFrom(req));
+  } catch (err) {
+    req.log.error({ err }, "Stock sync failed on PUT /appointments/:id");
+    res.status(500).json({
+      message: `Appuntamento salvato ma magazzino non aggiornato: ${err.message}. Riprova a salvare.`
+    });
+    return;
+  }
   const parsed = UpdateAppointmentResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /appointments/:id");
@@ -60569,7 +61425,7 @@ router7.put("/appointments/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router7.delete("/appointments/:id", async (req, res) => {
+router9.delete("/appointments/:id", async (req, res) => {
   const params = DeleteAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60580,13 +61436,14 @@ router7.delete("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
+  await syncAppointmentStock(existing, await actorFrom(req), { removed: true });
   await dbDeleteAppointment(params.data.id);
   res.status(204).send();
 });
-var appointments_default = router7;
+var appointments_default = router9;
 
 // src/routes/settings.ts
-var import_express8 = __toESM(require_express2(), 1);
+var import_express10 = __toESM(require_express2(), 1);
 
 // src/middlewares/auth.ts
 async function requireAuth(req, res, next) {
@@ -60621,8 +61478,8 @@ function requireAdmin(req, res, next) {
 }
 
 // src/routes/settings.ts
-var router8 = (0, import_express8.Router)();
-router8.get("/settings", async (req, res) => {
+var router10 = (0, import_express10.Router)();
+router10.get("/settings", async (req, res) => {
   const data = await dbGetSettings();
   const parsed = GetSettingsResponse.safeParse(data);
   if (!parsed.success) {
@@ -60632,7 +61489,7 @@ router8.get("/settings", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router8.put("/settings", requireAuth, requireAdmin, async (req, res) => {
+router10.put("/settings", requireAuth, requireAdmin, async (req, res) => {
   const body = UpdateSettingsBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -60647,12 +61504,12 @@ router8.put("/settings", requireAuth, requireAdmin, async (req, res) => {
   }
   res.json(parsed.data);
 });
-var settings_default = router8;
+var settings_default = router10;
 
 // src/routes/client-formulas.ts
-var import_express9 = __toESM(require_express2(), 1);
-var router9 = (0, import_express9.Router)();
-router9.get("/client-formulas", async (req, res) => {
+var import_express11 = __toESM(require_express2(), 1);
+var router11 = (0, import_express11.Router)();
+router11.get("/client-formulas", async (req, res) => {
   const clientId = typeof req.query["clientId"] === "string" ? req.query["clientId"] : void 0;
   const data = await dbGetClientFormulas(clientId);
   const parsed = ListClientFormulasResponse.safeParse(data);
@@ -60663,7 +61520,7 @@ router9.get("/client-formulas", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router9.post("/client-formulas", async (req, res) => {
+router11.post("/client-formulas", async (req, res) => {
   const body = CreateClientFormulaBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -60690,7 +61547,7 @@ router9.post("/client-formulas", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router9.get("/client-formulas/:id", async (req, res) => {
+router11.get("/client-formulas/:id", async (req, res) => {
   const params = GetClientFormulaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60709,7 +61566,7 @@ router9.get("/client-formulas/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router9.put("/client-formulas/:id", async (req, res) => {
+router11.put("/client-formulas/:id", async (req, res) => {
   const params = UpdateClientFormulaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60746,7 +61603,7 @@ router9.put("/client-formulas/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router9.delete("/client-formulas/:id", async (req, res) => {
+router11.delete("/client-formulas/:id", async (req, res) => {
   const params = DeleteClientFormulaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60760,16 +61617,16 @@ router9.delete("/client-formulas/:id", async (req, res) => {
   await dbDeleteClientFormula(params.data.id);
   res.status(204).send();
 });
-var client_formulas_default = router9;
+var client_formulas_default = router11;
 
 // src/routes/users.ts
-var import_express10 = __toESM(require_express2(), 1);
-var router10 = (0, import_express10.Router)();
-router10.use(requireAdmin);
+var import_express12 = __toESM(require_express2(), 1);
+var router12 = (0, import_express12.Router)();
+router12.use(requireAdmin);
 function toSafeUser(u) {
   return { id: u.id, username: u.username, role: u.role, name: u.name ?? null };
 }
-router10.get("/users", async (req, res) => {
+router12.get("/users", async (req, res) => {
   const data = await dbGetUsers();
   const parsed = ListUsersResponse.safeParse(data.map(toSafeUser));
   if (!parsed.success) {
@@ -60779,7 +61636,7 @@ router10.get("/users", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router10.post("/users", async (req, res) => {
+router12.post("/users", async (req, res) => {
   const body = CreateUserBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Richiesta non valida" });
@@ -60805,7 +61662,7 @@ router10.post("/users", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router10.put("/users/:id", async (req, res) => {
+router12.put("/users/:id", async (req, res) => {
   const params = UpdateUserParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60862,7 +61719,7 @@ router10.put("/users/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router10.delete("/users/:id", async (req, res) => {
+router12.delete("/users/:id", async (req, res) => {
   const params = DeleteUserParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -60888,25 +61745,27 @@ router10.delete("/users/:id", async (req, res) => {
   await dbDeleteUser(params.data.id);
   res.status(204).send();
 });
-var users_default = router10;
+var users_default = router12;
 
 // src/routes/index.ts
-var router11 = (0, import_express11.Router)();
-router11.use(health_default);
-router11.use(auth_default);
-router11.use(settings_default);
-router11.use(requireAuth);
-router11.use(clients_default);
-router11.use(services_default);
-router11.use(products_default);
-router11.use(staff_default);
-router11.use(appointments_default);
-router11.use(client_formulas_default);
-router11.use(users_default);
-var routes_default = router11;
+var router13 = (0, import_express13.Router)();
+router13.use(health_default);
+router13.use(auth_default);
+router13.use(settings_default);
+router13.use(requireAuth);
+router13.use(clients_default);
+router13.use(services_default);
+router13.use(products_default);
+router13.use(stock_default);
+router13.use(brands_default);
+router13.use(staff_default);
+router13.use(appointments_default);
+router13.use(client_formulas_default);
+router13.use(users_default);
+var routes_default = router13;
 
 // src/app.ts
-var app = (0, import_express12.default)();
+var app = (0, import_express14.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -60941,8 +61800,8 @@ if (corsOriginEnv) {
 }
 app.use((0, import_cors.default)({ origin: corsOrigin, credentials: true }));
 app.use((0, import_cookie_parser.default)());
-app.use(import_express12.default.json({ limit: "5mb" }));
-app.use(import_express12.default.urlencoded({ extended: true, limit: "5mb" }));
+app.use(import_express14.default.json({ limit: "5mb" }));
+app.use(import_express14.default.urlencoded({ extended: true, limit: "5mb" }));
 app.use("/api", routes_default);
 var defaultStaticDir = path2.join(
   path2.dirname(fileURLToPath(import.meta.url)),
@@ -60951,7 +61810,7 @@ var defaultStaticDir = path2.join(
 );
 var staticDir = process.env["STATIC_DIR"] ?? defaultStaticDir;
 if (fs.existsSync(path2.join(staticDir, "index.html"))) {
-  app.use(import_express12.default.static(staticDir));
+  app.use(import_express14.default.static(staticDir));
   app.use((req, res, next) => {
     if (req.method !== "GET" && req.method !== "HEAD") return next();
     if (req.path.startsWith("/api")) return next();
@@ -60974,7 +61833,10 @@ var port = rawPort ? Number(rawPort) : 3001;
 if (rawPort && (Number.isNaN(port) || port <= 0)) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
-initDb().then(() => {
+initDb().then(async () => {
+  await backfillAppointmentMovements().catch((err) => {
+    logger.error({ err }, "Could not backfill stock movements");
+  });
   app_default.listen(port, (err) => {
     if (err) {
       logger.error({ err }, "Error listening on port");

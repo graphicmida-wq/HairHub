@@ -20,22 +20,27 @@ import type {
   ApiError,
   Appointment,
   AuthUser,
+  BrandColor,
   Client,
   ClientFormula,
   CreateAppointmentInput,
   CreateClientFormulaInput,
   CreateClientInput,
   CreateProductInput,
+  CreateSaleInput,
   CreateServiceInput,
   CreateStaffMemberInput,
   CreateUserInput,
   HealthStatus,
   ListClientFormulasParams,
+  ListStockMovementsParams,
   LoginInput,
   Product,
   SalonSettings,
   Service,
+  SetBrandColorInput,
   StaffMember,
+  StockMovement,
   UpdateAppointmentInput,
   UpdateClientFormulaInput,
   UpdateClientInput,
@@ -1381,6 +1386,434 @@ export const useDeleteProduct = <
   TContext
 > => {
   return useMutation(getDeleteProductMutationOptions(options));
+};
+
+/**
+ * @summary List the colours assigned to brands
+ */
+export const getListBrandColorsUrl = () => {
+  return `/api/brand-colors`;
+};
+
+export const listBrandColors = async (
+  options?: RequestInit,
+): Promise<BrandColor[]> => {
+  return customFetch<BrandColor[]>(getListBrandColorsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBrandColorsQueryKey = () => {
+  return [`/api/brand-colors`] as const;
+};
+
+export const getListBrandColorsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBrandColors>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandColors>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBrandColorsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listBrandColors>>> = ({
+    signal,
+  }) => listBrandColors({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandColors>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBrandColorsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBrandColors>>
+>;
+export type ListBrandColorsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List the colours assigned to brands
+ */
+
+export function useListBrandColors<
+  TData = Awaited<ReturnType<typeof listBrandColors>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandColors>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBrandColorsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Set (or with color null remove) the colour of a brand
+ */
+export const getSetBrandColorUrl = () => {
+  return `/api/brand-colors`;
+};
+
+export const setBrandColor = async (
+  setBrandColorInput: SetBrandColorInput,
+  options?: RequestInit,
+): Promise<BrandColor[]> => {
+  return customFetch<BrandColor[]>(getSetBrandColorUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setBrandColorInput),
+  });
+};
+
+export const getSetBrandColorMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setBrandColor>>,
+    TError,
+    { data: BodyType<SetBrandColorInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setBrandColor>>,
+  TError,
+  { data: BodyType<SetBrandColorInput> },
+  TContext
+> => {
+  const mutationKey = ["setBrandColor"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setBrandColor>>,
+    { data: BodyType<SetBrandColorInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return setBrandColor(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetBrandColorMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setBrandColor>>
+>;
+export type SetBrandColorMutationBody = BodyType<SetBrandColorInput>;
+export type SetBrandColorMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Set (or with color null remove) the colour of a brand
+ */
+export const useSetBrandColor = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setBrandColor>>,
+    TError,
+    { data: BodyType<SetBrandColorInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setBrandColor>>,
+  TError,
+  { data: BodyType<SetBrandColorInput> },
+  TContext
+> => {
+  return useMutation(getSetBrandColorMutationOptions(options));
+};
+
+/**
+ * @summary List stock movements (newest first), optionally filtered
+ */
+export const getListStockMovementsUrl = (params?: ListStockMovementsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/stock-movements?${stringifiedParams}`
+    : `/api/stock-movements`;
+};
+
+export const listStockMovements = async (
+  params?: ListStockMovementsParams,
+  options?: RequestInit,
+): Promise<StockMovement[]> => {
+  return customFetch<StockMovement[]>(getListStockMovementsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListStockMovementsQueryKey = (
+  params?: ListStockMovementsParams,
+) => {
+  return [`/api/stock-movements`, ...(params ? [params] : [])] as const;
+};
+
+export const getListStockMovementsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listStockMovements>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListStockMovementsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listStockMovements>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListStockMovementsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listStockMovements>>
+  > = ({ signal }) => listStockMovements(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listStockMovements>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListStockMovementsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listStockMovements>>
+>;
+export type ListStockMovementsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List stock movements (newest first), optionally filtered
+ */
+
+export function useListStockMovements<
+  TData = Awaited<ReturnType<typeof listStockMovements>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListStockMovementsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listStockMovements>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListStockMovementsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Record an over-the-counter sale (one movement per item) and deduct stock
+ */
+export const getCreateSaleUrl = () => {
+  return `/api/sales`;
+};
+
+export const createSale = async (
+  createSaleInput: CreateSaleInput,
+  options?: RequestInit,
+): Promise<StockMovement[]> => {
+  return customFetch<StockMovement[]>(getCreateSaleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSaleInput),
+  });
+};
+
+export const getCreateSaleMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSale>>,
+    TError,
+    { data: BodyType<CreateSaleInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createSale>>,
+  TError,
+  { data: BodyType<CreateSaleInput> },
+  TContext
+> => {
+  const mutationKey = ["createSale"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createSale>>,
+    { data: BodyType<CreateSaleInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createSale(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateSaleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createSale>>
+>;
+export type CreateSaleMutationBody = BodyType<CreateSaleInput>;
+export type CreateSaleMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Record an over-the-counter sale (one movement per item) and deduct stock
+ */
+export const useCreateSale = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSale>>,
+    TError,
+    { data: BodyType<CreateSaleInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createSale>>,
+  TError,
+  { data: BodyType<CreateSaleInput> },
+  TContext
+> => {
+  return useMutation(getCreateSaleMutationOptions(options));
+};
+
+/**
+ * @summary Cancel an over-the-counter sale with reversing movements (stock goes back)
+ */
+export const getCancelSaleUrl = (saleId: string) => {
+  return `/api/sales/${saleId}/cancel`;
+};
+
+export const cancelSale = async (
+  saleId: string,
+  options?: RequestInit,
+): Promise<StockMovement[]> => {
+  return customFetch<StockMovement[]>(getCancelSaleUrl(saleId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCancelSaleMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelSale>>,
+    TError,
+    { saleId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelSale>>,
+  TError,
+  { saleId: string },
+  TContext
+> => {
+  const mutationKey = ["cancelSale"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelSale>>,
+    { saleId: string }
+  > = (props) => {
+    const { saleId } = props ?? {};
+
+    return cancelSale(saleId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelSaleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelSale>>
+>;
+
+export type CancelSaleMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Cancel an over-the-counter sale with reversing movements (stock goes back)
+ */
+export const useCancelSale = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelSale>>,
+    TError,
+    { saleId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelSale>>,
+  TError,
+  { saleId: string },
+  TContext
+> => {
+  return useMutation(getCancelSaleMutationOptions(options));
 };
 
 /**

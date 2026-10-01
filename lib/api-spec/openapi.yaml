@@ -16,6 +16,10 @@ tags:
     description: Service management
   - name: products
     description: Product/inventory management
+  - name: stock
+    description: Stock movements and over-the-counter sales
+  - name: brands
+    description: Colours of product brands (brands are free text on products)
   - name: appointments
     description: Appointment management
   - name: settings
@@ -304,6 +308,149 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /brand-colors:
+    get:
+      operationId: listBrandColors
+      tags: [brands]
+      summary: List the colours assigned to brands
+      responses:
+        "200":
+          description: Brand colours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BrandColor"
+    put:
+      operationId: setBrandColor
+      tags: [brands]
+      summary: Set (or with color null remove) the colour of a brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetBrandColorInput"
+      responses:
+        "200":
+          description: All brand colours after the change
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BrandColor"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /stock-movements:
+    get:
+      operationId: listStockMovements
+      tags: [stock]
+      summary: List stock movements (newest first), optionally filtered
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: "First day included, YYYY-MM-DD"
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          description: "Last day included, YYYY-MM-DD"
+          schema:
+            type: string
+        - name: productId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: clientId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: reason
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/StockMovementReason"
+      responses:
+        "200":
+          description: List of stock movements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+
+  /sales:
+    post:
+      operationId: createSale
+      tags: [stock]
+      summary: Record an over-the-counter sale (one movement per item) and deduct stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSaleInput"
+      responses:
+        "201":
+          description: Movements created for the sale
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sales/{saleId}/cancel:
+    parameters:
+      - name: saleId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: cancelSale
+      tags: [stock]
+      summary: Cancel an over-the-counter sale with reversing movements (stock goes back)
+      responses:
+        "200":
+          description: Reversing movements created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Sale already cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /appointments:
     get:
@@ -986,6 +1133,11 @@ components:
           type: number
           nullable: true
           description: Total remaining stock in g or ml (quantity * unitSize, decremented on use)
+        subcategories:
+          type: array
+          items:
+            type: string
+          description: Optional sub-categories of the main category (free text, like tags)
       required:
         - id
         - name
@@ -1030,6 +1182,11 @@ components:
           type: number
           nullable: true
           description: Total stock in g or ml (auto-computed as quantity * unitSize if not provided)
+        subcategories:
+          type: array
+          items:
+            type: string
+          description: Optional sub-categories of the main category (free text, like tags)
       required:
         - name
         - category
@@ -1070,6 +1227,165 @@ components:
         stockGrams:
           type: number
           nullable: true
+        subcategories:
+          type: array
+          items:
+            type: string
+          description: Optional sub-categories of the main category (free text, like tags)
+        stockChangeReason:
+          $ref: "#/components/schemas/StockMovementReason"
+        stockChangeNote:
+          type: string
+          nullable: true
+          description: Note stored on the stock movement logged when quantity/stock changes
+
+    BrandColor:
+      type: object
+      properties:
+        brand:
+          type: string
+          description: Brand name trimmed and lower-cased (how products are grouped by brand)
+        color:
+          type: string
+          description: "Hex colour, e.g. #2a78d6"
+      required:
+        - brand
+        - color
+
+    SetBrandColorInput:
+      type: object
+      properties:
+        brand:
+          type: string
+          description: Brand name as written on the products (any case)
+        color:
+          type: string
+          nullable: true
+          description: "Hex colour #rrggbb, or null to go back to no colour"
+      required:
+        - brand
+
+    StockMovementReason:
+      type: string
+      description: >-
+        Causale. vendita and uso_servizio are generated by sales and completed
+        appointments; the others are manual stock changes.
+      enum:
+        - vendita
+        - uso_servizio
+        - rifornimento
+        - giacenza_iniziale
+        - reso
+        - rettifica
+        - danneggiato
+        - altro
+
+    StockUnit:
+      type: string
+      enum: [pz, g, ml]
+
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        productName:
+          type: string
+          description: Product name at the time of the movement
+        productBrand:
+          type: string
+        reason:
+          $ref: "#/components/schemas/StockMovementReason"
+        quantity:
+          type: number
+          description: Signed change - negative leaves the stock (scarico), positive enters it (carico)
+        unit:
+          $ref: "#/components/schemas/StockUnit"
+        unitPrice:
+          type: number
+          nullable: true
+          description: Sale price per piece (vendita only)
+        date:
+          type: string
+          description: "YYYY-MM-DD"
+        time:
+          type: string
+          description: "HH:MM"
+        clientId:
+          type: string
+          nullable: true
+        clientName:
+          type: string
+          nullable: true
+        appointmentId:
+          type: string
+          nullable: true
+        saleId:
+          type: string
+          nullable: true
+          description: Groups the lines of one over-the-counter sale
+        note:
+          type: string
+          nullable: true
+        userName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - productId
+        - productName
+        - productBrand
+        - reason
+        - quantity
+        - unit
+        - date
+        - time
+        - createdAt
+
+    SaleItemInput:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+          minimum: 0
+      required:
+        - productId
+        - quantity
+        - unitPrice
+
+    CreateSaleInput:
+      type: object
+      properties:
+        date:
+          type: string
+          description: "YYYY-MM-DD"
+        time:
+          type: string
+          description: "HH:MM"
+        clientId:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SaleItemInput"
+      required:
+        - date
+        - time
+        - items
 
     AppointmentStatus:
       type: string
@@ -1433,5 +1749,9 @@ components:
           type: string
           nullable: true
           description: "Hex color string for the brand palette primary color, e.g. #5c5870"
+        backgroundColor:
+          type: string
+          nullable: true
+          description: "Hex color of the page background behind the cards; null = default warm grey"
       required:
         - salonName

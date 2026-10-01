@@ -19,10 +19,22 @@
   --color-brand-primary:    #3a4d7a;
   --color-brand-dark:       #20304f;
   --color-brand-muted:      #b8c2db;
+  --color-brand-text-muted: #636e84;
   --color-brand-icon-bg:    #dde2ee;
   --color-brand-icon-color: #3a4d7a;
   --color-brand-gold:       #3a4d7a;
   --color-brand-gold-bg:    #dde2ee;
+
+  /* Page background behind the cards, and the text drawn directly on it.
+     Set from Impostazioni at runtime (lib/page-background.ts); on a dark
+     background the on-page colours switch to light. */
+  --color-page-bg:       #e4e3df;
+  --color-on-page:       #1c1917;
+  --color-on-page-muted: #78716c;
+  --color-on-page-brand: var(--color-brand-dark);
+  --color-on-page-link:  var(--color-brand-primary);
+  /* Translucent white card (Dashboard figures); solid white on a dark background */
+  --color-page-card-soft: #ffffff91;
 
   --color-background: #ffffff;
   --color-foreground: var(--color-stone-900);

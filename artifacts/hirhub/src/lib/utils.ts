@@ -5,6 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Alphabetical order for names: ignores case and accents, numbers by value ("7.0" before "10.0"). */
+export const compareText = new Intl.Collator('it', { sensitivity: 'base', numeric: true }).compare;
+
 export function hexAlpha(hex: string, alpha: number): string {
   const alphaHex = Math.round(alpha * 255).toString(16).padStart(2, '0');
   return hex.startsWith('#') ? hex + alphaHex : '#' + hex + alphaHex;

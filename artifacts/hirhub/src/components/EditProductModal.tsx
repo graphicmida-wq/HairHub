@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BarChart3, ChevronRight } from 'lucide-react';
 import { Modal } from './Modal';
 import { CategoryInput } from './CategoryInput';
-import { BrandInput } from './BrandInput';
-import { useListProducts, useUpdateProduct, useDeleteProduct, getListProductsQueryKey } from '@workspace/api-client-react';
+import { BrandInput, NewBrandColorField } from './BrandInput';
+import { SubcategoryInput } from './SubcategoryInput';
+import { useSaveBrandColor } from '../lib/product-brand-colors';
+import { useListProducts, useUpdateProduct, useDeleteProduct, getListProductsQueryKey, type StockMovementReason } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
+import { MANUAL_REASONS, formatNumber, invalidateStock } from '../lib/stock';
 
 const LABEL = "text-sm font-medium text-stone-700";
 const INPUT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full text-sm";
@@ -27,17 +32,22 @@ interface FormData {
   unitSize: number;
   unitType: UnitType;
   stockGrams: number;
+  subcategories: string[];
 }
 
 export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boolean, onClose: () => void, productId: string | null }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: products = [] } = useListProducts();
   const product = products.find(p => p.id === productId);
 
+  const { mutate: saveBrandColor } = useSaveBrandColor();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+      onSuccess: (updated) => {
+        if (newBrandColor) saveBrandColor({ data: { brand: updated.brand, color: newBrandColor } });
+        setNewBrandColor(null);
+        invalidateStock(queryClient);
         toast.show('Prodotto aggiornato');
         onClose();
       },
@@ -64,9 +74,12 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
 
   const [formData, setFormData] = useState<FormData>({
     name: '', category: '', brand: '', price: 0, quantity: 0, minThreshold: 5,
-    trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0,
+    trackByWeight: false, unitSize: 100, unitType: 'ml', stockGrams: 0, subcategories: [],
   });
   const [stockGramsManual, setStockGramsManual] = useState(false);
+  const [stockReason, setStockReason] = useState<StockMovementReason | null>(null);
+  const [stockNote, setStockNote] = useState('');
+  const [newBrandColor, setNewBrandColor] = useState<string | null>(null);
 
   useEffect(() => {
     if (product) {
@@ -84,10 +97,26 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
         unitSize: product.unitSize ?? 100,
         unitType: (product.unitType as UnitType) ?? 'ml',
         stockGrams: product.stockGrams ?? 0,
+        subcategories: product.subcategories ?? [],
       });
       setStockGramsManual(false);
+      setStockReason(null);
+      setStockNote('');
     }
   }, [product]);
+
+  // How much the stock changes with this edit, as the server will log it
+  const stockChange = (() => {
+    if (!product) return null;
+    const wasByWeight = product.unitSize != null && product.stockGrams != null;
+    if (wasByWeight && formData.trackByWeight) {
+      const diff = formData.stockGrams - (product.stockGrams ?? 0);
+      return Math.abs(diff) < 0.005 ? null : { diff, unit: product.unitType ?? formData.unitType };
+    }
+    const diff = formData.quantity - product.quantity;
+    return diff === 0 ? null : { diff, unit: 'pz' };
+  })();
+  const effectiveReason: StockMovementReason = stockReason ?? (stockChange && stockChange.diff > 0 ? 'rifornimento' : 'rettifica');
 
   const handleQuantityChange = (val: number) => {
     setStockGramsManual(false);
@@ -120,10 +149,15 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
       name: formData.name.trim(),
       category: formData.category.trim(),
       brand: formData.brand.trim(),
+      subcategories: formData.subcategories,
       price: formData.price,
       quantity: formData.quantity,
       minThreshold: formData.minThreshold,
     };
+    if (stockChange) {
+      payload.stockChangeReason = effectiveReason;
+      payload.stockChangeNote = stockNote.trim() || null;
+    }
     if (formData.trackByWeight) {
       payload.unitSize = formData.unitSize;
       payload.unitType = formData.unitType;
@@ -144,6 +178,18 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Modifica Prodotto">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {productId && (
+          <button
+            type="button"
+            onClick={() => { onClose(); navigate(`/vendite?prodotto=${productId}`); }}
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:opacity-90"
+            style={{ backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
+          >
+            <BarChart3 className="w-5 h-5 shrink-0" />
+            <span className="flex-1 text-sm font-medium">Vedi vendite, utilizzi e movimenti</span>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+          </button>
+        )}
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Nome Prodotto</label>
           <input required type="text" value={formData.name}
@@ -164,10 +210,21 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
             <CategoryInput
               required
               value={formData.category}
-              onChange={val => setFormData(pr => ({ ...pr, category: val }))}
+              onChange={val => setFormData(pr => ({
+                ...pr,
+                category: val,
+                subcategories: val.trim().toLowerCase() === pr.category.trim().toLowerCase() ? pr.subcategories : [],
+              }))}
             />
           </div>
         </div>
+        <NewBrandColorField brand={formData.brand} color={newBrandColor} onChange={setNewBrandColor} />
+        <SubcategoryInput
+          brand={formData.brand}
+          category={formData.category}
+          value={formData.subcategories}
+          onChange={subs => setFormData(pr => ({ ...pr, subcategories: subs }))}
+        />
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Prezzo base (€)</label>
           <input
@@ -245,6 +302,30 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
                   ? 'Valore personalizzato — cambiare le confezioni aggiunge/sottrae una confezione al totale'
                   : `Aggiungere/togliere confezioni aggiusta lo stock di ±${formData.unitSize} ${formData.unitType} alla volta`}
               </p>
+            </div>
+          </div>
+        )}
+
+        {stockChange && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col gap-3">
+            <p className="text-sm text-amber-900">
+              Giacenza {stockChange.diff > 0 ? 'aumentata' : 'diminuita'} di{' '}
+              <strong>{formatNumber(Math.abs(stockChange.diff))} {stockChange.unit}</strong>: verrà registrata nei movimenti.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className={LABEL}>Motivo</label>
+                <select value={effectiveReason}
+                  onChange={e => setStockReason(e.target.value as StockMovementReason)}
+                  className={SELECT}>
+                  {MANUAL_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={LABEL}>Nota <span className="font-normal text-stone-400">(facoltativa)</span></label>
+                <input type="text" value={stockNote} onChange={e => setStockNote(e.target.value)}
+                  placeholder="es. ordine n. 45" className={INPUT} />
+              </div>
             </div>
           </div>
         )}

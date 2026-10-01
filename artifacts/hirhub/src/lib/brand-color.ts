@@ -125,6 +125,8 @@ export function applyBrandPalette(palette: BrandPalette) {
   root.style.setProperty('--color-brand-dark', palette.dark);
   root.style.setProperty('--color-brand-muted', palette.muted);
   root.style.setProperty('--color-brand-light', palette.light);
+  // Secondary text on white: the brand's dark tone, lightened just enough to stay legible
+  root.style.setProperty('--color-brand-text-muted', mixWithWhite(palette.dark, 0.3));
   const iconBg = mixWithWhite(palette.primary, 0.82);
   root.style.setProperty('--color-brand-icon-bg', iconBg);
   root.style.setProperty('--color-brand-icon-color', palette.primary);

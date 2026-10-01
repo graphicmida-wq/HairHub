@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { store } from '../lib/store';
 import { useListProducts, type Product } from '@workspace/api-client-react';
-import { Box, Search, AlertCircle, Plus, Loader2, Tag, ChevronRight, ArrowLeft } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { Box, Search, AlertCircle, Plus, Loader2, Tag, ChevronRight, ArrowLeft, Palette, CornerDownRight } from 'lucide-react';
+import { cn, compareText } from '../lib/utils';
 import { EditProductModal } from '../components/EditProductModal';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { BrandColorPicker, solidTileStyle, tintTileStyle, useBrandColors, useSaveBrandColor } from '../lib/product-brand-colors';
+import { toast } from '../components/Toast';
 
 function isLowStock(product: Product): boolean {
   if (product.unitSize != null && product.stockGrams != null) {
@@ -27,23 +30,23 @@ function formatStock(product: Product): React.ReactNode {
     const quantity = getDisplayQuantity(product);
     return (
       <div className="flex flex-col items-end gap-0.5">
-        <span className={cn("text-lg font-medium", low ? "text-red-600" : "text-stone-900")}>
+        <span className={cn("text-xl font-semibold", low ? "text-red-600" : "text-stone-900")}>
           {product.stockGrams % 1 === 0 ? product.stockGrams : product.stockGrams.toFixed(1)}{' '}
-          <span className="text-sm font-normal text-stone-400">{unit}</span>
+          <span className="text-sm font-medium text-stone-500">{unit}</span>
         </span>
-        <span className="text-xs text-stone-400">{quantity} pz</span>
+        <span className={cn("text-sm font-semibold", low ? "text-red-600" : "text-stone-500")}>{quantity} pz</span>
       </div>
     );
   }
   const low = isLowStock(product);
   return (
-    <span className={cn("text-lg font-medium", low ? "text-red-600" : "text-stone-900")}>
-      {product.quantity} <span className="text-sm font-normal text-stone-400">pz</span>
+    <span className={cn("text-xl font-semibold", low ? "text-red-600" : "text-stone-900")}>
+      {product.quantity} <span className="text-sm font-medium text-stone-500">pz</span>
     </span>
   );
 }
 
-const ProductCard = ({ product, onClick }: { product: Product; onClick: () => void }) => {
+const ProductCard = ({ product, brandColor, onClick }: { product: Product; brandColor: string | null; onClick: () => void }) => {
   const low = isLowStock(product);
   return (
     <div
@@ -52,15 +55,25 @@ const ProductCard = ({ product, onClick }: { product: Product; onClick: () => vo
     >
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-        style={low
-          ? { backgroundColor: '#fef2f2', color: '#dc2626' }
-          : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
+        // The brand colour identifies the product; low stock still shows in red on the quantity and badge
+        style={brandColor
+          ? tintTileStyle(brandColor)
+          : low
+            ? { backgroundColor: '#fef2f2', color: '#dc2626' }
+            : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
       >
         <Box className="w-6 h-6" />
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-stone-900 uppercase break-words leading-tight">{product.name}</h3>
         <p className="text-sm text-stone-500 truncate"><span className="uppercase">{product.brand}</span> &bull; {product.category}</p>
+        {(product.subcategories ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {product.subcategories!.map(sub => (
+              <span key={sub} className="text-[11px] leading-none px-2 py-1 rounded-full bg-stone-100 text-stone-600">{sub}</span>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {low && (
@@ -78,8 +91,13 @@ export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [editProductId, setEditProductId] = useState<string | null>(null);
-  const { data: products = [], isLoading, isError } = useListProducts();
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const colorOf = useBrandColors();
+  const { mutate: saveBrandColor } = useSaveBrandColor();
+  const { data: unsortedProducts = [], isLoading, isError } = useListProducts();
+  const products = [...unsortedProducts].sort((a, b) => compareText(a.name, b.name) || compareText(a.brand, b.brand));
 
   // Brands/categories are free text: group them ignoring case and surrounding
   // spaces so "artego", "Artego " and "ARTEGO" collapse into one card.
@@ -116,8 +134,9 @@ export const Inventory = () => {
       name,
       count: group.length,
       hasLowStock: group.some(isLowStock),
+      color: colorOf(key),
     };
-  }).sort((a, b) => a.name.localeCompare(b.name, 'it'));
+  }).sort((a, b) => compareText(a.name, b.name));
 
   const brandProducts = selectedBrand
     ? products.filter(p => normalize(p.brand) === selectedBrand)
@@ -126,45 +145,73 @@ export const Inventory = () => {
   const selectedBrandName = selectedBrand
     ? (brandNames.get(selectedBrand) ?? selectedBrand)
     : '';
+  const selectedBrandColor = selectedBrand ? colorOf(selectedBrand) : null;
+
+  const changeBrandColor = (color: string | null) => {
+    if (!selectedBrand) return;
+    saveBrandColor(
+      { data: { brand: selectedBrand, color } },
+      { onError: () => toast.show('Errore nel salvataggio del colore', 'error') },
+    );
+  };
 
   const categoryNames = groupBy(brandProducts.map(p => p.category));
   const categories = Array.from(categoryNames, ([key, name]) => ({ key, name }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    .sort((a, b) => compareText(a.name, b.name));
 
   // Ignore a stale category (e.g. after editing the last product of that category)
   const activeCategory = selectedCategory && categoryNames.has(selectedCategory)
     ? selectedCategory
     : null;
 
+  // Second row of filters: sub-categories of the chosen category, within this brand
+  const subNames = groupBy(
+    activeCategory
+      ? brandProducts.filter(p => normalize(p.category) === activeCategory).flatMap(p => p.subcategories ?? [])
+      : []
+  );
+  const subcategories = Array.from(subNames, ([key, name]) => ({ key, name }))
+    .sort((a, b) => compareText(a.name, b.name));
+  const activeSub = selectedSub && subNames.has(selectedSub) ? selectedSub : null;
+
+  const chooseCategory = (key: string | null) => {
+    setSelectedCategory(key);
+    setSelectedSub(null);
+  };
+
   const openBrand = (brand: string) => {
     setSelectedBrand(brand);
-    setSelectedCategory(null);
+    chooseCategory(null);
     setSearchTerm('');
   };
 
   const closeBrand = () => {
     setSelectedBrand(null);
-    setSelectedCategory(null);
+    chooseCategory(null);
     setSearchTerm('');
   };
 
   const query = searchTerm.trim().toLowerCase();
 
-  // Root view: typing searches across all products (name or brand), otherwise brand cards
+  const subMatches = (p: Product) => (p.subcategories ?? []).some(sub => sub.toLowerCase().includes(query));
+
+  // Root view: typing searches across all products (name, brand or sub-category), otherwise brand cards
   const globalResults = products.filter(p =>
     p.name.toLowerCase().includes(query) ||
-    p.brand.toLowerCase().includes(query)
+    p.brand.toLowerCase().includes(query) ||
+    subMatches(p)
   );
 
   const visibleBrandProducts = brandProducts.filter(p =>
     (!activeCategory || normalize(p.category) === activeCategory) &&
-    (!query || p.name.toLowerCase().includes(query))
+    (!activeSub || (p.subcategories ?? []).some(sub => normalize(sub) === activeSub)) &&
+    (!query || p.name.toLowerCase().includes(query) || subMatches(p))
   );
 
   return (
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif text-stone-900">Magazzino</h1>
+        <h1 className="text-3xl font-serif text-on-page">Magazzino</h1>
         <button onClick={() => store.openModal('isNewProductOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <Plus className="w-4 h-4" /> Nuovo Prodotto
         </button>
@@ -179,12 +226,32 @@ export const Inventory = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="min-w-0">
-            <h2 className="text-xl font-medium text-stone-900 truncate uppercase">{selectedBrandName}</h2>
-            <p className="text-xs text-stone-500">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-medium text-on-page truncate uppercase">{selectedBrandName}</h2>
+            <p className="text-xs text-on-page-muted">
               {brandProducts.length} {brandProducts.length === 1 ? 'prodotto' : 'prodotti'}
             </p>
           </div>
+          <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className="shrink-0 flex items-center gap-2 bg-white border border-stone-200 rounded-xl pl-2.5 pr-3 py-2 text-sm font-medium text-stone-700 hover:border-brand-dark/30 hover:shadow-sm transition-all active:scale-95"
+                aria-label="Colore della marca"
+              >
+                {selectedBrandColor
+                  ? <span className="w-5 h-5 rounded-full" style={{ backgroundColor: selectedBrandColor }} />
+                  : <Palette className="w-5 h-5 text-stone-400" />}
+                Colore
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 rounded-2xl">
+              <p className="text-sm font-medium text-stone-900 mb-3">Colore di <span className="uppercase">{selectedBrandName}</span></p>
+              <BrandColorPicker
+                value={selectedBrandColor}
+                onChange={color => { changeBrandColor(color); setColorPickerOpen(false); }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       )}
 
@@ -202,7 +269,7 @@ export const Inventory = () => {
       {selectedBrand && categories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar -mt-2">
           <button
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => chooseCategory(null)}
             className={cn(
               "shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all active:scale-95",
               !activeCategory
@@ -215,7 +282,7 @@ export const Inventory = () => {
           {categories.map(cat => (
             <button
               key={cat.key}
-              onClick={() => setSelectedCategory(cat.key)}
+              onClick={() => chooseCategory(cat.key)}
               className={cn(
                 "shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all active:scale-95",
                 activeCategory === cat.key
@@ -229,8 +296,40 @@ export const Inventory = () => {
         </div>
       )}
 
+      {selectedBrand && activeCategory && subcategories.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mt-3">
+          <CornerDownRight className="w-4 h-4 shrink-0 text-on-page-muted" aria-hidden />
+          <button
+            onClick={() => setSelectedSub(null)}
+            className={cn(
+              "shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all active:scale-95",
+              !activeSub
+                ? "btn-brand text-white border-transparent"
+                : "bg-white text-stone-600 border-stone-200 hover:border-brand-dark/30"
+            )}
+          >
+            Tutte
+          </button>
+          {subcategories.map(sub => (
+            <button
+              key={sub.key}
+              // Tapping the active one again goes back to all
+              onClick={() => setSelectedSub(activeSub === sub.key ? null : sub.key)}
+              className={cn(
+                "shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all active:scale-95",
+                activeSub === sub.key
+                  ? "btn-brand text-white border-transparent"
+                  : "bg-white text-stone-600 border-stone-200 hover:border-brand-dark/30"
+              )}
+            >
+              {sub.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {isLoading ? (
-        <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>
+        <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-on-page-muted" /></div>
       ) : isError ? (
         <div className="py-12 flex flex-col items-center justify-center text-red-500 gap-2">
           <AlertCircle className="w-8 h-8 opacity-70" />
@@ -238,32 +337,32 @@ export const Inventory = () => {
         </div>
       ) : selectedBrand ? (
         visibleBrandProducts.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-stone-400 gap-2">
+          <div className="py-12 flex flex-col items-center justify-center text-on-page-muted gap-2">
             <Box className="w-8 h-8 opacity-50" />
             <p className="text-sm">Nessun prodotto trovato.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
             {visibleBrandProducts.map(product => (
-              <ProductCard key={product.id} product={product} onClick={() => setEditProductId(product.id)} />
+              <ProductCard key={product.id} product={product} brandColor={colorOf(product.brand)} onClick={() => setEditProductId(product.id)} />
             ))}
           </div>
         )
       ) : query ? (
         globalResults.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-stone-400 gap-2">
+          <div className="py-12 flex flex-col items-center justify-center text-on-page-muted gap-2">
             <Box className="w-8 h-8 opacity-50" />
             <p className="text-sm">Nessun prodotto trovato.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
             {globalResults.map(product => (
-              <ProductCard key={product.id} product={product} onClick={() => setEditProductId(product.id)} />
+              <ProductCard key={product.id} product={product} brandColor={colorOf(product.brand)} onClick={() => setEditProductId(product.id)} />
             ))}
           </div>
         )
       ) : brands.length === 0 ? (
-        <div className="py-12 flex flex-col items-center justify-center text-stone-400 gap-2">
+        <div className="py-12 flex flex-col items-center justify-center text-on-page-muted gap-2">
           <Box className="w-8 h-8 opacity-50" />
           <p className="text-sm">Nessun prodotto in magazzino.</p>
         </div>
@@ -277,7 +376,9 @@ export const Inventory = () => {
             >
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
+                style={brand.color
+                  ? solidTileStyle(brand.color)
+                  : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
               >
                 <Tag className="w-6 h-6" />
               </div>

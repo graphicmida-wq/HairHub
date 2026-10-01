@@ -6,3 +6,5 @@ export * from "./appointments";
 export * from "./settings";
 export * from "./client-formulas";
 export * from "./users";
+export * from "./stock-movements";
+export * from "./brand-colors";

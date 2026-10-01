@@ -48,7 +48,7 @@ export function ClientPicker({
 }: {
   value: Client | null;
   onChange: (client: Client) => void;
-  onCreateNew: () => void;
+  onCreateNew?: () => void;
   disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -91,18 +91,22 @@ export function ClientPicker({
             onValueChange={setQuery}
           />
           <CommandList>
-            <CommandGroup>
-              <CommandItem
-                onSelect={() => {
-                  setOpen(false);
-                  onCreateNew();
-                }}
-              >
-                <UserPlus className="h-4 w-4" />
-                <span>+ Nuovo cliente</span>
-              </CommandItem>
-            </CommandGroup>
-            <CommandSeparator />
+            {onCreateNew && (
+              <>
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpen(false);
+                      onCreateNew();
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span>+ Nuovo cliente</span>
+                  </CommandItem>
+                </CommandGroup>
+                <CommandSeparator />
+              </>
+            )}
             <CommandGroup heading="Risultati">
               {debouncedQuery.trim().length < minChars ? (
                 <div className="px-2 py-2 text-sm text-muted-foreground">

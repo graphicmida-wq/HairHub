@@ -9,7 +9,7 @@
 
 import { randomBytes } from "crypto";
 import path from "path";
-import { asc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, like, lte, or, sql, type SQL } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { hashPassword, assertAuthSecret } from "../lib/auth";
 
@@ -50,6 +50,8 @@ import {
   clientFormulas as sqliteFormulas,
   salonSettings as sqliteSalon,
   users as sqliteUsers,
+  stockMovements as sqliteMovements,
+  brandColors as sqliteBrandColors,
 } from "./sqlite-schema";
 
 type SqliteDb = BetterSQLite3Database<typeof sqliteSchema>;
@@ -105,7 +107,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       notes TEXT,
       unit_size REAL,
       unit_type TEXT,
-      stock_grams REAL
+      stock_grams REAL,
+      subcategories TEXT
     );
     CREATE TABLE IF NOT EXISTS staff_members (
       id TEXT PRIMARY KEY,
@@ -146,7 +149,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       address TEXT,
       phone TEXT,
       email TEXT,
-      brand_color TEXT
+      brand_color TEXT,
+      background_color TEXT
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -157,8 +161,39 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       created_at TEXT NOT NULL
     );
   `);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      product_brand TEXT NOT NULL DEFAULT '',
+      reason TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      unit TEXT NOT NULL,
+      unit_price REAL,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      client_id TEXT,
+      client_name TEXT,
+      appointment_id TEXT,
+      sale_id TEXT,
+      note TEXT,
+      user_id TEXT,
+      user_name TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_date ON stock_movements(date);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_appointment ON stock_movements(appointment_id);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_sale ON stock_movements(sale_id);
+    CREATE TABLE IF NOT EXISTS brand_colors (
+      brand TEXT PRIMARY KEY,
+      color TEXT NOT NULL
+    );
+  `);
   // Migrations: no-op if column already present
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN brand_color TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN background_color TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN logo_url TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN show_salon_name INTEGER NOT NULL DEFAULT 1"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN staff_id TEXT REFERENCES staff_members(id) ON DELETE SET NULL"); } catch { /* already exists */ }
@@ -175,6 +210,7 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
   try { sqlite.exec("ALTER TABLE products ADD COLUMN unit_size REAL"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN unit_type TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN stock_grams REAL"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE products ADD COLUMN subcategories TEXT"); } catch { /* already exists */ }
   try { sqlite.exec(`CREATE TABLE IF NOT EXISTS client_formulas (
     id TEXT PRIMARY KEY,
     client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -284,7 +320,8 @@ async function initMysql() {
       notes TEXT,
       unit_size DECIMAL(10,2),
       unit_type VARCHAR(2),
-      stock_grams DECIMAL(10,2)
+      stock_grams DECIMAL(10,2),
+      subcategories JSON
     )
   `);
   await db.execute(sql`
@@ -337,7 +374,8 @@ async function initMysql() {
       address VARCHAR(500),
       phone VARCHAR(30),
       email VARCHAR(255),
-      brand_color VARCHAR(20)
+      brand_color VARCHAR(20),
+      background_color VARCHAR(20)
     )
   `);
   // Widen logo_url on pre-existing tables (originally TEXT = 64KB, too small for a base64 logo).
@@ -350,6 +388,40 @@ async function initMysql() {
       role ENUM('admin','user') NOT NULL DEFAULT 'user',
       name VARCHAR(100),
       created_at VARCHAR(40) NOT NULL
+    )
+  `);
+  // No foreign keys: the movement history must outlive deleted products,
+  // clients and appointments (their names are snapshotted on each row).
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id CHAR(12) PRIMARY KEY,
+      product_id CHAR(12) NOT NULL,
+      product_name VARCHAR(200) NOT NULL,
+      product_brand VARCHAR(100) NOT NULL DEFAULT '',
+      reason VARCHAR(30) NOT NULL,
+      quantity DECIMAL(10,2) NOT NULL,
+      unit VARCHAR(3) NOT NULL,
+      unit_price DECIMAL(10,2),
+      date VARCHAR(10) NOT NULL,
+      time VARCHAR(5) NOT NULL,
+      client_id CHAR(12),
+      client_name VARCHAR(200),
+      appointment_id CHAR(12),
+      sale_id CHAR(12),
+      note TEXT,
+      user_id CHAR(12),
+      user_name VARCHAR(100),
+      created_at VARCHAR(40) NOT NULL,
+      INDEX idx_stock_movements_date (date),
+      INDEX idx_stock_movements_product (product_id),
+      INDEX idx_stock_movements_appointment (appointment_id),
+      INDEX idx_stock_movements_sale (sale_id)
+    )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS brand_colors (
+      brand VARCHAR(100) PRIMARY KEY,
+      color VARCHAR(9) NOT NULL
     )
   `);
 
@@ -401,6 +473,7 @@ async function initMysql() {
   await migrate("ALTER TABLE products ADD COLUMN unit_size DECIMAL(10,2)");
   await migrate("ALTER TABLE products ADD COLUMN unit_type VARCHAR(2)");
   await migrate("ALTER TABLE products ADD COLUMN stock_grams DECIMAL(10,2)");
+  await migrate("ALTER TABLE products ADD COLUMN subcategories JSON");
 
   // staff_members: role + colour
   await migrate("ALTER TABLE staff_members ADD COLUMN role VARCHAR(100)");
@@ -413,6 +486,7 @@ async function initMysql() {
   await migrate("ALTER TABLE salon_settings ADD COLUMN phone VARCHAR(30)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN email VARCHAR(255)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN background_color VARCHAR(20)");
 
   // appointments: the multi-service upgrade (single service_id → service_ids[])
   // plus staff assignment, pricing snapshots and product usage. This is the
@@ -800,7 +874,39 @@ function getTrackedQuantity(
   return quantity;
 }
 
-function normalizeProduct(row: Record<string, unknown>) {
+export interface ProductRecord {
+  id: string;
+  name: string;
+  category: string;
+  brand: string;
+  price: number;
+  quantity: number;
+  minThreshold: number;
+  supplier: string | null;
+  notes: string | null;
+  unitSize: number | null;
+  unitType: string | null;
+  stockGrams: number | null;
+  subcategories: string[];
+}
+
+/** Trimmed, no empties, no duplicates ignoring case (first spelling wins). */
+function cleanSubcategories(list: string[] | null | undefined): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of list ?? []) {
+    const text = raw.trim();
+    if (text && !seen.has(text.toLowerCase())) {
+      seen.add(text.toLowerCase());
+      out.push(text);
+    }
+  }
+  return out;
+}
+
+type ProductWrite = Omit<typeof sqliteProducts.$inferInsert, "id" | "subcategories"> & { subcategories?: string[] | null };
+
+function normalizeProduct(row: Record<string, unknown>): ProductRecord {
   const price = row["price"] != null ? Number(row["price"]) : 0;
   const unitSize = row["unitSize"] != null ? Number(row["unitSize"]) : null;
   const stockGrams = row["stockGrams"] != null ? Number(row["stockGrams"]) : null;
@@ -812,15 +918,22 @@ function normalizeProduct(row: Record<string, unknown>) {
     quantity,
     unitSize,
     stockGrams,
-  };
+    // SQLite keeps it as JSON text, MySQL may return it parsed or as text
+    subcategories: coerceJson<string[]>(row["subcategories"]) ?? [],
+  } as ProductRecord;
 }
+
+// Alphabetical, ignoring case/accents, with numbers by value ("Colore 7.0" before "Colore 10.0")
+const productCollator = new Intl.Collator("it", { sensitivity: "base", numeric: true });
+const byProductName = (a: ProductRecord, b: ProductRecord) =>
+  productCollator.compare(a.name, b.name) || productCollator.compare(a.brand, b.brand);
 
 export async function dbGetProducts() {
   if (_useMysql) {
     const { productsTable } = await import("@workspace/db");
-    return getMysqlDb().select().from(productsTable).execute().then(rows => rows.map(normalizeProduct));
+    return getMysqlDb().select().from(productsTable).execute().then(rows => rows.map(normalizeProduct).sort(byProductName));
   }
-  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).all().map(row => normalizeProduct(row)));
+  return Promise.resolve(getSqliteDb().select().from(sqliteProducts).all().map(row => normalizeProduct(row)).sort(byProductName));
 }
 
 export async function dbGetProduct(id: string) {
@@ -834,8 +947,10 @@ export async function dbGetProduct(id: string) {
   return Promise.resolve(row ? normalizeProduct(row) : undefined);
 }
 
-export async function dbCreateProduct(data: Omit<typeof sqliteProducts.$inferInsert, "id">) {
+export async function dbCreateProduct(input: ProductWrite) {
   const id = uid();
+  const { subcategories: rawSubcategories, ...data } = input;
+  const subcategories = cleanSubcategories(rawSubcategories);
   // Auto-compute stockGrams if not provided and unitSize/quantity are present
   const stockGrams = data.stockGrams != null
     ? data.stockGrams
@@ -851,17 +966,19 @@ export async function dbCreateProduct(data: Omit<typeof sqliteProducts.$inferIns
       price: String((productData as { price?: number }).price ?? 0),
       unitSize: productData.unitSize != null ? String(productData.unitSize) : null,
       stockGrams: productData.stockGrams != null ? String(productData.stockGrams) : null,
+      subcategories,
     };
     await getMysqlDb().insert(productsTable).values(mysqlData as typeof productsTable.$inferInsert);
     return getMysqlDb().select().from(productsTable).where(eq(productsTable.id, id)).execute().then(r =>
       normalizeProduct(r[0]! as Record<string, unknown>)
     );
   }
-  getSqliteDb().insert(sqliteProducts).values({ ...productData, id }).run();
+  getSqliteDb().insert(sqliteProducts).values({ ...productData, id, subcategories: JSON.stringify(subcategories) }).run();
   return Promise.resolve(normalizeProduct(getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get()!));
 }
 
-export async function dbUpdateProduct(id: string, data: Partial<Omit<typeof sqliteProducts.$inferInsert, "id">>) {
+export async function dbUpdateProduct(id: string, input: Partial<ProductWrite>) {
+  const { subcategories: rawSubcategories, ...data } = input;
   const existing = await dbGetProduct(id);
   if (!existing) {
     return undefined;
@@ -881,12 +998,16 @@ export async function dbUpdateProduct(id: string, data: Partial<Omit<typeof sqli
     if (normalizedData.price !== undefined) mysqlPatch["price"] = normalizedData.price != null ? String(normalizedData.price) : "0";
     if (normalizedData.unitSize !== undefined) mysqlPatch["unitSize"] = normalizedData.unitSize != null ? String(normalizedData.unitSize) : null;
     if (normalizedData.stockGrams !== undefined) mysqlPatch["stockGrams"] = normalizedData.stockGrams != null ? String(normalizedData.stockGrams) : null;
+    if (rawSubcategories !== undefined) mysqlPatch["subcategories"] = cleanSubcategories(rawSubcategories);
     await getMysqlDb().update(productsTable).set(mysqlPatch as Partial<typeof productsTable.$inferInsert>).where(eq(productsTable.id, id));
     return getMysqlDb().select().from(productsTable).where(eq(productsTable.id, id)).execute().then(r =>
       r[0] ? normalizeProduct(r[0] as Record<string, unknown>) : undefined
     );
   }
-  getSqliteDb().update(sqliteProducts).set(normalizedData).where(eq(sqliteProducts.id, id)).run();
+  getSqliteDb().update(sqliteProducts).set({
+    ...normalizedData,
+    ...(rawSubcategories !== undefined ? { subcategories: JSON.stringify(cleanSubcategories(rawSubcategories)) } : {}),
+  }).where(eq(sqliteProducts.id, id)).run();
   const updated = getSqliteDb().select().from(sqliteProducts).where(eq(sqliteProducts.id, id)).get();
   return Promise.resolve(updated ? normalizeProduct(updated) : undefined);
 }
@@ -1234,6 +1355,202 @@ export async function dbDeleteAppointment(id: string) {
   getSqliteDb().delete(sqliteAppts).where(eq(sqliteAppts.id, id)).run();
 }
 
+// ── Stock movements ────────────────────────────────────────────────────────────
+
+export type StockReason =
+  | "vendita"
+  | "uso_servizio"
+  | "rifornimento"
+  | "giacenza_iniziale"
+  | "reso"
+  | "rettifica"
+  | "danneggiato"
+  | "altro";
+export type StockUnit = "pz" | "g" | "ml";
+
+export interface NewStockMovement {
+  productId: string;
+  productName: string;
+  productBrand: string;
+  reason: StockReason;
+  quantity: number;
+  unit: StockUnit;
+  unitPrice?: number | null;
+  date: string;
+  time: string;
+  clientId?: string | null;
+  clientName?: string | null;
+  appointmentId?: string | null;
+  saleId?: string | null;
+  note?: string | null;
+  userId?: string | null;
+  userName?: string | null;
+}
+
+export interface StockMovementFilter {
+  from?: string;
+  to?: string;
+  productId?: string;
+  clientId?: string;
+  reason?: StockReason;
+  appointmentId?: string;
+  saleId?: string;
+}
+
+export function newId() {
+  return uid();
+}
+
+function normalizeMovement(row: Record<string, unknown>) {
+  return {
+    ...row,
+    quantity: Number(row["quantity"]),
+    unitPrice: row["unitPrice"] != null ? Number(row["unitPrice"]) : null,
+  } as typeof sqliteMovements.$inferSelect;
+}
+
+export async function dbInsertStockMovements(rows: NewStockMovement[]) {
+  if (rows.length === 0) return [];
+  const createdAt = new Date().toISOString();
+  const values = rows.map(r => ({
+    id: uid(),
+    productId: r.productId,
+    productName: r.productName,
+    productBrand: r.productBrand,
+    reason: r.reason,
+    // Two decimals is what MySQL stores; rounding here keeps both backends equal
+    quantity: Math.round(r.quantity * 100) / 100,
+    unit: r.unit,
+    unitPrice: r.unitPrice ?? null,
+    date: r.date,
+    time: r.time,
+    clientId: r.clientId ?? null,
+    clientName: r.clientName ?? null,
+    appointmentId: r.appointmentId ?? null,
+    saleId: r.saleId ?? null,
+    note: r.note ?? null,
+    userId: r.userId ?? null,
+    userName: r.userName ?? null,
+    createdAt,
+  }));
+  // In blocks: the first start-up imports the whole appointment history at once,
+  // and one huge INSERT could exceed MySQL's max_allowed_packet.
+  const CHUNK = 500;
+  for (let i = 0; i < values.length; i += CHUNK) {
+    const chunk = values.slice(i, i + CHUNK);
+    if (_useMysql) {
+      const { stockMovementsTable } = await import("@workspace/db");
+      await getMysqlDb().insert(stockMovementsTable).values(chunk.map(v => ({
+        ...v,
+        quantity: String(v.quantity),
+        unitPrice: v.unitPrice != null ? String(v.unitPrice) : null,
+      })));
+    } else {
+      getSqliteDb().insert(sqliteMovements).values(chunk).run();
+    }
+  }
+  return values;
+}
+
+export async function dbListStockMovements(filter: StockMovementFilter = {}) {
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await import("@workspace/db");
+    const conds: SQL[] = [];
+    if (filter.from) conds.push(gte(t.date, filter.from));
+    if (filter.to) conds.push(lte(t.date, filter.to));
+    if (filter.productId) conds.push(eq(t.productId, filter.productId));
+    if (filter.clientId) conds.push(eq(t.clientId, filter.clientId));
+    if (filter.reason) conds.push(eq(t.reason, filter.reason));
+    if (filter.appointmentId) conds.push(eq(t.appointmentId, filter.appointmentId));
+    if (filter.saleId) conds.push(eq(t.saleId, filter.saleId));
+    const rows = await getMysqlDb().select().from(t)
+      .where(conds.length ? and(...conds) : undefined)
+      .orderBy(desc(t.date), desc(t.time), desc(t.createdAt))
+      .execute();
+    return rows.map(r => normalizeMovement(r as Record<string, unknown>));
+  }
+  const t = sqliteMovements;
+  const conds: SQL[] = [];
+  if (filter.from) conds.push(gte(t.date, filter.from));
+  if (filter.to) conds.push(lte(t.date, filter.to));
+  if (filter.productId) conds.push(eq(t.productId, filter.productId));
+  if (filter.clientId) conds.push(eq(t.clientId, filter.clientId));
+  if (filter.reason) conds.push(eq(t.reason, filter.reason));
+  if (filter.appointmentId) conds.push(eq(t.appointmentId, filter.appointmentId));
+  if (filter.saleId) conds.push(eq(t.saleId, filter.saleId));
+  return Promise.resolve(
+    getSqliteDb().select().from(t)
+      .where(conds.length ? and(...conds) : undefined)
+      .orderBy(desc(t.date), desc(t.time), desc(t.createdAt))
+      .all()
+      .map(r => normalizeMovement(r as Record<string, unknown>)),
+  );
+}
+
+/** Ids of every appointment that already has at least one movement. */
+export async function dbGetAppointmentIdsWithMovements(): Promise<Set<string>> {
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await import("@workspace/db");
+    const rows = await getMysqlDb().selectDistinct({ id: t.appointmentId }).from(t)
+      .where(isNotNull(t.appointmentId)).execute();
+    return new Set(rows.map(r => r.id!));
+  }
+  const t = sqliteMovements;
+  const rows = getSqliteDb().selectDistinct({ id: t.appointmentId }).from(t)
+    .where(isNotNull(t.appointmentId)).all();
+  return new Set(rows.map(r => r.id!));
+}
+
+/** Keep an appointment's movements on the appointment's current day and client. */
+export async function dbUpdateAppointmentMovementsMeta(appointmentId: string, data: {
+  date: string;
+  time: string;
+  clientId: string | null;
+  clientName: string | null;
+}) {
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await import("@workspace/db");
+    await getMysqlDb().update(t).set(data).where(eq(t.appointmentId, appointmentId));
+    return;
+  }
+  getSqliteDb().update(sqliteMovements).set(data).where(eq(sqliteMovements.appointmentId, appointmentId)).run();
+}
+
+// ── Brand colours ──────────────────────────────────────────────────────────────
+
+/** Same grouping as Magazzino: "Artego", "artego " and "ARTEGO" are one brand. */
+export function brandKey(brand: string): string {
+  return brand.trim().toLowerCase();
+}
+
+export async function dbGetBrandColors() {
+  if (_useMysql) {
+    const { brandColorsTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(brandColorsTable).execute();
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteBrandColors).all());
+}
+
+export async function dbSetBrandColor(brand: string, color: string | null) {
+  const key = brandKey(brand);
+  if (_useMysql) {
+    const { brandColorsTable } = await import("@workspace/db");
+    if (color == null) {
+      await getMysqlDb().delete(brandColorsTable).where(eq(brandColorsTable.brand, key));
+    } else {
+      await getMysqlDb().insert(brandColorsTable).values({ brand: key, color }).onDuplicateKeyUpdate({ set: { color } });
+    }
+    return dbGetBrandColors();
+  }
+  if (color == null) {
+    getSqliteDb().delete(sqliteBrandColors).where(eq(sqliteBrandColors.brand, key)).run();
+  } else {
+    getSqliteDb().insert(sqliteBrandColors).values({ brand: key, color })
+      .onConflictDoUpdate({ target: sqliteBrandColors.brand, set: { color } }).run();
+  }
+  return dbGetBrandColors();
+}
+
 // ── Client Formulas ────────────────────────────────────────────────────────────
 
 function parseFormulaRow(f: typeof sqliteFormulas.$inferSelect) {
@@ -1380,6 +1697,7 @@ export async function dbUpdateSettings(data: Partial<{
   phone: string | null;
   email: string | null;
   brandColor: string | null;
+  backgroundColor: string | null;
 }>) {
   const current = await dbGetSettings();
   if (_useMysql) {
@@ -1392,6 +1710,7 @@ export async function dbUpdateSettings(data: Partial<{
     if (data.phone !== undefined) patch.phone = data.phone;
     if (data.email !== undefined) patch.email = data.email;
     if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
+    if (data.backgroundColor !== undefined) patch.backgroundColor = data.backgroundColor;
     await getMysqlDb().update(salonSettingsTable).set(patch).where(eq(salonSettingsTable.id, current.id));
     return dbGetSettings();
   }
@@ -1403,6 +1722,7 @@ export async function dbUpdateSettings(data: Partial<{
   if (data.phone !== undefined) patch.phone = data.phone;
   if (data.email !== undefined) patch.email = data.email;
   if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
+  if (data.backgroundColor !== undefined) patch.backgroundColor = data.backgroundColor;
   getSqliteDb().update(sqliteSalon).set(patch).where(eq(sqliteSalon.id, current.id)).run();
   return dbGetSettings();
 }

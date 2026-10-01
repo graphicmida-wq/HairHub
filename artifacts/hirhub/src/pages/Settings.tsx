@@ -5,7 +5,7 @@ import {
   getListStaffQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Save, Loader2, CheckCircle2, Palette, Calendar, Users, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Palette, Calendar, Users, Plus, Pencil, Trash2, X, Check, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from '../components/Toast';
 import {
@@ -16,6 +16,14 @@ import {
   mixWithWhite,
   type BrandPalette,
 } from '../lib/brand-color';
+import {
+  BACKGROUND_PRESETS,
+  DEFAULT_BACKGROUND,
+  applyPageBackground,
+  loadPageBackground,
+  needsLightText,
+  normalizeBackground,
+} from '../lib/page-background';
 
 const DAYS = [
   { key: 'monday', label: 'Lunedì' },
@@ -86,10 +94,11 @@ function saveInfoFallback(info: SalonInfo) {
 const inputClass =
   'w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300 placeholder:text-stone-400 transition';
 
-function BrandPreview({ palette }: { palette: BrandPalette }) {
+function BrandPreview({ palette, background }: { palette: BrandPalette; background: string }) {
   const iconBg = mixWithWhite(palette.primary, 0.82);
+  const onPage = needsLightText(background) ? '#fafaf9' : '#292524';
   return (
-    <div className="rounded-2xl border border-stone-100 overflow-hidden bg-[#f8f8f7]">
+    <div className="rounded-2xl border border-stone-100 overflow-hidden" style={{ backgroundColor: background }}>
       <div
         className="px-4 py-3 flex items-center justify-between"
         style={{ backgroundColor: palette.dark }}
@@ -111,7 +120,7 @@ function BrandPreview({ palette }: { palette: BrandPalette }) {
 
       <div className="p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-stone-800" style={{ fontFamily: '"Playfair Display", serif' }}>
+          <h3 className="text-base font-semibold" style={{ fontFamily: '"Playfair Display", serif', color: onPage }}>
             Agenda
           </h3>
           <button
@@ -231,6 +240,7 @@ export const Settings = () => {
   const [activePalette, setActivePalette] = useState<BrandPalette>(() => loadBrandPalette());
   const [customColor, setCustomColor] = useState<string>(() => loadBrandPalette().primary);
   const [colorSaved, setColorSaved] = useState(false);
+  const [background, setBackground] = useState<string>(() => loadPageBackground());
 
   useEffect(() => {
     if (apiSettings) {
@@ -247,6 +257,7 @@ export const Settings = () => {
         setActivePalette(palette);
         setCustomColor(palette.primary);
       }
+      setBackground(normalizeBackground(apiSettings.backgroundColor));
     } else if (!isLoading) {
       const fallback = loadInfoFallback();
       if (fallback) {
@@ -314,6 +325,12 @@ export const Settings = () => {
     applyBrandPalette(palette);
   }, []);
 
+  const handleSelectBackground = useCallback((color: string) => {
+    const bg = normalizeBackground(color);
+    setBackground(bg);
+    applyPageBackground(bg);
+  }, []);
+
   const handleSaveColor = () => {
     const payload = {
       salonName: salonName || 'L\'Atelier',
@@ -321,6 +338,8 @@ export const Settings = () => {
       phone: phone || null,
       email: email || null,
       brandColor: activePalette.primary,
+      // The default grey is stored as "no choice", so a future default change applies
+      backgroundColor: background === DEFAULT_BACKGROUND ? null : background,
     };
     queryClient.setQueryData(getGetSettingsQueryKey(), payload);
     updateSettings.mutate(
@@ -333,7 +352,7 @@ export const Settings = () => {
         },
         onError: () => {
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
-          toast.show('Errore durante il salvataggio del colore', 'error');
+          toast.show('Errore durante il salvataggio dei colori', 'error');
         },
       }
     );
@@ -347,12 +366,12 @@ export const Settings = () => {
   return (
     <div className="flex flex-col gap-8 page-enter">
       <section>
-        <span className="text-stone-500 text-sm font-medium tracking-wide uppercase">Configurazione</span>
-        <h1 className="text-3xl font-serif text-stone-900 mt-1 mb-6">Impostazioni</h1>
+        <span className="text-on-page-muted text-sm font-medium tracking-wide uppercase">Configurazione</span>
+        <h1 className="text-3xl font-serif text-on-page mt-1 mb-6">Impostazioni</h1>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-on-page-muted" />
           </div>
         ) : (
           <div className="flex flex-col gap-6">
@@ -510,17 +529,17 @@ export const Settings = () => {
               <div className="px-6 py-4 border-b border-stone-100">
                 <div className="flex items-center gap-2">
                   <Palette className="w-4 h-4 text-stone-400" />
-                  <h2 className="text-base font-semibold text-stone-900">Colore Brand</h2>
+                  <h2 className="text-base font-semibold text-stone-900">Colori dell'app</h2>
                 </div>
                 <p className="text-sm text-stone-500 mt-0.5">
-                  Scegli il colore principale dell'interfaccia. La modifica è visibile subito.
+                  Colore principale di menu e pulsanti e colore dello sfondo. Le modifiche sono visibili subito.
                 </p>
               </div>
 
               <div className="p-6 flex flex-col gap-5">
                 <div>
                   <label className="block text-xs font-medium text-stone-600 mb-3 uppercase tracking-wide">
-                    Palette predefinite
+                    Colore principale · menu e pulsanti
                   </label>
                   <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {BRAND_PRESETS.map(preset => (
@@ -589,10 +608,70 @@ export const Settings = () => {
                 </div>
 
                 <div className="border-t border-stone-100 pt-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-xs font-medium text-stone-600 uppercase tracking-wide">
+                      Sfondo
+                    </label>
+                    {background !== DEFAULT_BACKGROUND && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectBackground(DEFAULT_BACKGROUND)}
+                        className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Ripristina
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {BACKGROUND_PRESETS.map(preset => (
+                      <button
+                        key={preset.key}
+                        type="button"
+                        onClick={() => handleSelectBackground(preset.color)}
+                        title={preset.label}
+                        className={cn(
+                          'flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all',
+                          background === preset.color
+                            ? 'border-stone-900 shadow-sm'
+                            : 'border-transparent hover:border-stone-200'
+                        )}
+                      >
+                        <span
+                          className="w-10 h-8 rounded-lg block border border-stone-200"
+                          style={{ backgroundColor: preset.color }}
+                        />
+                        <span className="text-[10px] text-stone-500 leading-tight text-center">
+                          {preset.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3 mt-4">
+                    <input
+                      type="color"
+                      value={background}
+                      onChange={e => handleSelectBackground(e.target.value)}
+                      className="w-10 h-10 rounded-xl border border-stone-200 cursor-pointer p-0.5 bg-white"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm text-stone-700 font-medium">
+                        {BACKGROUND_PRESETS.find(p => p.color === background)?.label ?? 'Personalizzato'}
+                      </span>
+                      <span className="text-xs text-stone-400 font-mono">{background}</span>
+                    </div>
+                  </div>
+                  {needsLightText(background) && (
+                    <p className="text-xs text-stone-500 mt-3">
+                      Sfondo scuro: i titoli e i testi scritti sullo sfondo diventano chiari automaticamente.
+                    </p>
+                  )}
+                </div>
+
+                <div className="border-t border-stone-100 pt-5">
                   <label className="block text-xs font-medium text-stone-600 mb-3 uppercase tracking-wide">
                     Anteprima
                   </label>
-                  <BrandPreview palette={activePalette} />
+                  <BrandPreview palette={activePalette} background={background} />
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-stone-100">
@@ -610,7 +689,7 @@ export const Settings = () => {
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    Salva colore
+                    Salva colori
                   </button>
                 </div>
               </div>

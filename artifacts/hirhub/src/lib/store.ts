@@ -8,6 +8,7 @@ class ModalStore {
     isNewAppointmentOpen: false,
     isNewProductOpen: false,
     isNewServiceOpen: false,
+    isNewSaleOpen: false,
   };
 
   private listeners: Listener[] = [];

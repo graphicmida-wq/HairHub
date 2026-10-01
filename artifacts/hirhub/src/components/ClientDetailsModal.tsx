@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
 import {
-  useListClients, useListAppointments, useListServices, useListProducts,
+  useListClients, useListServices, useListProducts,
   useListClientFormulas, useCreateClientFormula, useUpdateClientFormula, useDeleteClientFormula,
   getListClientFormulasQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Clock, Calendar as CalendarIcon, Phone, Mail, FileText, AlertTriangle, Edit, FlaskConical, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Phone, Mail, FileText, AlertTriangle, Edit, FlaskConical, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { toast } from './Toast';
 import type { ClientFormulaProduct, ClientFormula } from '@workspace/api-client-react';
+import { ClientStats, ClientTimeline, useClientHistory } from './ClientHistory';
 
 interface FormulaFormState {
   name: string;
@@ -26,7 +27,7 @@ const emptyFormulaForm = (): FormulaFormState => ({
 export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOpen: boolean, onClose: () => void, clientId: string | null, onEdit: (id: string) => void }) => {
   const queryClient = useQueryClient();
   const { data: clients = [] } = useListClients();
-  const { data: appointments = [] } = useListAppointments();
+  const history = useClientHistory(clientId);
   const { data: services = [] } = useListServices();
   const { data: products = [] } = useListProducts();
   const { data: allFormulas = [] } = useListClientFormulas(
@@ -72,10 +73,6 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
 
   const client = clients.find(c => c.id === clientId);
   if (!client) return null;
-
-  const clientAppointments = appointments
-    .filter(a => a.clientId === client.id)
-    .sort((a, b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime());
 
   const clientFormulas = allFormulas.filter(f => f.clientId === client.id);
 
@@ -170,50 +167,60 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Scheda Cliente">
-      <div className="flex flex-col gap-6">
-
-        <div className="flex items-start justify-between">
-          <div className="flex gap-4 items-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-2xl shrink-0" style={{ backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}>
-              {client.firstName.charAt(0)}{client.lastName.charAt(0)}
-            </div>
-            <div>
-              <h3 className="font-serif text-2xl text-stone-900">{client.firstName} {client.lastName}</h3>
-              <div className="flex items-center gap-2 text-stone-500 mt-1 flex-wrap">
-                <span className="flex items-center gap-1 text-sm"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>
-                {client.email && <span className="flex items-center gap-1 text-sm"><Mail className="w-3.5 h-3.5" /> {client.email}</span>}
+    <Modal isOpen={isOpen} onClose={onClose} title="Scheda Cliente" wide>
+      {/* Phones: one column (history before formulas). Larger screens: history on the right. */}
+      <div className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:grid-rows-[auto_1fr] md:gap-x-8 md:items-start">
+        <div className="flex flex-col gap-6 md:col-start-1 md:row-start-1">
+          <div className="flex items-start justify-between">
+            <div className="flex gap-4 items-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center font-serif text-2xl shrink-0" style={{ backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}>
+                {client.firstName.charAt(0)}{client.lastName.charAt(0)}
+              </div>
+              <div>
+                <h3 className="font-serif text-2xl text-stone-900">{client.firstName} {client.lastName}</h3>
+                <div className="flex items-center gap-2 text-stone-500 mt-1 flex-wrap">
+                  <span className="flex items-center gap-1 text-sm"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>
+                  {client.email && <span className="flex items-center gap-1 text-sm"><Mail className="w-3.5 h-3.5" /> {client.email}</span>}
+                </div>
               </div>
             </div>
+            <button onClick={() => onEdit(client.id)} className="p-2 text-stone-400 hover:text-stone-900 bg-stone-50 rounded-full transition-colors">
+              <Edit className="w-4 h-4" />
+            </button>
           </div>
-          <button onClick={() => onEdit(client.id)} className="p-2 text-stone-400 hover:text-stone-900 bg-stone-50 rounded-full transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
+
+          {(client.dob || client.allergies || client.notes) && (
+            <div className="grid grid-cols-1 gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
+              {client.dob && (
+                <div>
+                  <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider">Data di Nascita</span>
+                  <p className="text-sm font-medium text-stone-900 mt-0.5">{format(new Date(client.dob), 'd MMMM yyyy', { locale: it })}</p>
+                </div>
+              )}
+              {client.allergies && (
+                <div className="text-red-700 bg-red-50 p-2 -mx-2 rounded-lg">
+                  <span className="text-xs uppercase font-semibold tracking-wider flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Allergie / Intolleranze</span>
+                  <p className="text-sm font-medium mt-0.5">{client.allergies}</p>
+                </div>
+              )}
+              {client.notes && (
+                <div>
+                  <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider flex items-center gap-1"><FileText className="w-3 h-3" /> Note</span>
+                  <p className="text-sm text-stone-700 mt-0.5 whitespace-pre-line">{client.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <ClientStats history={history} />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
-          {client.dob && (
-            <div>
-              <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider">Data di Nascita</span>
-              <p className="text-sm font-medium text-stone-900 mt-0.5">{format(new Date(client.dob), 'd MMMM yyyy', { locale: it })}</p>
-            </div>
-          )}
-          {client.allergies && (
-            <div className="text-red-700 bg-red-50 p-2 -mx-2 rounded-lg">
-              <span className="text-xs uppercase font-semibold tracking-wider flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Allergie / Intolleranze</span>
-              <p className="text-sm font-medium mt-0.5">{client.allergies}</p>
-            </div>
-          )}
-          {client.notes && (
-            <div>
-              <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider flex items-center gap-1"><FileText className="w-3 h-3" /> Note</span>
-              <p className="text-sm text-stone-700 mt-0.5 whitespace-pre-line">{client.notes}</p>
-            </div>
-          )}
+        <div className="md:col-start-2 md:row-start-1 md:row-span-2">
+          <ClientTimeline history={history} />
         </div>
 
         {/* Formulas section */}
-        <div>
+        <div className="md:col-start-1 md:row-start-2">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-medium text-stone-900 flex items-center gap-2">
               <FlaskConical className="w-4 h-4 text-stone-400" />
@@ -348,73 +355,6 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Appointment history */}
-        <div>
-          <h4 className="font-medium text-stone-900 mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-stone-400" />
-            Storico Appuntamenti
-          </h4>
-
-          <div className="flex flex-col gap-3">
-            {clientAppointments.length === 0 ? (
-              <p className="text-sm text-stone-500 italic px-2">Nessun appuntamento passato.</p>
-            ) : (
-              clientAppointments.map(app => {
-                const svcNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
-                const usedProds = app.usedProducts
-                  ? app.usedProducts.map(up => {
-                      const prod = products.find(p => p.id === up.productId);
-                      const unit = prod?.unitType ?? 'g';
-                      return prod ? `${prod.name} ${up.quantityUsed}${unit}` : null;
-                    }).filter(Boolean) as string[]
-                  : (app.usedProductIds
-                      ? app.usedProductIds.map(pid => products.find(p => p.id === pid)?.name).filter(Boolean) as string[]
-                      : []);
-
-                return (
-                  <div key={app.id} className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-stone-400" />
-                        <span className="text-sm font-medium text-stone-900">
-                          {format(new Date(app.date), 'dd/MM/yyyy')} alle {app.time}
-                        </span>
-                      </div>
-                      <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm ${
-                        app.status === 'completato' ? 'bg-green-100 text-green-700' :
-                        app.status === 'annullato' || app.status === 'no-show' ? 'bg-red-100 text-red-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {app.status}
-                      </span>
-                    </div>
-
-                    {svcNames && (
-                      <p className="text-sm text-stone-600 pl-6">{svcNames}</p>
-                    )}
-
-                    {app.notes && (
-                      <p className="text-xs text-stone-500 pl-6 border-l-2 border-stone-100 ml-1 mt-1 italic">
-                        "{app.notes}"
-                      </p>
-                    )}
-
-                    {usedProds.length > 0 && (
-                      <div className="pl-6 mt-1 flex flex-wrap gap-1">
-                        {usedProds.map((prodLabel, i) => (
-                          <span key={i} className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">
-                            {prodLabel}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
           </div>
         </div>
 

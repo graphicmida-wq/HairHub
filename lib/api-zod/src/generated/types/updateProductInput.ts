@@ -5,6 +5,7 @@
  * Lumii salon management API
  * OpenAPI spec version: 0.2.0
  */
+import type { StockMovementReason } from "./stockMovementReason";
 import type { UpdateProductInputUnitType } from "./updateProductInputUnitType";
 
 export interface UpdateProductInput {
@@ -20,4 +21,9 @@ export interface UpdateProductInput {
   unitSize?: number | null;
   unitType?: UpdateProductInputUnitType;
   stockGrams?: number | null;
+  /** Optional sub-categories of the main category (free text, like tags) */
+  subcategories?: string[];
+  stockChangeReason?: StockMovementReason;
+  /** Note stored on the stock movement logged when quantity/stock changes */
+  stockChangeNote?: string | null;
 }

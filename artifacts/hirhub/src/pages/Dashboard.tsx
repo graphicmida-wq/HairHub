@@ -5,12 +5,14 @@ import {
   AlertCircle, Plus, Users, ArrowRight,
   Loader2, Package2, TrendingUp, TrendingDown,
   UserPlus, Scissors, CalendarDays, Calendar,
-  Clock, ChevronRight, MoreHorizontal,
+  Clock, ChevronRight, MoreHorizontal, ShoppingBag,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { cn } from '../lib/utils';
+import { formatEuro, formatNumber } from '../lib/stock';
+import { BrandDot } from '../lib/product-brand-colors';
 
 const CARD_BORDER = '#E8E3D8';
 const CARD_SHADOW = '0 2px 12px rgba(92,88,112,0.04)';
@@ -18,49 +20,69 @@ const ACCENT = 'var(--color-brand-dark)';
 const ACCENT_LIGHT = 'var(--color-brand-icon-bg)';
 const TEXT_HEADING = 'var(--color-brand-dark)';
 const TEXT_BODY = '#6B6880';
-const TEXT_MUTED = 'var(--color-brand-muted)';
+const TEXT_MUTED = 'var(--color-brand-text-muted)';
+// Text drawn directly on the page background (adapts when the background is dark)
+const PAGE_HEADING = 'var(--color-on-page-brand)';
+const PAGE_MUTED = 'var(--color-on-page-muted)';
+const PAGE_LINK = 'var(--color-on-page-link)';
 
 const KpiCard = ({
   icon,
   label,
   value,
   sub,
+  link,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   sub?: React.ReactNode;
-}) => (
-  <div
-    className="rounded-2xl p-5 flex flex-col relative overflow-hidden bg-[#ffffff91]"
-    style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
-  >
-    <div
-      className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0"
-      style={{ backgroundColor: ACCENT_LIGHT }}
+  /** Makes the whole card a link (e.g. Fatturato → Incassi) */
+  link?: { to: string; label: string };
+}) => {
+  const Tag = link ? Link : 'div';
+  return (
+    <Tag
+      to={link?.to as string}
+      className={cn(
+        "rounded-2xl p-5 flex flex-col relative overflow-hidden bg-page-card-soft",
+        link && "transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+      )}
+      style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
     >
-      {icon}
-    </div>
-    <p className="text-[10px] uppercase tracking-[0.18em] font-medium mb-1" style={{ color: TEXT_MUTED }}>
-      {label}
-    </p>
-    <p className="text-3xl font-semibold mb-1 leading-none" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
-      {value}
-    </p>
-    {sub && <div className="mt-1">{sub}</div>}
-  </div>
-);
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0"
+        style={{ backgroundColor: ACCENT_LIGHT }}
+      >
+        {icon}
+      </div>
+      <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>
+        {label}
+      </p>
+      <p className="text-3xl font-semibold mb-1 leading-none" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
+        {value}
+      </p>
+      {sub && <div className="mt-1">{sub}</div>}
+      {link && (
+        <span className="mt-2 text-xs font-medium flex items-center gap-1" style={{ color: 'var(--color-brand-primary)' }}>
+          {link.label} <ArrowRight className="w-3.5 h-3.5" />
+        </span>
+      )}
+    </Tag>
+  );
+};
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const {
     isLoading, isError,
     clients, services,
-    fatturato, thisMonthCount, monthGrowthPct,
+    fatturato, fatturatoParts, thisMonthCount, monthGrowthPct,
     noShowRate, newClientsThisMonth,
     topServices, maxServiceCount,
     upcomingByDay,
     lowStockProducts,
+    salesOfMonth,
   } = useStats();
 
   const growthBadge = monthGrowthPct !== null ? (
@@ -78,10 +100,10 @@ export const Dashboard = () => {
 
       <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-medium mb-1.5" style={{ color: TEXT_MUTED }}>
+          <p className="text-xs uppercase tracking-[0.15em] font-semibold mb-1.5" style={{ color: PAGE_MUTED }}>
             Bentornato
           </p>
-          <h1 className="text-4xl" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
+          <h1 className="text-4xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
             Panoramica del Mese
           </h1>
         </div>
@@ -106,7 +128,7 @@ export const Dashboard = () => {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: TEXT_MUTED }} />
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: PAGE_MUTED }} />
         </div>
       ) : isError ? (
         <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 border border-red-100 rounded-2xl p-4">
@@ -116,19 +138,26 @@ export const Dashboard = () => {
         <>
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiCard
-              icon={<TrendingUp className="w-5 h-5" style={{ color: 'var(--color-brand-icon-color)' }} />}
+              icon={<TrendingUp className="w-5 h-5" style={{ color: 'var(--color-brand-dark)' }} />}
               label="Fatturato"
+              link={{ to: '/incassi', label: 'Vedi incassi' }}
               value={`€${fatturato.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
-              sub={growthBadge}
+              sub={
+                <div className="flex flex-col gap-0.5 text-xs" style={{ color: TEXT_BODY }}>
+                  <span>Servizi {formatEuro(fatturatoParts.servicesRevenue)}</span>
+                  <span>Prodotti in appuntamento {formatEuro(fatturatoParts.appointmentProductsRevenue)}</span>
+                  <span>Vendite al banco {formatEuro(fatturatoParts.counterRevenue)}</span>
+                </div>
+              }
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: 'var(--color-brand-icon-color)' }} />}
+              icon={<CalendarDays className="w-5 h-5" style={{ color: 'var(--color-brand-dark)' }} />}
               label="Appuntamenti"
               value={String(thisMonthCount)}
-              sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
+              sub={growthBadge ?? <span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : 'var(--color-brand-icon-color)' }} />}
+              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : 'var(--color-brand-dark)' }} />}
               label="No-show"
               value={`${noShowRate}%`}
               sub={<span className="text-xs" style={{ color: noShowRate > 10 ? '#dc2626' : TEXT_BODY }}>
@@ -136,7 +165,7 @@ export const Dashboard = () => {
               </span>}
             />
             <KpiCard
-              icon={<UserPlus className="w-5 h-5" style={{ color: 'var(--color-brand-icon-color)' }} />}
+              icon={<UserPlus className="w-5 h-5" style={{ color: 'var(--color-brand-dark)' }} />}
               label="Nuovi Clienti"
               value={String(newClientsThisMonth)}
               sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
@@ -144,7 +173,7 @@ export const Dashboard = () => {
           </section>
 
           <section>
-            <p className="text-[10px] uppercase tracking-[0.18em] font-medium mb-3" style={{ color: TEXT_MUTED }}>
+            <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-3" style={{ color: PAGE_MUTED }}>
               Azioni Rapide
             </p>
             <div className="flex flex-wrap gap-3">
@@ -164,102 +193,178 @@ export const Dashboard = () => {
                 <Plus className="w-4 h-4" />
                 Nuovo Prodotto
               </button>
+              <button
+                onClick={() => store.openModal('isNewSaleOpen')}
+                className="bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
+                style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Nuova Vendita
+              </button>
             </div>
           </section>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
-                  Prossimi Appuntamenti
-                </h2>
-                <Link
-                  to="/agenda"
-                  className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                  style={{ color: 'var(--color-brand-primary)' }}
-                >
-                  Vedi tutti <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+            <div className="flex flex-col gap-6">
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                    Prossimi Appuntamenti
+                  </h2>
+                  <Link
+                    to="/agenda"
+                    className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+                    style={{ color: PAGE_LINK }}
+                  >
+                    Vedi tutti <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
 
-              <div
-                className="bg-white rounded-2xl overflow-hidden"
-                style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
-              >
-                {upcomingByDay.length === 0 ? (
-                  <div className="p-6 text-center text-sm" style={{ color: TEXT_MUTED }}>
-                    Nessun appuntamento nei prossimi giorni.
-                  </div>
-                ) : (
-                  upcomingByDay.map(({ dateStr, appts }) => {
-                    const dateLabel = format(new Date(dateStr + 'T12:00:00'), 'EEEE d MMM', { locale: it });
-                    return (
-                      <div key={dateStr}>
-                        <div className="px-4 py-2" style={{ backgroundColor: '#f3f3f2', borderBottom: `1px solid ${CARD_BORDER}` }}>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest capitalize" style={{ color: TEXT_MUTED }}>
-                            {dateLabel}
-                          </p>
-                        </div>
-                        <div>
-                          {appts.map(app => {
-                            const client = clients.find(c => c.id === app.clientId);
-                            const serviceNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
-                            return (
-                              <div
-                                key={app.id}
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => navigate(`/agenda?open=${app.id}`)}
-                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/agenda?open=${app.id}`); } }}
-                                className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
-                                style={{ borderBottom: `1px solid transparent` }}
-                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
-                                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                              >
+                <div
+                  className="bg-white rounded-2xl overflow-hidden"
+                  style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
+                >
+                  {upcomingByDay.length === 0 ? (
+                    <div className="p-6 text-center text-sm" style={{ color: TEXT_MUTED }}>
+                      Nessun appuntamento nei prossimi giorni.
+                    </div>
+                  ) : (
+                    upcomingByDay.map(({ dateStr, appts }) => {
+                      const dateLabel = format(new Date(dateStr + 'T12:00:00'), 'EEEE d MMM', { locale: it });
+                      return (
+                        <div key={dateStr}>
+                          <div className="px-4 py-2" style={{ backgroundColor: '#f3f3f2', borderBottom: `1px solid ${CARD_BORDER}` }}>
+                            <p className="text-xs font-semibold uppercase tracking-wider capitalize" style={{ color: TEXT_MUTED }}>
+                              {dateLabel}
+                            </p>
+                          </div>
+                          <div>
+                            {appts.map(app => {
+                              const client = clients.find(c => c.id === app.clientId);
+                              const serviceNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
+                              return (
                                 <div
-                                  className="w-14 flex flex-col items-center justify-center pr-3 mr-3 shrink-0"
-                                  style={{ borderRight: `1px solid ${CARD_BORDER}` }}
+                                  key={app.id}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => navigate(`/agenda?open=${app.id}`)}
+                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/agenda?open=${app.id}`); } }}
+                                  className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
+                                  style={{ borderBottom: `1px solid transparent` }}
+                                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
+                                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                                 >
-                                  <span className="text-sm font-semibold" style={{ color: TEXT_HEADING }}>{app.time}</span>
-                                  <span className="text-[10px] flex items-center gap-0.5 mt-0.5" style={{ color: TEXT_MUTED }}>
-                                    <Clock className="w-2.5 h-2.5" />
-                                  </span>
+                                  <div
+                                    className="w-14 flex flex-col items-center justify-center pr-3 mr-3 shrink-0"
+                                    style={{ borderRight: `1px solid ${CARD_BORDER}` }}
+                                  >
+                                    <span className="text-sm font-semibold" style={{ color: TEXT_HEADING }}>{app.time}</span>
+                                    <span className="text-xs flex items-center gap-0.5 mt-0.5" style={{ color: TEXT_MUTED }}>
+                                      <Clock className="w-3 h-3" />
+                                    </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>
+                                      {client?.firstName} {client?.lastName}
+                                    </p>
+                                    <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{serviceNames}</p>
+                                  </div>
+                                  <div
+                                    className="w-7 h-7 rounded-full border flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                                    style={{ borderColor: CARD_BORDER, color: 'var(--color-brand-primary)' }}
+                                  >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>
-                                    {client?.firstName} {client?.lastName}
-                                  </p>
-                                  <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{serviceNames}</p>
-                                </div>
-                                <div
-                                  className="w-7 h-7 rounded-full border flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                                  style={{ borderColor: CARD_BORDER, color: 'var(--color-brand-primary)' }}
-                                >
-                                  <ChevronRight className="w-3.5 h-3.5" />
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                    Vendite del Mese
+                  </h2>
+                  <Link
+                    to="/vendite"
+                    className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+                    style={{ color: PAGE_LINK }}
+                  >
+                    Vai a Vendite <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div
+                  className="bg-white rounded-2xl p-5 flex flex-col gap-5"
+                  style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
+                >
+                  <div className="grid grid-cols-3 gap-3 items-end">
+                    {[
+                      { label: 'Venduti', value: `${formatNumber(salesOfMonth.soldPieces)} pz` },
+                      { label: 'Incasso', value: formatEuro(salesOfMonth.productRevenue) },
+                      { label: 'Usati servizi', value: `${formatNumber(salesOfMonth.usedPackages)} conf.` },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="min-w-0">
+                        <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>{label}</p>
+                        <p className="text-2xl font-semibold leading-none truncate" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
+                          {value}
+                        </p>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+                    ))}
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-1" style={{ color: TEXT_MUTED }}>Più venduti</p>
+                    {salesOfMonth.topSold.length === 0 ? (
+                      <p className="text-sm py-2" style={{ color: TEXT_MUTED }}>Nessuna vendita questo mese.</p>
+                    ) : (
+                      <ol className="flex flex-col">
+                        {salesOfMonth.topSold.map((p, i) => (
+                          <li key={p.productId} className="flex items-center gap-3 py-2.5"
+                            style={{ borderBottom: i < salesOfMonth.topSold.length - 1 ? `1px solid ${CARD_BORDER}` : undefined }}>
+                            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+                              style={{ backgroundColor: ACCENT_LIGHT, color: TEXT_HEADING }}>
+                              {i + 1}
+                            </span>
+                            <span className="flex-1 min-w-0 text-sm font-medium uppercase leading-tight" style={{ color: TEXT_HEADING }}>
+                              <BrandDot brand={p.brand} />{p.name}
+                            </span>
+                            <span className="text-base font-semibold shrink-0" style={{ color: TEXT_HEADING }}>
+                              {formatNumber(p.quantity)} pz
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => store.openModal('isNewSaleOpen')}
+                    className="btn-brand self-start flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium"
+                  >
+                    <Plus className="w-4 h-4" /> Nuova vendita
+                  </button>
+                </div>
+              </section>
+            </div>
 
             <div className="flex flex-col gap-6">
 
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
+                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
                     Servizi più richiesti
                   </h2>
                   <Link
                     to="/servizi"
                     className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                    style={{ color: 'var(--color-brand-primary)' }}
+                    style={{ color: PAGE_LINK }}
                   >
                     Vedi tutti <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -277,7 +382,10 @@ export const Dashboard = () => {
                       {topServices.map(({ service, count }) => (
                         <div key={service!.id}>
                           <div className="flex justify-between text-sm mb-2">
-                            <span className="font-medium" style={{ color: TEXT_HEADING }}>{service!.name}</span>
+                            <span className="font-medium flex items-center gap-2" style={{ color: TEXT_HEADING }}>
+                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: service!.color }} />
+                              {service!.name}
+                            </span>
                             <span style={{ color: TEXT_BODY }}>{count}x</span>
                           </div>
                           <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: ACCENT_LIGHT }}>
@@ -285,7 +393,7 @@ export const Dashboard = () => {
                               className="h-full rounded-full transition-all"
                               style={{
                                 width: `${Math.round((count / maxServiceCount) * 100)}%`,
-                                backgroundColor: ACCENT,
+                                backgroundColor: service!.color || ACCENT,
                               }}
                             />
                           </div>
@@ -299,13 +407,13 @@ export const Dashboard = () => {
               {lowStockProducts.length > 0 && (
                 <section>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
+                    <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
                       Attenzione Magazzino
                     </h2>
                     <Link
                       to="/magazzino"
                       className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                      style={{ color: 'var(--color-brand-primary)' }}
+                      style={{ color: PAGE_LINK }}
                     >
                       Vedi tutti <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -325,9 +433,9 @@ export const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm uppercase leading-tight" style={{ color: TEXT_HEADING }}>{p.name}</p>
-                          <p className="text-xs uppercase" style={{ color: TEXT_MUTED }}>{p.brand}</p>
+                          <p className="text-xs uppercase" style={{ color: TEXT_MUTED }}><BrandDot brand={p.brand} />{p.brand}</p>
                         </div>
-                        <span className="text-sm font-medium text-red-600 shrink-0">{p.quantity} pz</span>
+                        <span className="text-base font-semibold text-red-600 shrink-0">{p.quantity} pz</span>
                       </div>
                     ))}
                   </div>

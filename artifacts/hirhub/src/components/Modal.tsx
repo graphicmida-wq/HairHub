@@ -10,9 +10,11 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   className?: string;
+  /** Wider panel on large screens, for content laid out in columns */
+  wide?: boolean;
 }
 
-export const Modal = ({ isOpen, onClose, title, children, className }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, title, children, className, wide }: ModalProps) => {
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -49,7 +51,7 @@ export const Modal = ({ isOpen, onClose, title, children, className }: ModalProp
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.96 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '30rem', maxHeight: '90vh' }}
+            style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: wide ? '60rem' : '30rem', maxHeight: '90vh' }}
             className={cn(
               'flex flex-col bg-white shadow-2xl rounded-2xl overflow-hidden',
               className

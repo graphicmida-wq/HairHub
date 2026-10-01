@@ -3,11 +3,13 @@ import { Modal } from './Modal';
 import {
   useListAppointments, useListClients, useListServices, useListProducts,
   useUpdateAppointment, useCreateClientFormula,
-  getListAppointmentsQueryKey, getListProductsQueryKey, getListClientFormulasQueryKey,
+  getListAppointmentsQueryKey, getListClientFormulasQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, Box, CheckCircle2, FlaskConical, ChevronDown, ChevronUp, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from './Toast';
+import { invalidateStock } from '../lib/stock';
+import { BrandDot } from '../lib/product-brand-colors';
 import { format } from 'date-fns';
 
 interface UsedProductRow {
@@ -59,7 +61,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        invalidateStock(queryClient);
         toast.show('Appuntamento completato');
         onClose();
       },
@@ -436,10 +438,14 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-stone-900 uppercase leading-tight">{p.name}</div>
                     <div className="text-xs text-stone-500">
-                      <span className="uppercase">{p.brand}</span>
-                      {hasWeight && p.stockGrams != null
-                        ? ` · ${p.stockGrams % 1 === 0 ? p.stockGrams : p.stockGrams.toFixed(1)} ${unit} rimanenti`
-                        : ` · ${p.quantity} pz rimanenti`}
+                      <BrandDot brand={p.brand} /><span className="uppercase">{p.brand}</span>
+                      {' · '}
+                      <span className="font-semibold text-stone-700">
+                        {hasWeight && p.stockGrams != null
+                          ? `${p.stockGrams % 1 === 0 ? p.stockGrams : p.stockGrams.toFixed(1)} ${unit}`
+                          : `${p.quantity} pz`}
+                      </span>
+                      {' rimanenti'}
                     </div>
                   </div>
                   {hasWeight ? (
@@ -461,7 +467,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 shrink-0" title="Solo registrazione — nessuna deduzione scorta per prodotti a pezzi">
+                    <div className="flex items-center gap-1 shrink-0">
                       <input
                         type="number"
                         min="0"
@@ -469,9 +475,9 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
                         placeholder="0"
                         value={usedRow ? usedRow.quantityUsed : ''}
                         onChange={e => setQuantity(p.id, parseInt(e.target.value) || 0)}
-                        className="w-16 border border-stone-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-brand-dark opacity-60"
+                        className="w-16 border border-stone-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-brand-dark"
                       />
-                      <span className="text-xs text-stone-400">pz*</span>
+                      <span className="text-xs text-stone-400">pz</span>
                       {usedRow && usedRow.quantityUsed > 0 && (
                         <button type="button" onClick={() => removeProduct(p.id)} className="text-stone-300 hover:text-red-400 transition-colors">
                           <X className="w-3.5 h-3.5" />
@@ -507,7 +513,7 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
                 <div key={p.id} className="p-3 border-b border-stone-50 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-stone-900 uppercase leading-tight">{p.name}</div>
-                    <div className="text-xs text-stone-500"><span className="uppercase">{p.brand}</span> · {p.quantity} pz rimanenti</div>
+                    <div className="text-xs text-stone-500"><BrandDot brand={p.brand} /><span className="uppercase">{p.brand}</span> · <span className="font-semibold text-stone-700">{p.quantity} pz</span> rimanenti</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <input

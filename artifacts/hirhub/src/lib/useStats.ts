@@ -1,12 +1,21 @@
 import { useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths, addDays } from 'date-fns';
-import { useListAppointments, useListClients, useListProducts, useListServices } from '@workspace/api-client-react';
+import { getListStockMovementsQueryKey, useListAppointments, useListClients, useListProducts, useListServices, useListStockMovements } from '@workspace/api-client-react';
+import { toPackages } from './stock';
 
 export function useStats() {
   const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
   const { data: clients = [], isLoading: loadingClients, isError: errorClients } = useListClients();
   const { data: services = [], isLoading: loadingServices, isError: errorServices } = useListServices();
   const { data: products = [], isLoading: loadingProducts, isError: errorProducts } = useListProducts();
+  // This month's stock movements: product sales (also over the counter) and service usage
+  const monthParams = {
+    from: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    to: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
+  };
+  const { data: monthMovements = [] } = useListStockMovements(monthParams, {
+    query: { queryKey: getListStockMovementsQueryKey(monthParams) },
+  });
 
   const isLoading = loadingAppts || loadingClients || loadingServices || loadingProducts;
   const isError = errorAppts || errorClients || errorServices || errorProducts;
@@ -32,18 +41,23 @@ export function useStats() {
     );
 
     const completedThisMonth = thisMonthAppts.filter(a => a.status === 'completato');
+    const monthSales = monthMovements.filter(m => m.reason === 'vendita');
 
-    const fatturato = completedThisMonth.reduce((sum, a) => {
-      const svcTotal = (a.serviceIds ?? []).reduce((s2, sid, i) => {
+    // Revenue of the month = services of completed appointments
+    //   + products sold during those appointments + over-the-counter sales
+    const servicesRevenue = completedThisMonth.reduce((sum, a) =>
+      sum + (a.serviceIds ?? []).reduce((s2, sid, i) => {
         const v = a.servicePrices?.[i];
         if (typeof v === 'number' && Number.isFinite(v)) return s2 + v;
         return s2 + (services.find(s => s.id === sid)?.price ?? 0);
-      }, 0);
-      const soldTotal = (a.soldProducts ?? []).reduce((s3, sp) => {
-        return s3 + sp.quantity * sp.unitPrice;
-      }, 0);
-      return sum + svcTotal + soldTotal;
-    }, 0);
+      }, 0), 0);
+    const appointmentProductsRevenue = completedThisMonth.reduce((sum, a) =>
+      sum + (a.soldProducts ?? []).reduce((s3, sp) => s3 + sp.quantity * sp.unitPrice, 0), 0);
+    // Appointment sales are already counted with their appointment; cancelled sales net to zero
+    const counterRevenue = monthSales
+      .filter(m => m.appointmentId == null)
+      .reduce((sum, m) => sum - m.quantity * (m.unitPrice ?? 0), 0);
+    const fatturato = servicesRevenue + appointmentProductsRevenue + counterRevenue;
 
     const thisMonthCount = thisMonthAppts.length;
     const prevMonthCount = prevMonthAppts.length;
@@ -99,9 +113,35 @@ export function useStats() {
 
     const lowStockProducts = products.filter(p => p.quantity <= p.minThreshold);
 
+    // "Vendite del mese" (sale movements are net of cancellations and corrections)
+    const soldByProduct = new Map<string, { productId: string; name: string; brand: string; quantity: number }>();
+    let soldPieces = 0;
+    let productRevenue = 0;
+    for (const m of monthSales) {
+      soldPieces -= m.quantity;
+      productRevenue -= m.quantity * (m.unitPrice ?? 0);
+      const entry = soldByProduct.get(m.productId) ?? {
+        productId: m.productId,
+        name: products.find(p => p.id === m.productId)?.name ?? m.productName,
+        brand: products.find(p => p.id === m.productId)?.brand ?? m.productBrand,
+        quantity: 0,
+      };
+      entry.quantity -= m.quantity;
+      soldByProduct.set(m.productId, entry);
+    }
+    const usedPackages = monthMovements
+      .filter(m => m.reason === 'uso_servizio')
+      .reduce((sum, m) => sum + (toPackages(-m.quantity, m.unit, products.find(p => p.id === m.productId)) ?? 0), 0);
+    const topSold = [...soldByProduct.values()]
+      .filter(p => p.quantity > 0.005)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 3);
+    const salesOfMonth = { soldPieces, productRevenue, usedPackages, topSold };
+
     return {
       today,
       fatturato,
+      fatturatoParts: { servicesRevenue, appointmentProductsRevenue, counterRevenue },
       thisMonthCount,
       prevMonthCount,
       monthGrowthPct,
@@ -112,8 +152,9 @@ export function useStats() {
       todaysAppointments,
       upcomingByDay,
       lowStockProducts,
+      salesOfMonth,
     };
-  }, [appointments, clients, services, products]);
+  }, [appointments, clients, services, products, monthMovements]);
 
   return {
     isLoading,
