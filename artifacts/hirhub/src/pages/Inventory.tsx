@@ -59,7 +59,7 @@ const ProductCard = ({ product, brandColor, onClick }: { product: Product; brand
         style={brandColor
           ? tintTileStyle(brandColor)
           : low
-            ? { backgroundColor: '#fef2f2', color: '#dc2626' }
+            ? { backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)' }
             : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}
       >
         <Box className="w-6 h-6" />

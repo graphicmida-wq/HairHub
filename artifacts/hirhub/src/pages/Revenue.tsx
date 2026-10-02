@@ -333,17 +333,17 @@ export const Revenue = () => {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={report.rows} barCategoryGap="22%" margin={{ top: 4, right: 4, left: -6, bottom: 0 }}>
-                      <CartesianGrid vertical={false} stroke="#EFEBE3" />
-                      <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#E3DED3' }}
-                        tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }} interval="preserveStartEnd" minTickGap={6} />
-                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }} width={54 * fontScale}
+                      <CartesianGrid vertical={false} stroke="var(--color-chart-grid)" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: 'var(--color-chart-axis)' }}
+                        tick={{ fontSize: 11 * fontScale, fill: 'var(--color-chart-tick)' }} interval="preserveStartEnd" minTickGap={6} />
+                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 * fontScale, fill: 'var(--color-chart-tick)' }} width={54 * fontScale}
                         ticks={yTicks} domain={[0, yTicks[yTicks.length - 1]!]}
                         tickFormatter={v => `€${Number(v).toLocaleString('it-IT')}`} />
-                      <Tooltip cursor={{ fill: 'rgba(32,48,79,0.05)' }} content={<ChartTooltip />} />
+                      <Tooltip cursor={{ fill: 'var(--color-chart-cursor)' }} content={<ChartTooltip />} />
                       {/* white edge = the 2px gap between stacked segments */}
-                      <Bar dataKey="services" stackId="r" fill={SERIES.services.color} stroke="#fff" strokeWidth={1} maxBarSize={24} />
-                      <Bar dataKey="apptProducts" stackId="r" fill={SERIES.apptProducts.color} stroke="#fff" strokeWidth={1} maxBarSize={24} />
-                      <Bar dataKey="counter" stackId="r" fill={SERIES.counter.color} stroke="#fff" strokeWidth={1} maxBarSize={24} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="services" stackId="r" fill={SERIES.services.color} stroke="var(--color-surface-cut)" strokeWidth={1} maxBarSize={24} />
+                      <Bar dataKey="apptProducts" stackId="r" fill={SERIES.apptProducts.color} stroke="var(--color-surface-cut)" strokeWidth={1} maxBarSize={24} />
+                      <Bar dataKey="counter" stackId="r" fill={SERIES.counter.color} stroke="var(--color-surface-cut)" strokeWidth={1} maxBarSize={24} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -407,7 +407,7 @@ export const Revenue = () => {
                       <span className="font-semibold text-stone-900 tabular-nums">{formatEuro(w.total)}</span>
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-brand-icon-bg)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${Math.round((w.total / maxWeekday) * 100)}%`, backgroundColor: 'var(--color-brand-dark)' }} />
+                      <div className="h-full rounded-full" style={{ width: `${Math.round((w.total / maxWeekday) * 100)}%`, backgroundColor: 'var(--color-brand-solid)' }} />
                     </div>
                   </div>
                 ))}

@@ -1,8 +1,33 @@
 import { useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { getListStockMovementsQueryKey, useListAppointments, useListClients, useListProducts, useListServices, useListStockMovements } from '@workspace/api-client-react';
+import type { Appointment, Service, StockMovement } from '@workspace/api-client-react';
 import { toPackages } from './stock';
 import { addMinsToTime } from './utils';
+
+// Pieces of the "Fatturato" figure, also used by the month-by-month trends (useKpiTrends)
+
+/** Services of an appointment, at the price agreed for it (list price as a fallback) */
+export function servicesRevenueOf(a: Appointment, services: Service[]): number {
+  return (a.serviceIds ?? []).reduce((sum, sid, i) => {
+    const v = a.servicePrices?.[i];
+    if (typeof v === 'number' && Number.isFinite(v)) return sum + v;
+    return sum + (services.find(s => s.id === sid)?.price ?? 0);
+  }, 0);
+}
+
+/** Products sold during an appointment */
+export function productsRevenueOf(a: Appointment): number {
+  return (a.soldProducts ?? []).reduce((sum, sp) => sum + sp.quantity * sp.unitPrice, 0);
+}
+
+/** Over-the-counter sales among these sale movements: appointment sales are already
+ *  counted with their appointment; cancelled sales net to zero */
+export function counterRevenueOf(saleMovements: StockMovement[]): number {
+  return saleMovements
+    .filter(m => m.appointmentId == null)
+    .reduce((sum, m) => sum - m.quantity * (m.unitPrice ?? 0), 0);
+}
 
 export function useStats() {
   const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
@@ -46,18 +71,9 @@ export function useStats() {
 
     // Revenue of the month = services of completed appointments
     //   + products sold during those appointments + over-the-counter sales
-    const servicesRevenue = completedThisMonth.reduce((sum, a) =>
-      sum + (a.serviceIds ?? []).reduce((s2, sid, i) => {
-        const v = a.servicePrices?.[i];
-        if (typeof v === 'number' && Number.isFinite(v)) return s2 + v;
-        return s2 + (services.find(s => s.id === sid)?.price ?? 0);
-      }, 0), 0);
-    const appointmentProductsRevenue = completedThisMonth.reduce((sum, a) =>
-      sum + (a.soldProducts ?? []).reduce((s3, sp) => s3 + sp.quantity * sp.unitPrice, 0), 0);
-    // Appointment sales are already counted with their appointment; cancelled sales net to zero
-    const counterRevenue = monthSales
-      .filter(m => m.appointmentId == null)
-      .reduce((sum, m) => sum - m.quantity * (m.unitPrice ?? 0), 0);
+    const servicesRevenue = completedThisMonth.reduce((sum, a) => sum + servicesRevenueOf(a, services), 0);
+    const appointmentProductsRevenue = completedThisMonth.reduce((sum, a) => sum + productsRevenueOf(a), 0);
+    const counterRevenue = counterRevenueOf(monthSales);
     const fatturato = servicesRevenue + appointmentProductsRevenue + counterRevenue;
 
     const thisMonthCount = thisMonthAppts.length;

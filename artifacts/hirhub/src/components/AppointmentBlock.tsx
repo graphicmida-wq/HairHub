@@ -65,7 +65,7 @@ export const AppointmentBlock = ({ box, clients, services, interaction, compact 
         width: `calc((100% - ${indent}px) / ${slots} - ${gapL + gapR}px)`,
         borderLeft: `4px solid ${color}`,
         // White edge on the left keeps a block readable where it sits on top of another one
-        boxShadow: depth > 0 && !isSelected ? '-2px 0 0 #fff, 0 1px 3px rgba(28,25,23,0.14)' : undefined,
+        boxShadow: depth > 0 && !isSelected ? '-2px 0 0 var(--color-surface-cut), 0 1px 3px rgba(28,25,23,0.14)' : undefined,
         zIndex: isSelected ? 500 : z,
       }}
     >

@@ -1,3 +1,5 @@
+import { applyPremiumPalette } from './theme';
+
 export interface BrandPalette {
   key: string;
   label: string;
@@ -132,6 +134,7 @@ export function applyBrandPalette(palette: BrandPalette) {
   root.style.setProperty('--color-brand-icon-color', palette.primary);
   root.style.setProperty('--color-brand-gold', palette.primary);
   root.style.setProperty('--color-brand-gold-bg', iconBg);
+  applyPremiumPalette(palette.primary);
 }
 
 export function saveBrandPalette(palette: BrandPalette) {

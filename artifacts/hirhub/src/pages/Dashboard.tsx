@@ -6,6 +6,7 @@ import {
   Loader2, Package2, TrendingUp, TrendingDown,
   UserPlus, Scissors, CalendarDays, Calendar,
   Clock, ChevronRight, MoreHorizontal, ShoppingBag,
+  BarChart3, type LucideIcon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format, isToday, isTomorrow } from 'date-fns';
@@ -13,13 +14,16 @@ import { it } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { formatEuro, formatNumber } from '../lib/stock';
 import { BrandDot } from '../lib/product-brand-colors';
+import { useTheme } from '../lib/theme';
+import { TREND_MONTHS, useKpiTrends } from '../lib/useKpiTrends';
+import { Sparkline } from '../components/Sparkline';
 
-const CARD_BORDER = '#E8E3D8';
+const CARD_BORDER = 'var(--color-card-border)';
 const CARD_SHADOW = '0 2px 12px rgba(92,88,112,0.04)';
 const ACCENT = 'var(--color-brand-dark)';
 const ACCENT_LIGHT = 'var(--color-brand-icon-bg)';
 const TEXT_HEADING = 'var(--color-brand-dark)';
-const TEXT_BODY = '#6B6880';
+const TEXT_BODY = 'var(--color-text-body)';
 const TEXT_MUTED = 'var(--color-brand-text-muted)';
 // Text drawn directly on the page background (adapts when the background is dark)
 const PAGE_HEADING = 'var(--color-on-page-brand)';
@@ -29,34 +33,55 @@ const PAGE_LINK = 'var(--color-on-page-link)';
 const MAX_UPCOMING = 5;
 
 const KpiCard = ({
-  icon,
+  icon: Icon,
   label,
   value,
   sub,
   link,
+  alert,
+  accent,
+  trend,
 }: {
-  icon: React.ReactNode;
+  icon: LucideIcon;
   label: string;
   value: string;
   sub?: React.ReactNode;
   /** Makes the whole card a link (e.g. Fatturato → Incassi) */
   link?: { to: string; label: string };
+  /** A figure to keep an eye on: icon in red */
+  alert?: boolean;
+  /** This figure's shade of the brand in the Premium look (glow, icon, mini-chart) */
+  accent: string;
+  /** Month by month values, drawn as a mini-chart in the Premium look */
+  trend?: number[];
 }) => {
   const Tag = link ? Link : 'div';
   return (
     <Tag
       to={link?.to as string}
       className={cn(
-        "rounded-2xl p-5 flex flex-col relative overflow-hidden bg-page-card-soft",
+        "kpi-card rounded-2xl p-5 flex flex-col relative overflow-hidden bg-page-card-soft",
         link && "transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
       )}
-      style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
+      style={{
+        border: `1px solid ${CARD_BORDER}`,
+        boxShadow: CARD_SHADOW,
+        '--kpi-accent': alert ? 'var(--color-danger)' : accent,
+      } as React.CSSProperties}
     >
+      {trend && (
+        <Sparkline
+          values={trend}
+          color="var(--kpi-accent)"
+          title={`Andamento degli ultimi ${TREND_MONTHS} mesi, quello in corso tratteggiato`}
+          className="premium-only absolute top-5 right-5 w-[38%] max-w-32 h-12"
+        />
+      )}
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0"
-        style={{ backgroundColor: ACCENT_LIGHT }}
+        className="kpi-icon w-10 h-10 rounded-full flex items-center justify-center mb-4 shrink-0"
+        style={{ backgroundColor: ACCENT_LIGHT, color: alert ? 'var(--color-danger)' : 'var(--color-brand-dark)' }}
       >
-        {icon}
+        <Icon className="w-5 h-5" />
       </div>
       <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>
         {label}
@@ -86,6 +111,8 @@ export const Dashboard = () => {
     lowStockProducts,
     salesOfMonth,
   } = useStats();
+  const premium = useTheme() === 'premium';
+  const trends = useKpiTrends(premium);
 
   const growthBadge = monthGrowthPct !== null ? (
     <span className={cn(
@@ -140,7 +167,9 @@ export const Dashboard = () => {
         <>
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiCard
-              icon={<TrendingUp className="w-5 h-5" style={{ color: 'var(--color-brand-dark)' }} />}
+              icon={TrendingUp}
+              accent="var(--pm-shade-1)"
+              trend={trends.revenue}
               label="Fatturato"
               link={{ to: '/incassi', label: 'Vedi incassi' }}
               value={`€${fatturato.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
@@ -153,21 +182,28 @@ export const Dashboard = () => {
               }
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: 'var(--color-brand-dark)' }} />}
+              icon={CalendarDays}
+              accent="var(--pm-shade-2)"
+              trend={trends.count}
               label="Appuntamenti"
               value={String(thisMonthCount)}
               sub={growthBadge ?? <span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
             />
             <KpiCard
-              icon={<CalendarDays className="w-5 h-5" style={{ color: noShowRate > 10 ? '#dc2626' : 'var(--color-brand-dark)' }} />}
+              icon={CalendarDays}
+              alert={noShowRate > 10}
+              accent="var(--pm-shade-3)"
+              trend={trends.noShowRate}
               label="No-show"
               value={`${noShowRate}%`}
-              sub={<span className="text-xs" style={{ color: noShowRate > 10 ? '#dc2626' : TEXT_BODY }}>
+              sub={<span className="text-xs" style={{ color: noShowRate > 10 ? 'var(--color-danger)' : TEXT_BODY }}>
                 {noShowRate > 10 ? 'Da monitorare' : 'In linea'}
               </span>}
             />
             <KpiCard
-              icon={<UserPlus className="w-5 h-5" style={{ color: 'var(--color-brand-dark)' }} />}
+              icon={UserPlus}
+              accent="var(--pm-shade-4)"
+              trend={trends.newClients}
               label="Nuovi Clienti"
               value={String(newClientsThisMonth)}
               sub={<span className="text-xs" style={{ color: TEXT_BODY }}>questo mese</span>}
@@ -181,7 +217,7 @@ export const Dashboard = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => store.openModal('isNewClientOpen')}
-                className="bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
+                className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
                 style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
               >
                 <Users className="w-4 h-4" />
@@ -189,7 +225,7 @@ export const Dashboard = () => {
               </button>
               <button
                 onClick={() => store.openModal('isNewProductOpen')}
-                className="bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
+                className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
                 style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
               >
                 <Plus className="w-4 h-4" />
@@ -197,7 +233,7 @@ export const Dashboard = () => {
               </button>
               <button
                 onClick={() => store.openModal('isNewSaleOpen')}
-                className="bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
+                className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
                 style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -209,9 +245,10 @@ export const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <div className="flex flex-col gap-6">
-              <section>
+              <section className="dash-panel">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                  <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                    <span className="premium-only section-icon"><Calendar className="w-4 h-4" /></span>
                     Prossimi Appuntamenti
                   </h2>
                   <Link
@@ -238,12 +275,12 @@ export const Dashboard = () => {
                     const more = upcoming.appts.length - shown.length;
                     return (
                       <div>
-                        <div className="px-4 py-2" style={{ backgroundColor: '#f3f3f2', borderBottom: `1px solid ${CARD_BORDER}` }}>
+                        <div className="px-4 py-2" style={{ backgroundColor: 'var(--color-card-subtle)', borderBottom: `1px solid ${CARD_BORDER}` }}>
                           <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>
                             {dayLabel}
                           </p>
                         </div>
-                        <div className="py-0.5">
+                        <div className="upcoming-day py-0.5">
                           {shown.map(app => {
                             const client = clients.find(c => c.id === app.clientId);
                             const serviceNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
@@ -256,7 +293,7 @@ export const Dashboard = () => {
                                 onClick={() => navigate(`/agenda?open=${app.id}`)}
                                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/agenda?open=${app.id}`); } }}
                                 className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
-                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
+                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-card-hover)')}
                                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                               >
                                 <div
@@ -306,9 +343,10 @@ export const Dashboard = () => {
                 </div>
               </section>
 
-              <section>
+              <section className="dash-panel">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                  <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                    <span className="premium-only section-icon"><BarChart3 className="w-4 h-4" /></span>
                     Vendite del Mese
                   </h2>
                   <Link
@@ -375,9 +413,10 @@ export const Dashboard = () => {
 
             <div className="flex flex-col gap-6">
 
-              <section>
+              <section className="dash-panel">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                  <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                    <span className="premium-only section-icon"><TrendingUp className="w-4 h-4" /></span>
                     Servizi più richiesti
                   </h2>
                   <Link
@@ -409,10 +448,11 @@ export const Dashboard = () => {
                           </div>
                           <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: ACCENT_LIGHT }}>
                             <div
-                              className="h-full rounded-full transition-all"
+                              className="svc-bar h-full rounded-full transition-all"
                               style={{
                                 width: `${Math.round((count / maxServiceCount) * 100)}%`,
                                 backgroundColor: service!.color || ACCENT,
+                                color: service!.color || ACCENT,
                               }}
                             />
                           </div>
@@ -424,9 +464,10 @@ export const Dashboard = () => {
               </section>
 
               {lowStockProducts.length > 0 && (
-                <section>
+                <section className="dash-panel">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                    <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+                      <span className="premium-only section-icon"><Package2 className="w-4 h-4" /></span>
                       Attenzione Magazzino
                     </h2>
                     <Link
@@ -439,7 +480,7 @@ export const Dashboard = () => {
                   </div>
                   <div
                     className="bg-white rounded-2xl overflow-hidden"
-                    style={{ border: `1px solid #fecaca`, boxShadow: CARD_SHADOW }}
+                    style={{ border: '1px solid var(--color-danger-border)', boxShadow: CARD_SHADOW }}
                   >
                     {lowStockProducts.slice(0, 4).map(p => (
                       <div

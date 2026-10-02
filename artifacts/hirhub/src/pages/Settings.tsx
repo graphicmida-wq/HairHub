@@ -9,6 +9,7 @@ import { Save, Loader2, CheckCircle2, Palette, Calendar, Users, Plus, Pencil, Tr
 import { cn } from '../lib/utils';
 import { toast } from '../components/Toast';
 import { FontSizeCard } from '../components/FontSizeCard';
+import { ThemeCard } from '../components/ThemeCard';
 import {
   BRAND_PRESETS,
   paletteFromCustomColor,
@@ -468,6 +469,8 @@ export const Settings = () => {
             </div>
 
             <FontSizeCard />
+
+            <ThemeCard palette={activePalette} pageBackground={background} />
 
             {/* Brand color card */}
             <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">

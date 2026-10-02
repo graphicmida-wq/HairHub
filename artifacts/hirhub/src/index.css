@@ -59,6 +59,29 @@
   --color-ring: var(--color-brand-primary);
 }
 
+/* Colours the components use inline, named so the Premium look
+   (theme-premium.css) can redefine them; these are the classic values. */
+:root {
+  /* Large brand-coloured surfaces (sidebar, login) and brand fills under white text */
+  --color-brand-surface: var(--color-brand-dark);
+  --color-brand-solid: var(--color-brand-dark);
+  --nav-active-bg: rgba(245, 240, 227, 0.15);
+  --color-card-border: #e8e3d8;
+  --color-card-subtle: #f3f3f2;
+  --color-card-hover: #f8f8f7;
+  --color-text-body: #6b6880;
+  --color-placeholder: #9ca3af;
+  /* Edge that separates overlapping appointments in the agenda */
+  --color-surface-cut: #ffffff;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-chart-grid: #efebe3;
+  --color-chart-axis: #e3ded3;
+  --color-chart-tick: #8a8578;
+  --color-chart-cursor: rgba(32, 48, 79, 0.05);
+}
+
 body {
   @apply text-stone-900 font-sans antialiased;
   background-color: #f8f8f7;

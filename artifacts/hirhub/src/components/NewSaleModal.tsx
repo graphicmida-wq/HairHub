@@ -155,7 +155,7 @@ export const NewSaleModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   </div>
                   <span className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
                     style={inCart
-                      ? { backgroundColor: 'var(--color-brand-dark)', color: '#fff' }
+                      ? { backgroundColor: 'var(--color-brand-solid)', color: '#fff' }
                       : { backgroundColor: 'var(--color-brand-icon-bg)', color: 'var(--color-brand-icon-color)' }}>
                     {inCart ? inCart.quantity : <Plus className="w-4 h-4" />}
                   </span>

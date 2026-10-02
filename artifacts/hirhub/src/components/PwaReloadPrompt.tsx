@@ -28,7 +28,7 @@ export function PwaReloadPrompt() {
     >
       <div
         className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm"
-        style={{ background: 'var(--color-brand-dark)', color: '#F5F0E3' }}
+        style={{ background: 'var(--color-brand-surface)', color: '#F5F0E3' }}
       >
         <RefreshCw className="w-4 h-4 shrink-0 opacity-80" />
         <span className="flex-1 font-medium">Nuova versione disponibile</span>

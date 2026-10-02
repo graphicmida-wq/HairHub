@@ -35,8 +35,7 @@ export const Login = () => {
 
   return (
     <div
-      className="min-h-[100dvh] flex items-center justify-center p-6"
-      style={{ background: 'var(--color-brand-dark)' }}
+      className="app-shell min-h-[100dvh] flex items-center justify-center p-6 bg-[var(--color-brand-surface)]"
     >
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-8">

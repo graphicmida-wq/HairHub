@@ -328,13 +328,13 @@ export const Sales = () => {
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={buckets} barGap={2} barCategoryGap="18%" margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
-                      <CartesianGrid vertical={false} stroke="#EFEBE3" />
-                      <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#E3DED3' }}
-                        tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }} interval="preserveStartEnd" minTickGap={6} />
-                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }}
+                      <CartesianGrid vertical={false} stroke="var(--color-chart-grid)" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: 'var(--color-chart-axis)' }}
+                        tick={{ fontSize: 11 * fontScale, fill: 'var(--color-chart-tick)' }} interval="preserveStartEnd" minTickGap={6} />
+                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 * fontScale, fill: 'var(--color-chart-tick)' }}
                         allowDecimals={false} domain={[0, (max: number) => Math.max(1, Math.ceil(max))]}
                         tickFormatter={v => formatNumber(Number(v))} width={44 * fontScale} />
-                      <Tooltip cursor={{ fill: 'rgba(32,48,79,0.05)' }}
+                      <Tooltip cursor={{ fill: 'var(--color-chart-cursor)' }}
                         content={<ChartTooltip unitNote={pinnedId && !pinnedByWeight ? 'pz' : 'conf.'} />} />
                       <Bar dataKey="sold" name="Venduti" fill={SERIES_SOLD} radius={[4, 4, 0, 0]} maxBarSize={24}
                         activeBar={{ fillOpacity: 0.8 }} />

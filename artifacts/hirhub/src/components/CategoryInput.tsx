@@ -123,7 +123,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
         type="button"
         onClick={() => { setIsOpen(o => !o); setAddingNew(false); setNewCategory(''); }}
         className="w-full flex items-center justify-between bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors text-left"
-        style={{ borderColor: isOpen ? 'var(--color-brand-dark)' : undefined, color: hasValue ? '#1c1917' : '#9ca3af' }}
+        style={{ borderColor: isOpen ? 'var(--color-brand-dark)' : undefined, color: hasValue ? 'var(--color-stone-900)' : 'var(--color-placeholder)' }}
       >
         <span className="truncate">{displayValue}</span>
         <ChevronDown

@@ -1,0 +1,263 @@
+/* Premium look (Impostazioni → Aspetto): dark glass tinted by the brand colour.
+
+   Every rule is scoped to <html data-theme="premium"> (lib/theme.ts), so the
+   classic look never sees them; deleting this file and lib/theme.ts brings
+   the app back to classic only. The --pm-* colours are computed from the
+   brand colour in lib/theme.ts.
+
+   The rules are not in a cascade layer on purpose: that way they win over
+   Tailwind's utilities without !important. !important is only used for the
+   variables that brand-color.ts / page-background.ts write inline on <html>
+   and for the few colours components set in inline styles. */
+
+/* Shown only in one of the two looks */
+:root[data-theme="premium"] .classic-only { display: none; }
+:root:not([data-theme="premium"]) .premium-only { display: none; }
+
+:root[data-theme="premium"] {
+  color-scheme: dark;
+
+  /* Brand tokens for a dark page: the "dark" brand tone used for text and
+     lines becomes a pale tint, the primary becomes the neon accent */
+  --color-brand-dark: var(--pm-text-brand) !important;
+  --color-brand-primary: var(--pm-neon) !important;
+  --color-brand-light: color-mix(in srgb, var(--pm-neon) 10%, transparent) !important;
+  --color-brand-text-muted: var(--pm-text-muted) !important;
+  --color-brand-icon-bg: color-mix(in srgb, var(--pm-neon) 16%, transparent) !important;
+  --color-brand-icon-color: var(--pm-neon) !important;
+  --color-brand-gold: var(--pm-neon) !important;
+  --color-brand-gold-bg: color-mix(in srgb, var(--pm-neon) 16%, transparent) !important;
+  --color-brand-surface: var(--pm-bg-0);
+  --color-brand-solid: var(--pm-solid);
+  --nav-active-bg: color-mix(in srgb, var(--pm-neon) 14%, transparent);
+
+  /* Page */
+  --color-page-bg: var(--pm-bg-0) !important;
+  --color-on-page: #f6f4f0 !important;
+  --color-on-page-muted: var(--pm-text-muted) !important;
+  --color-on-page-brand: var(--pm-text-brand) !important;
+  --color-on-page-link: var(--pm-neon) !important;
+  --color-page-card-soft: var(--pm-glass) !important;
+
+  /* Glass: a see-through white with a touch of the brand */
+  --pm-glass: color-mix(in srgb, var(--pm-neon) 7%, rgb(255 255 255 / 0.045));
+
+  /* Neutral scale turned over: 900 is now the brightest text, 50–300 are
+     see-through whites for fills and lines */
+  --color-stone-50: rgb(255 255 255 / 0.045);
+  --color-stone-100: rgb(255 255 255 / 0.08);
+  --color-stone-200: rgb(255 255 255 / 0.13);
+  --color-stone-300: rgb(255 255 255 / 0.3);
+  --color-stone-400: #938e87;
+  --color-stone-500: #aaa59e;
+  --color-stone-600: #c2bdb6;
+  --color-stone-700: #d8d4cd;
+  --color-stone-800: #e9e6e0;
+  --color-stone-900: #f6f4f0;
+  --color-gray-50: rgb(255 255 255 / 0.045);
+
+  /* Status fills: pale backgrounds become coloured glass */
+  --color-red-50: rgb(244 63 94 / 0.12);
+  --color-red-100: rgb(244 63 94 / 0.18);
+  --color-red-200: rgb(244 63 94 / 0.32);
+  --color-green-100: rgb(34 197 94 / 0.16);
+  --color-emerald-50: rgb(16 185 129 / 0.16);
+  --color-amber-50: rgb(245 158 11 / 0.12);
+  --color-amber-100: rgb(245 158 11 / 0.18);
+  --color-amber-200: rgb(245 158 11 / 0.32);
+  --color-yellow-100: rgb(234 179 8 / 0.16);
+  --color-blue-100: rgb(59 130 246 / 0.18);
+
+  /* App tokens (index.css) */
+  --color-card-border: color-mix(in srgb, var(--pm-neon) 20%, rgb(255 255 255 / 0.1));
+  --color-card-subtle: rgb(255 255 255 / 0.04);
+  --color-card-hover: rgb(255 255 255 / 0.06);
+  --color-text-body: #c4c0d4;
+  --color-placeholder: #938e87;
+  --color-surface-cut: var(--pm-surface);
+  --color-danger: #fb7185;
+  --color-danger-bg: rgb(244 63 94 / 0.14);
+  --color-danger-border: rgb(244 63 94 / 0.4);
+  --color-chart-grid: rgb(255 255 255 / 0.07);
+  --color-chart-axis: rgb(255 255 255 / 0.15);
+  --color-chart-tick: var(--pm-text-muted);
+  --color-chart-cursor: rgb(255 255 255 / 0.05);
+}
+
+:root[data-theme="premium"] body {
+  background-color: var(--pm-bg-0);
+}
+
+/* ── Frame: deep brand background with two soft glows ─────────────────────── */
+
+:root[data-theme="premium"] .app-shell {
+  background-color: var(--pm-bg-0);
+  background-image:
+    radial-gradient(ellipse 70% 55% at 85% -10%, color-mix(in srgb, var(--pm-neon-2) 20%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 5% 110%, color-mix(in srgb, var(--pm-neon) 16%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--pm-bg-1), var(--pm-bg-0) 65%);
+}
+:root[data-theme="premium"] .app-sidebar {
+  background-color: rgb(0 0 0 / 0.16);
+}
+:root[data-theme="premium"] :is(.app-content, .app-mobile-header) {
+  background-color: transparent;
+}
+:root[data-theme="premium"] .app-sidebar a[data-active] {
+  background-image: linear-gradient(90deg, color-mix(in srgb, var(--pm-neon) 30%, transparent), color-mix(in srgb, var(--pm-neon) 6%, transparent));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--pm-neon) 45%, transparent),
+    0 0 22px -6px var(--pm-neon);
+}
+
+/* ── Glass ─────────────────────────────────────────────────────────────────── */
+
+/* Cards: see-through, with a faint light sheen at the top. The background is
+   a smooth gradient, so a real blur would look the same and only slow down
+   older tablets: it is kept for the floating parts below. */
+:root[data-theme="premium"] :is(.bg-white, .bg-page-card-soft) {
+  background-color: var(--pm-glass);
+  background-image: linear-gradient(165deg, rgb(255 255 255 / 0.05), transparent 45%);
+}
+
+/* Anything floating over other content (menus, pop-ups, sticky headers,
+   windows) must stay opaque, or the text below would show through */
+:root[data-theme="premium"] :is(
+  .bg-white.absolute, .bg-white.fixed, .bg-white.sticky,
+  .bg-white.shadow-lg, .bg-white.shadow-xl, .bg-white.shadow-2xl, .bg-white[class*="shadow-["]
+) {
+  background-color: var(--pm-surface);
+  background-image: linear-gradient(165deg, rgb(255 255 255 / 0.06), transparent 50%);
+}
+:root[data-theme="premium"] .bg-white.shadow-2xl {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--pm-neon) 28%, transparent),
+    0 30px 80px -20px rgb(0 0 0 / 0.85);
+}
+:root[data-theme="premium"] .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--pm-surface) 85%, transparent);
+}
+/* Sticky headers on the page (Clienti letters): invisible until they stick,
+   then frosted glass instead of the classic fade */
+:root[data-theme="premium"] .bg-page-bg.sticky {
+  background-color: transparent;
+}
+:root[data-theme="premium"] .bg-page-bg.sticky::after {
+  display: none;
+}
+:root[data-theme="premium"] .bg-page-bg.sticky[data-stuck] {
+  background-color: color-mix(in srgb, var(--pm-bg-0) 70%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 var(--color-card-border);
+}
+
+/* Phone nav pill */
+:root[data-theme="premium"] .nav-glass {
+  background-color: color-mix(in srgb, var(--pm-surface) 78%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--pm-neon) 28%, transparent),
+    0 10px 30px -6px rgb(0 0 0 / 0.6);
+}
+
+/* ── Buttons: brand gradient with a neon glow ──────────────────────────────── */
+
+:root[data-theme="premium"] .btn-brand,
+:root[data-theme="premium"] :is(.bg-stone-900, .bg-stone-800) {
+  background-color: var(--pm-solid);
+  background-image: linear-gradient(120deg, var(--pm-solid), var(--pm-solid-2));
+  border-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 8px 22px -10px var(--pm-neon);
+}
+:root[data-theme="premium"] .btn-brand:not(:disabled):hover,
+:root[data-theme="premium"] :is(.hover\:bg-stone-800, .hover\:bg-stone-700):not(:disabled):hover {
+  background-color: var(--pm-solid);
+  filter: brightness(1.12);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 10px 28px -8px var(--pm-neon);
+}
+
+/* ── Text in status colours, brightened to read on the dark glass ─────────── */
+
+:root[data-theme="premium"] :is(.text-red-500, .text-red-600, .text-red-700) { color: #fb7185; }
+:root[data-theme="premium"] :is(.text-green-600, .text-green-700, .text-emerald-600, .text-emerald-700) { color: #34d399; }
+:root[data-theme="premium"] :is(.text-amber-600, .text-amber-700, .text-amber-800, .text-amber-900, .text-yellow-700) { color: #fbbf24; }
+:root[data-theme="premium"] .text-blue-700 { color: #93c5fd; }
+:root[data-theme="premium"] .text-gray-600 { color: var(--color-stone-600); }
+:root[data-theme="premium"] .text-gray-900 { color: var(--color-stone-900); }
+/* Yellow warning toast keeps dark text */
+:root[data-theme="premium"] .bg-amber-400 { color: #1c1917; }
+
+/* ── Dashboard ─────────────────────────────────────────────────────────────── */
+
+/* Each section becomes a glass panel holding its title and its card */
+:root[data-theme="premium"] .dash-panel {
+  padding: 1rem;
+  border-radius: 1.5rem;
+  background-color: color-mix(in srgb, var(--pm-neon) 4%, rgb(255 255 255 / 0.025));
+  border: 1px solid var(--color-card-border);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 24px 48px -32px rgb(0 0 0 / 0.8);
+}
+:root[data-theme="premium"] .dash-panel > :first-child {
+  margin-bottom: 0.875rem;
+}
+/* On phones the panel and its icon would squeeze the titles */
+:root[data-theme="premium"]:not([data-bp~="sm"]) .dash-panel {
+  padding: 0.75rem;
+  border-radius: 1.25rem;
+}
+:root[data-theme="premium"]:not([data-bp~="sm"]) .section-icon {
+  display: none;
+}
+:root[data-theme="premium"] .section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  color: var(--pm-neon);
+  background-color: color-mix(in srgb, var(--pm-neon) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pm-neon) 40%, transparent), 0 0 16px -4px var(--pm-neon);
+}
+
+/* KPI cards: a tint and a glow in each card's own shade of the brand */
+:root[data-theme="premium"] .kpi-card {
+  background-image:
+    radial-gradient(ellipse 80% 70% at 100% 0%, color-mix(in srgb, var(--kpi-accent) 16%, transparent), transparent 70%),
+    linear-gradient(165deg, rgb(255 255 255 / 0.05), transparent 45%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    inset 0 0 0 1px color-mix(in srgb, var(--kpi-accent) 14%, transparent) !important;
+}
+:root[data-theme="premium"] .kpi-icon {
+  color: var(--kpi-accent) !important;
+  background-color: color-mix(in srgb, var(--kpi-accent) 15%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kpi-accent) 45%, transparent), 0 0 18px -4px var(--kpi-accent);
+}
+
+/* Quick actions: outlined in neon */
+:root[data-theme="premium"] .quick-action {
+  border-color: color-mix(in srgb, var(--pm-neon) 40%, transparent) !important;
+  box-shadow: 0 0 18px -10px var(--pm-neon) !important;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+:root[data-theme="premium"] .quick-action:hover {
+  box-shadow: 0 0 22px -6px var(--pm-neon) !important;
+}
+
+/* Next appointments: a neon line along the day */
+:root[data-theme="premium"] .upcoming-day {
+  box-shadow: inset 3px 0 0 var(--pm-neon);
+}
+
+/* Service bars keep the colour chosen for each service, and glow with it */
+:root[data-theme="premium"] .svc-bar {
+  box-shadow: 0 0 10px -1px currentColor;
+}
+:root[data-theme="premium"] :has(> .svc-bar) {
+  overflow: visible;
+}

@@ -167,7 +167,7 @@ export const Clients = () => {
                     the cards, so it is invisible when the letter is not stuck. It is
                     a bit wider than the cards so their shadows don't show at the sides.
                   */}
-                  <h2 className={`sticky -top-6 md:-top-8 z-10 bg-page-bg -mx-3 px-3 pt-3 pb-1 text-lg font-serif font-semibold text-on-page mb-4 after:content-[''] after:absolute after:inset-x-0 after:top-full after:bg-gradient-to-b ${stuckLetter === letter ? 'after:h-10' : 'after:h-4'} after:from-page-bg after:to-transparent after:pointer-events-none`}>
+                  <h2 data-stuck={stuckLetter === letter || undefined} className={`sticky -top-6 md:-top-8 z-10 bg-page-bg -mx-3 px-3 pt-3 pb-1 text-lg font-serif font-semibold text-on-page mb-4 after:content-[''] after:absolute after:inset-x-0 after:top-full after:bg-gradient-to-b ${stuckLetter === letter ? 'after:h-10' : 'after:h-4'} after:from-page-bg after:to-transparent after:pointer-events-none`}>
                     {letter}
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">

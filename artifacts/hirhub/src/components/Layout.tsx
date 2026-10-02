@@ -17,9 +17,8 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import lumiiLogo from '../assets/lumii-logo.png';
 
-const SIDEBAR_BG = 'var(--color-brand-dark)';
 const SIDEBAR_BORDER = 'rgba(245,240,227,0.06)';
-const NAV_ACTIVE_BG = 'rgba(245,240,227,0.15)';
+const NAV_ACTIVE_BG = 'var(--nav-active-bg)';
 const NAV_ACTIVE_TEXT = '#F5F0E3';
 const NAV_INACTIVE_TEXT = 'var(--color-brand-muted)';
 const NAV_HOVER_BG = 'rgba(245,240,227,0.06)';
@@ -52,11 +51,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const userDisplayName = user?.name?.trim() || user?.username || '';
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden" style={{ background: SIDEBAR_BG }}>
+    <div className="app-shell flex h-[100dvh] w-full overflow-hidden bg-[var(--color-brand-surface)]">
       {/* At the larger text sizes on a short screen the whole sidebar scrolls */}
       <aside
-        className="hidden md:flex w-56 flex-col shrink-0 overflow-y-auto no-scrollbar"
-        style={{ backgroundColor: SIDEBAR_BG, borderRight: `1px solid ${SIDEBAR_BORDER}` }}
+        className="app-sidebar hidden md:flex w-56 flex-col shrink-0 overflow-y-auto no-scrollbar"
+        style={{ borderRight: `1px solid ${SIDEBAR_BORDER}` }}
       >
         <div className="p-6 pb-4 flex flex-col items-center text-center">
           {logoUrl ? (
@@ -90,6 +89,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <Link
                 key={item.path}
                 to={item.path}
+                data-active={isActive || undefined}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
                 style={{
                   backgroundColor: isActive ? NAV_ACTIVE_BG : 'transparent',
@@ -121,6 +121,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           {isAdmin && (
             <Link
               to="/utenti"
+              data-active={isUsersActive || undefined}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
               style={{
                 backgroundColor: isUsersActive ? NAV_ACTIVE_BG : 'transparent',
@@ -147,6 +148,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           {isAdmin && (
             <Link
               to="/impostazioni"
+              data-active={isSettingsActive || undefined}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
               style={{
                 backgroundColor: isSettingsActive ? NAV_ACTIVE_BG : 'transparent',
@@ -204,11 +206,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </aside>
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative rounded-l-2xl bg-page-bg">
+      <div className="app-content flex-1 flex flex-col min-w-0 overflow-hidden relative rounded-l-2xl bg-page-bg">
         <header
-          className="md:hidden px-5 flex items-center justify-between shrink-0"
+          className="app-mobile-header md:hidden px-5 flex items-center justify-between shrink-0 bg-[var(--color-brand-surface)]"
           style={{
-            backgroundColor: SIDEBAR_BG,
             paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.875rem)',
             paddingBottom: '0.875rem',
           }}
@@ -287,35 +288,35 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewSaleOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: '#E8E3D8' }}
+                style={{ borderColor: 'var(--color-card-border)' }}
               >
                 Nuova Vendita
               </button>
               <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewProductOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: '#E8E3D8' }}
+                style={{ borderColor: 'var(--color-card-border)' }}
               >
                 Nuovo Prodotto
               </button>
               <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewServiceOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: '#E8E3D8' }}
+                style={{ borderColor: 'var(--color-card-border)' }}
               >
                 Nuovo Servizio
               </button>
               <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewAppointmentOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: '#E8E3D8' }}
+                style={{ borderColor: 'var(--color-card-border)' }}
               >
                 Nuovo Appuntamento
               </button>
               <button
                 onClick={() => { setIsFabOpen(false); store.openModal('isNewClientOpen'); }}
                 className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: '#E8E3D8' }}
+                style={{ borderColor: 'var(--color-card-border)' }}
               >
                 Nuovo Cliente
               </button>

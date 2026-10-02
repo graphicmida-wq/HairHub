@@ -59,8 +59,7 @@ function AppGate() {
   if (isLoading) {
     return (
       <div
-        className="min-h-[100dvh] flex items-center justify-center"
-        style={{ background: 'var(--color-brand-dark)' }}
+        className="app-shell min-h-[100dvh] flex items-center justify-center bg-[var(--color-brand-surface)]"
       >
         <Loader2 className="w-7 h-7 animate-spin" style={{ color: 'var(--color-brand-muted)' }} />
       </div>
