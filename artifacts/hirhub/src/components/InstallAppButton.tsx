@@ -9,14 +9,14 @@ const HINT_TEXT = "#F5F0E3";
 
 const IosHint = () => (
   <div
-    className="flex items-start gap-2 text-[12px] leading-snug rounded-lg p-3 mt-1"
+    className="flex items-start gap-2 text-[0.75rem] leading-snug rounded-lg p-3 mt-1"
     style={{ backgroundColor: HINT_BG, color: HINT_TEXT }}
   >
     <span>
       Tocca{" "}
-      <Share className="inline w-[14px] h-[14px] align-text-bottom" /> Condividi
+      <Share className="inline w-[0.875rem] h-[0.875rem] align-text-bottom" /> Condividi
       e poi{" "}
-      <Plus className="inline w-[14px] h-[14px] align-text-bottom" /> «Aggiungi a
+      <Plus className="inline w-[0.875rem] h-[0.875rem] align-text-bottom" /> «Aggiungi a
       Home».
     </span>
   </div>
@@ -79,7 +79,7 @@ export const InstallAppButton = ({
           (e.currentTarget as HTMLElement).style.color = NAV_INACTIVE_TEXT;
         }}
       >
-        <Download className="w-[18px] h-[18px] shrink-0" />
+        <Download className="w-[1.125rem] h-[1.125rem] shrink-0" />
         <span>Installa l'app</span>
       </button>
       {showIosHint && ios && !canInstall ? <IosHint /> : null}

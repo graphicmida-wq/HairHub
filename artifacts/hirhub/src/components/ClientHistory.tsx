@@ -20,7 +20,7 @@ const PAGE_SIZE = 10;
 const CHIP = "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95";
 const CHIP_ON = "btn-brand text-white border-transparent";
 const CHIP_OFF = "bg-white text-stone-600 border-stone-200 hover:border-brand-dark/30";
-const SECTION_LABEL = "text-[11px] uppercase tracking-[0.12em] font-semibold text-stone-500";
+const SECTION_LABEL = "text-[0.6875rem] uppercase tracking-[0.12em] font-semibold text-stone-500";
 
 const fmtDate = (d: string) => format(parseISO(d), 'dd/MM/yyyy');
 
@@ -197,7 +197,7 @@ const AppointmentEntry = ({ appt, history }: { appt: Appointment; history: Histo
             {staffName && <span className="font-normal text-stone-500"> · con {staffName}</span>}
           </span>
         </div>
-        <span className={cn('shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm', STATUS_CLASS[appt.status] ?? STATUS_CLASS.prenotato)}>
+        <span className={cn('shrink-0 text-[0.625rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm', STATUS_CLASS[appt.status] ?? STATUS_CLASS.prenotato)}>
           {appt.status}
         </span>
       </div>
@@ -226,7 +226,7 @@ const AppointmentEntry = ({ appt, history }: { appt: Appointment; history: Histo
           <div className="flex flex-wrap items-center gap-1">
             <span className="text-xs text-stone-500 mr-0.5">Usati:</span>
             {used.map((u, i) => (
-              <span key={i} className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">
+              <span key={i} className="text-[0.625rem] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">
                 <span className="uppercase">{u.name}</span> {u.qty}
               </span>
             ))}

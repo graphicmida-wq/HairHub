@@ -50,7 +50,7 @@ export const Login = () => {
                 {salonName}
               </h1>
               <p
-                className="text-[11px] uppercase tracking-[0.2em] mt-1"
+                className="text-[0.6875rem] uppercase tracking-[0.2em] mt-1"
                 style={{ color: 'var(--color-brand-muted)' }}
               >
                 Gestione Salone

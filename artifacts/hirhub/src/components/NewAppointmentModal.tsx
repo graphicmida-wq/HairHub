@@ -35,9 +35,13 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
 
   const { mutate: createAppointment, isPending } = useCreateAppointment({
     mutation: {
-      onSuccess: () => {
+      onSuccess: (_created, { data }) => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
-        toast.show('Appuntamento aggiunto');
+        if (data.serviceIds.length === 0) {
+          toast.show('Appuntamento salvato. Ricordati di inserire il servizio', 'warning');
+        } else {
+          toast.show('Appuntamento aggiunto');
+        }
         onClose();
       },
       onError: (err: unknown) => {
@@ -115,10 +119,6 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
     e.preventDefault();
     if (!formData.clientId) {
       toast.show('Seleziona un cliente', 'error');
-      return;
-    }
-    if (formData.serviceIds.length === 0) {
-      toast.show('Seleziona almeno un servizio', 'error');
       return;
     }
     const servicePrices = formData.serviceIds.map((sid, i) => {

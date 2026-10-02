@@ -87,8 +87,8 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <label className={LABEL}>Telefono</label>
-          <input required type="tel" value={formData.phone}
+          <label className={LABEL}>Telefono <span className="font-normal text-stone-400">(facoltativo)</span></label>
+          <input type="tel" value={formData.phone}
             onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
             className={INPUT} />
         </div>

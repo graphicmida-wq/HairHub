@@ -12,6 +12,7 @@ import { NewProductModal } from './NewProductModal';
 import { NewServiceModal } from './NewServiceModal';
 import { NewSaleModal } from './NewSaleModal';
 import { InstallAppButton } from './InstallAppButton';
+import { MobileNav, useCompactOnScroll } from './MobileNav';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import lumiiLogo from '../assets/lumii-logo.png';
@@ -29,6 +30,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const modalState = useModalStore();
   const { data: settings } = useGetSettings();
   const { user, isAdmin, logout } = useAuth();
+  const { compact: navCompact, onScroll: onMainScroll } = useCompactOnScroll(location.pathname);
 
   const salonName = settings?.salonName ?? "Capelli & Vanitá";
   const logoUrl = settings?.logoUrl ?? null;
@@ -51,8 +53,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden" style={{ background: SIDEBAR_BG }}>
+      {/* At the larger text sizes on a short screen the whole sidebar scrolls */}
       <aside
-        className="hidden md:flex w-56 flex-col shrink-0"
+        className="hidden md:flex w-56 flex-col shrink-0 overflow-y-auto no-scrollbar"
         style={{ backgroundColor: SIDEBAR_BG, borderRight: `1px solid ${SIDEBAR_BORDER}` }}
       >
         <div className="p-6 pb-4 flex flex-col items-center text-center">
@@ -60,10 +63,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <img
               src={logoUrl}
               alt="Logo salone"
-              className="w-28 h-28 rounded-xl object-contain mb-3"
+              className="w-[min(7rem,16vh)] h-[min(7rem,16vh)] rounded-xl object-contain mb-3"
             />
           ) : (
-            <img src={lumiiLogo} alt="Lumii" className="w-24 h-24 object-contain mb-3" />
+            <img src={lumiiLogo} alt="Lumii" className="w-[min(6rem,14vh)] h-[min(6rem,14vh)] object-contain mb-3" />
           )}
           {showName ? (
             <h1
@@ -73,12 +76,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               {salonName}
             </h1>
           ) : null}
-          <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--color-brand-muted)' }}>
+          <p className="text-[0.625rem] uppercase tracking-[0.2em]" style={{ color: 'var(--color-brand-muted)' }}>
             Gestione Salone
           </p>
         </div>
 
-        <nav className="flex-1 px-3 mt-4 flex flex-col gap-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 mt-4 flex flex-col gap-0.5">
           {navItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
@@ -105,7 +108,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   }
                 }}
               >
-                <item.icon className="w-[18px] h-[18px] shrink-0" />
+                <item.icon className="w-[1.125rem] h-[1.125rem] shrink-0" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -136,7 +139,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 }
               }}
             >
-              <UserCog className="w-[18px] h-[18px] shrink-0" />
+              <UserCog className="w-[1.125rem] h-[1.125rem] shrink-0" />
               <span>Utenti</span>
             </Link>
           )}
@@ -162,7 +165,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 }
               }}
             >
-              <Settings className="w-[18px] h-[18px] shrink-0" />
+              <Settings className="w-[1.125rem] h-[1.125rem] shrink-0" />
               <span>Impostazioni</span>
             </Link>
           )}
@@ -177,7 +180,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 <span className="text-sm font-medium truncate" style={{ color: '#F5F0E3' }}>
                   {userDisplayName}
                 </span>
-                <span className="text-[11px] truncate" style={{ color: 'var(--color-brand-muted)' }}>
+                <span className="text-[0.6875rem] truncate" style={{ color: 'var(--color-brand-muted)' }}>
                   {isAdmin ? 'Amministratore' : 'Utente'}
                 </span>
               </div>
@@ -195,7 +198,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   (e.currentTarget as HTMLElement).style.color = 'var(--color-brand-muted)';
                 }}
               >
-                <LogOut className="w-[18px] h-[18px]" />
+                <LogOut className="w-[1.125rem] h-[1.125rem]" />
               </button>
             </div>
           </div>
@@ -262,13 +265,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 pb-mobile-nav">
+        <main onScroll={onMainScroll} className="flex-1 overflow-y-auto scroll-smooth no-scrollbar p-6 md:p-8 pb-mobile-nav">
           <div className="max-w-5xl mx-auto">
             {children}
           </div>
         </main>
       </div>
-      <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40 flex flex-col items-end gap-3">
+      {/* On phones it floats just above the nav pill and follows it as it shrinks (index.css) */}
+      <div
+        className="fixed fab-dock md:bottom-8 right-4 md:right-8 z-40 flex flex-col items-end gap-3"
+        style={{ '--mobile-nav-h': navCompact ? '3.5rem' : '4.25rem' } as React.CSSProperties}
+      >
         <AnimatePresence>
           {isFabOpen && (
             <motion.div
@@ -330,37 +337,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <NewProductModal isOpen={modalState.isNewProductOpen} onClose={() => store.closeModal('isNewProductOpen')} />
       <NewServiceModal isOpen={modalState.isNewServiceOpen} onClose={() => store.closeModal('isNewServiceOpen')} />
       <NewSaleModal isOpen={modalState.isNewSaleOpen} onClose={() => store.closeModal('isNewSaleOpen')} />
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 border-t pb-safe z-30"
-        style={{ backgroundColor: SIDEBAR_BG, borderColor: SIDEBAR_BORDER }}
-      >
-        <div className="flex justify-around items-center h-[72px]">
-          {navItems.map((item) => {
-            const isActive =
-              location.pathname === item.path ||
-              (item.path !== '/' && location.pathname.startsWith(item.path));
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform"
-                onClick={() => setIsFabOpen(false)}
-              >
-                <item.icon
-                  className="w-5 h-5 transition-colors"
-                  style={{ color: isActive ? '#F5F0E3' : 'var(--color-brand-muted)' }}
-                />
-                <span
-                  className="text-[10px] font-medium transition-colors"
-                  style={{ color: isActive ? '#F5F0E3' : 'var(--color-brand-muted)' }}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <MobileNav
+        // "Dashboard" reaches the pill's rounded edge: the short name fits
+        items={navItems.map(item => (item.path === '/' ? { ...item, label: 'Home' } : item))}
+        isActive={path => location.pathname === path || (path !== '/' && location.pathname.startsWith(path))}
+        compact={navCompact}
+        onNavigate={() => setIsFabOpen(false)}
+      />
     </div>
   );
 };

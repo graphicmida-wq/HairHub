@@ -8,7 +8,7 @@ import {
   Clock, ChevronRight, MoreHorizontal, ShoppingBag,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isToday, isTomorrow } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { formatEuro, formatNumber } from '../lib/stock';
@@ -25,6 +25,8 @@ const TEXT_MUTED = 'var(--color-brand-text-muted)';
 const PAGE_HEADING = 'var(--color-on-page-brand)';
 const PAGE_MUTED = 'var(--color-on-page-muted)';
 const PAGE_LINK = 'var(--color-on-page-link)';
+// "Prossimi appuntamenti" is a quick glance: the next few, the rest is in the Agenda
+const MAX_UPCOMING = 5;
 
 const KpiCard = ({
   icon,
@@ -80,7 +82,7 @@ export const Dashboard = () => {
     fatturato, fatturatoParts, thisMonthCount, monthGrowthPct,
     noShowRate, newClientsThisMonth,
     topServices, maxServiceCount,
-    upcomingByDay,
+    upcoming,
     lowStockProducts,
     salesOfMonth,
   } = useStats();
@@ -225,65 +227,82 @@ export const Dashboard = () => {
                   className="bg-white rounded-2xl overflow-hidden"
                   style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
                 >
-                  {upcomingByDay.length === 0 ? (
+                  {!upcoming ? (
                     <div className="p-6 text-center text-sm" style={{ color: TEXT_MUTED }}>
-                      Nessun appuntamento nei prossimi giorni.
+                      Nessun appuntamento in programma.
                     </div>
-                  ) : (
-                    upcomingByDay.map(({ dateStr, appts }) => {
-                      const dateLabel = format(new Date(dateStr + 'T12:00:00'), 'EEEE d MMM', { locale: it });
-                      return (
-                        <div key={dateStr}>
-                          <div className="px-4 py-2" style={{ backgroundColor: '#f3f3f2', borderBottom: `1px solid ${CARD_BORDER}` }}>
-                            <p className="text-xs font-semibold uppercase tracking-wider capitalize" style={{ color: TEXT_MUTED }}>
-                              {dateLabel}
-                            </p>
-                          </div>
-                          <div>
-                            {appts.map(app => {
-                              const client = clients.find(c => c.id === app.clientId);
-                              const serviceNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
-                              return (
-                                <div
-                                  key={app.id}
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={() => navigate(`/agenda?open=${app.id}`)}
-                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/agenda?open=${app.id}`); } }}
-                                  className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
-                                  style={{ borderBottom: `1px solid transparent` }}
-                                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
-                                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                                >
-                                  <div
-                                    className="w-14 flex flex-col items-center justify-center pr-3 mr-3 shrink-0"
-                                    style={{ borderRight: `1px solid ${CARD_BORDER}` }}
-                                  >
-                                    <span className="text-sm font-semibold" style={{ color: TEXT_HEADING }}>{app.time}</span>
-                                    <span className="text-xs flex items-center gap-0.5 mt-0.5" style={{ color: TEXT_MUTED }}>
-                                      <Clock className="w-3 h-3" />
-                                    </span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>
-                                      {client?.firstName} {client?.lastName}
-                                    </p>
-                                    <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{serviceNames}</p>
-                                  </div>
-                                  <div
-                                    className="w-7 h-7 rounded-full border flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                                    style={{ borderColor: CARD_BORDER, color: 'var(--color-brand-primary)' }}
-                                  >
-                                    <ChevronRight className="w-3.5 h-3.5" />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                  ) : (() => {
+                    const day = new Date(upcoming.dateStr + 'T12:00:00');
+                    const dayLabel = isToday(day) ? 'Oggi' : isTomorrow(day) ? 'Domani' : format(day, 'EEEE d MMM', { locale: it });
+                    const shown = upcoming.appts.slice(0, MAX_UPCOMING);
+                    const more = upcoming.appts.length - shown.length;
+                    return (
+                      <div>
+                        <div className="px-4 py-2" style={{ backgroundColor: '#f3f3f2', borderBottom: `1px solid ${CARD_BORDER}` }}>
+                          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>
+                            {dayLabel}
+                          </p>
                         </div>
-                      );
-                    })
-                  )}
+                        <div className="py-0.5">
+                          {shown.map(app => {
+                            const client = clients.find(c => c.id === app.clientId);
+                            const serviceNames = (app.serviceIds ?? []).map((sid: string) => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
+                            const inProgress = isToday(day) && app.time <= upcoming.nowTime;
+                            return (
+                              <div
+                                key={app.id}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => navigate(`/agenda?open=${app.id}`)}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/agenda?open=${app.id}`); } }}
+                                className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer group"
+                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f8f7')}
+                                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                              >
+                                <div
+                                  className="w-14 flex flex-col items-center justify-center pr-3 mr-3 shrink-0"
+                                  style={{ borderRight: `1px solid ${CARD_BORDER}` }}
+                                >
+                                  <span className="text-sm font-semibold" style={{ color: TEXT_HEADING }}>{app.time}</span>
+                                  <span className="text-xs flex items-center gap-0.5 mt-0.5" style={{ color: TEXT_MUTED }}>
+                                    <Clock className="w-3 h-3" />
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>
+                                    {client?.firstName} {client?.lastName}
+                                  </p>
+                                  <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{serviceNames}</p>
+                                </div>
+                                {inProgress && (
+                                  <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 shrink-0 ml-2">
+                                    In corso
+                                  </span>
+                                )}
+                                <div
+                                  className="w-7 h-7 rounded-full border flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shrink-0 ml-2"
+                                  style={{ borderColor: CARD_BORDER, color: 'var(--color-brand-primary)' }}
+                                >
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {more > 0 && (
+                          <Link
+                            to={`/agenda?date=${upcoming.dateStr}`}
+                            className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors hover:bg-stone-50"
+                            style={{ borderTop: `1px solid ${CARD_BORDER}`, color: 'var(--color-brand-primary)' }}
+                          >
+                            Vedi di più
+                            <span style={{ color: TEXT_MUTED }}>· altri {more}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </section>
 

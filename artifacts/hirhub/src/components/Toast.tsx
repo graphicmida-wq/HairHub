@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '../lib/utils';
-import { CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error';
+// warning = saved, but something still needs attention
+export type ToastType = 'success' | 'error' | 'warning';
 
 export interface ToastMessage {
   id: string;
@@ -20,7 +21,7 @@ class ToastStore {
     const id = Math.random().toString(36).slice(2);
     this.toasts = [...this.toasts, { id, message, type }];
     this.emit();
-    setTimeout(() => this.dismiss(id), 4000);
+    setTimeout(() => this.dismiss(id), type === 'warning' ? 6000 : 4000);
   }
 
   dismiss(id: string) {
@@ -62,13 +63,14 @@ export const Toaster = () => {
           key={t.id}
           className={cn(
             "w-full pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm font-medium",
-            t.type === 'success' ? "bg-stone-900 text-white" : "bg-red-600 text-white"
+            t.type === 'success' && "bg-stone-900 text-white",
+            t.type === 'error' && "bg-red-600 text-white",
+            t.type === 'warning' && "bg-amber-400 text-stone-900"
           )}
         >
-          {t.type === 'success'
-            ? <CheckCircle2 className="w-4 h-4 shrink-0 opacity-80" />
-            : <AlertCircle className="w-4 h-4 shrink-0 opacity-80" />
-          }
+          {t.type === 'success' && <CheckCircle2 className="w-4 h-4 shrink-0 opacity-80" />}
+          {t.type === 'error' && <AlertCircle className="w-4 h-4 shrink-0 opacity-80" />}
+          {t.type === 'warning' && <AlertTriangle className="w-4 h-4 shrink-0 opacity-80" />}
           <span className="flex-1">{t.message}</span>
           <button onClick={() => dismiss(t.id)} className="opacity-60 hover:opacity-100 transition-opacity">
             <X className="w-4 h-4" />

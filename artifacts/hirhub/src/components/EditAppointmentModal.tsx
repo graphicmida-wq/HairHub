@@ -25,10 +25,14 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
 
   const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment({
     mutation: {
-      onSuccess: () => {
+      onSuccess: (_updated, { data }) => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
         invalidateStock(queryClient);
-        toast.show('Appuntamento aggiornato');
+        if (data.serviceIds?.length === 0) {
+          toast.show('Appuntamento salvato. Ricordati di inserire il servizio', 'warning');
+        } else {
+          toast.show('Appuntamento aggiornato');
+        }
         onClose();
       },
       onError: (err: unknown) => {
@@ -130,10 +134,6 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!appointmentId) return;
-    if (formData.serviceIds.length === 0) {
-      toast.show('Seleziona almeno un servizio', 'error');
-      return;
-    }
     const servicePrices = formData.serviceIds.map((sid, i) => {
       const v = formData.servicePrices[i];
       if (typeof v === 'number' && Number.isFinite(v)) return v;

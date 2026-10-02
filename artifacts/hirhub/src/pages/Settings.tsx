@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Save, Loader2, CheckCircle2, Palette, Calendar, Users, Plus, Pencil, Trash2, X, Check, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from '../components/Toast';
+import { FontSizeCard } from '../components/FontSizeCard';
 import {
   BRAND_PRESETS,
   paletteFromCustomColor,
@@ -25,37 +26,6 @@ import {
   normalizeBackground,
 } from '../lib/page-background';
 
-const DAYS = [
-  { key: 'monday', label: 'Lunedì' },
-  { key: 'tuesday', label: 'Martedì' },
-  { key: 'wednesday', label: 'Mercoledì' },
-  { key: 'thursday', label: 'Giovedì' },
-  { key: 'friday', label: 'Venerdì' },
-  { key: 'saturday', label: 'Sabato' },
-  { key: 'sunday', label: 'Domenica' },
-] as const;
-
-type DayKey = (typeof DAYS)[number]['key'];
-
-interface DaySchedule {
-  isOpen: boolean;
-  openTime: string;
-  closeTime: string;
-}
-
-type WorkingHours = Record<DayKey, DaySchedule>;
-
-const DEFAULT_HOURS: WorkingHours = {
-  monday: { isOpen: true, openTime: '09:00', closeTime: '19:00' },
-  tuesday: { isOpen: true, openTime: '09:00', closeTime: '19:00' },
-  wednesday: { isOpen: true, openTime: '09:00', closeTime: '19:00' },
-  thursday: { isOpen: true, openTime: '09:00', closeTime: '19:00' },
-  friday: { isOpen: true, openTime: '09:00', closeTime: '19:00' },
-  saturday: { isOpen: true, openTime: '09:00', closeTime: '18:00' },
-  sunday: { isOpen: false, openTime: '09:00', closeTime: '13:00' },
-};
-
-const LS_KEY = 'hirhub_working_hours';
 const LS_INFO_KEY = 'hirhub_salon_info';
 
 interface SalonInfo {
@@ -65,16 +35,6 @@ interface SalonInfo {
   address: string;
   phone: string;
   email: string;
-}
-
-function loadHours(): WorkingHours {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) {
-      return { ...DEFAULT_HOURS, ...JSON.parse(raw) } as WorkingHours;
-    }
-  } catch {}
-  return DEFAULT_HOURS;
 }
 
 function loadInfoFallback(): SalonInfo | null {
@@ -111,7 +71,7 @@ function BrandPreview({ palette, background }: { palette: BrandPalette; backgrou
         </div>
         <div className="flex flex-col items-start gap-0.5 ml-4">
           {['Dashboard', 'Agenda', 'Clienti'].map(item => (
-            <span key={item} className="text-[9px] font-medium" style={{ color: palette.muted }}>
+            <span key={item} className="text-[0.5625rem] font-medium" style={{ color: palette.muted }}>
               {item}
             </span>
           ))}
@@ -137,10 +97,10 @@ function BrandPreview({ palette, background }: { palette: BrandPalette; backgrou
           style={{ backgroundColor: palette.dark, borderColor: palette.dark }}
         >
           <div className="flex justify-between items-start">
-            <span className="text-[11px] font-semibold">Giulia Bianchi</span>
-            <span className="text-[9px] opacity-70 font-mono">10:00</span>
+            <span className="text-[0.6875rem] font-semibold">Giulia Bianchi</span>
+            <span className="text-[0.5625rem] opacity-70 font-mono">10:00</span>
           </div>
-          <span className="text-[10px] opacity-70">Colore Base</span>
+          <span className="text-[0.625rem] opacity-70">Colore Base</span>
         </div>
 
         <div
@@ -148,22 +108,22 @@ function BrandPreview({ palette, background }: { palette: BrandPalette; backgrou
           style={{ backgroundColor: palette.light, borderColor: palette.muted }}
         >
           <div className="flex justify-between items-start">
-            <span className="text-[11px] font-semibold" style={{ color: palette.dark }}>Marco Rossi</span>
-            <span className="text-[9px] font-mono opacity-60" style={{ color: palette.dark }}>11:15</span>
+            <span className="text-[0.6875rem] font-semibold" style={{ color: palette.dark }}>Marco Rossi</span>
+            <span className="text-[0.5625rem] font-mono opacity-60" style={{ color: palette.dark }}>11:15</span>
           </div>
-          <span className="text-[10px] opacity-60" style={{ color: palette.dark }}>Taglio Uomo</span>
+          <span className="text-[0.625rem] opacity-60" style={{ color: palette.dark }}>Taglio Uomo</span>
         </div>
 
         <div className="flex items-center gap-2 bg-white rounded-xl p-2.5 border border-stone-100">
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
+            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[0.625rem] font-bold"
             style={{ backgroundColor: iconBg, color: palette.primary }}
           >
             EC
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-xs font-semibold text-stone-800 truncate">Elena Conti</span>
-            <span className="text-[10px] text-stone-400">333 123 4567</span>
+            <span className="text-[0.625rem] text-stone-400">333 123 4567</span>
           </div>
         </div>
       </div>
@@ -234,9 +194,6 @@ export const Settings = () => {
   const [email, setEmail] = useState('');
   const [infoSaved, setInfoSaved] = useState(false);
 
-  const [hours, setHours] = useState<WorkingHours>(DEFAULT_HOURS);
-  const [hoursSaved, setHoursSaved] = useState(false);
-
   const [activePalette, setActivePalette] = useState<BrandPalette>(() => loadBrandPalette());
   const [customColor, setCustomColor] = useState<string>(() => loadBrandPalette().primary);
   const [colorSaved, setColorSaved] = useState(false);
@@ -271,10 +228,6 @@ export const Settings = () => {
     }
   }, [apiSettings, isLoading]);
 
-  useEffect(() => {
-    setHours(loadHours());
-  }, []);
-
   const handleSaveInfo = () => {
     const payload = {
       salonName,
@@ -300,16 +253,6 @@ export const Settings = () => {
         },
       }
     );
-  };
-
-  const handleSaveHours = () => {
-    localStorage.setItem(LS_KEY, JSON.stringify(hours));
-    setHoursSaved(true);
-    setTimeout(() => setHoursSaved(false), 2500);
-  };
-
-  const updateDay = (day: DayKey, patch: Partial<DaySchedule>) => {
-    setHours(prev => ({ ...prev, [day]: { ...prev[day], ...patch } }));
   };
 
   const handleSelectPreset = useCallback((preset: BrandPalette) => {
@@ -524,6 +467,8 @@ export const Settings = () => {
               </div>
             </div>
 
+            <FontSizeCard />
+
             {/* Brand color card */}
             <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-stone-100">
@@ -559,7 +504,7 @@ export const Settings = () => {
                           className="w-8 h-8 rounded-full shadow-sm block"
                           style={{ backgroundColor: preset.primary }}
                         />
-                        <span className="text-[10px] text-stone-500 leading-tight text-center">
+                        <span className="text-[0.625rem] text-stone-500 leading-tight text-center">
                           {preset.label}
                         </span>
                       </button>
@@ -640,7 +585,7 @@ export const Settings = () => {
                           className="w-10 h-8 rounded-lg block border border-stone-200"
                           style={{ backgroundColor: preset.color }}
                         />
-                        <span className="text-[10px] text-stone-500 leading-tight text-center">
+                        <span className="text-[0.625rem] text-stone-500 leading-tight text-center">
                           {preset.label}
                         </span>
                       </button>
@@ -818,82 +763,6 @@ export const Settings = () => {
                     </button>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Working hours card */}
-            <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-stone-100">
-                <h2 className="text-base font-semibold text-stone-900">Orari di Apertura</h2>
-                <p className="text-sm text-stone-500 mt-0.5">Imposta gli orari di apertura per ogni giorno della settimana.</p>
-              </div>
-
-              <div className="divide-y divide-stone-100">
-                {DAYS.map(({ key, label }) => {
-                  const day = hours[key];
-                  return (
-                    <div key={key} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                      <div className="w-28 shrink-0">
-                        <span className="text-sm font-medium text-stone-800">{label}</span>
-                      </div>
-
-                      <div className="flex items-center gap-3 flex-1">
-                        <button
-                          type="button"
-                          onClick={() => updateDay(key, { isOpen: !day.isOpen })}
-                          className={cn(
-                            'relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0',
-                            day.isOpen ? 'bg-stone-800' : 'bg-stone-200'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
-                              day.isOpen ? 'translate-x-4' : 'translate-x-1'
-                            )}
-                          />
-                        </button>
-
-                        {day.isOpen ? (
-                          <div className="flex items-center gap-2 flex-1">
-                            <input
-                              type="time"
-                              value={day.openTime}
-                              onChange={e => updateDay(key, { openTime: e.target.value })}
-                              className="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300"
-                            />
-                            <span className="text-stone-400 text-sm">–</span>
-                            <input
-                              type="time"
-                              value={day.closeTime}
-                              onChange={e => updateDay(key, { closeTime: e.target.value })}
-                              className="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300"
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-sm text-stone-400 italic">Chiuso</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-between">
-                {hoursSaved ? (
-                  <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
-                    <CheckCircle2 className="w-4 h-4" /> Salvato
-                  </span>
-                ) : (
-                  <span />
-                )}
-                <button
-                  onClick={handleSaveHours}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  Salva orari
-                </button>
               </div>
             </div>
 

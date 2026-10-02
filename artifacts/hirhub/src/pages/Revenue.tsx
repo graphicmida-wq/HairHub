@@ -14,6 +14,7 @@ import { cn } from '../lib/utils';
 import { formatEuro } from '../lib/stock';
 import { previousPeriod, timeSlots, ymd } from '../lib/period';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
+import { useFontScale } from '../lib/font-scale';
 
 // Validated categorical trio (blue / orange / aqua), in this order
 const SERIES = {
@@ -146,6 +147,7 @@ const SectionTitle = ({ children, action }: { children: ReactNode; action?: Reac
 );
 
 export const Revenue = () => {
+  const fontScale = useFontScale();
   const period = usePeriod('mese');
   const { mode, from, to } = period;
   const prev = previousPeriod(mode, from, to);
@@ -333,8 +335,8 @@ export const Revenue = () => {
                     <BarChart data={report.rows} barCategoryGap="22%" margin={{ top: 4, right: 4, left: -6, bottom: 0 }}>
                       <CartesianGrid vertical={false} stroke="#EFEBE3" />
                       <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#E3DED3' }}
-                        tick={{ fontSize: 11, fill: '#8A8578' }} interval="preserveStartEnd" minTickGap={6} />
-                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#8A8578' }} width={54}
+                        tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }} interval="preserveStartEnd" minTickGap={6} />
+                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }} width={54 * fontScale}
                         ticks={yTicks} domain={[0, yTicks[yTicks.length - 1]!]}
                         tickFormatter={v => `€${Number(v).toLocaleString('it-IT')}`} />
                       <Tooltip cursor={{ fill: 'rgba(32,48,79,0.05)' }} content={<ChartTooltip />} />
@@ -390,7 +392,7 @@ export const Revenue = () => {
                     <span className="text-sm font-semibold text-stone-900 tabular-nums">{formatEuro(m.services + m.products)}</span>
                   </div>
                 ))}
-                <p className="px-4 py-2 text-[11px] text-stone-400 bg-stone-50">Le vendite al banco non hanno un operatore e non sono incluse qui.</p>
+                <p className="px-4 py-2 text-[0.6875rem] text-stone-400 bg-stone-50">Le vendite al banco non hanno un operatore e non sono incluse qui.</p>
               </div>
             </section>
 

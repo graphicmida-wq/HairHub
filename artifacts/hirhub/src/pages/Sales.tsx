@@ -20,6 +20,7 @@ import {
 import { BrandDot, tintTileStyle, useBrandColors } from '../lib/product-brand-colors';
 import { timeSlots, ymd } from '../lib/period';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
+import { useFontScale } from '../lib/font-scale';
 
 const KINDS: { value: MovementKind | 'tutti'; label: string }[] = [
   { value: 'tutti', label: 'Tutti' },
@@ -95,6 +96,7 @@ const ChartTooltip = ({ active, payload, unitNote }: {
 };
 
 export const Sales = () => {
+  const fontScale = useFontScale();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const pinnedId = searchParams.get('prodotto');
@@ -278,7 +280,7 @@ export const Sales = () => {
             />
             {searchFocused && suggestions.length > 0 && (
               <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden">
-                <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-[0.15em] text-stone-400">Vedi solo il prodotto</p>
+                <p className="px-4 pt-2 pb-1 text-[0.625rem] uppercase tracking-[0.15em] text-stone-400">Vedi solo il prodotto</p>
                 {suggestions.map(p => (
                   <button key={p.id} type="button"
                     onMouseDown={e => e.preventDefault()}
@@ -328,10 +330,10 @@ export const Sales = () => {
                     <BarChart data={buckets} barGap={2} barCategoryGap="18%" margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
                       <CartesianGrid vertical={false} stroke="#EFEBE3" />
                       <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#E3DED3' }}
-                        tick={{ fontSize: 11, fill: '#8A8578' }} interval="preserveStartEnd" minTickGap={6} />
-                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#8A8578' }}
+                        tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }} interval="preserveStartEnd" minTickGap={6} />
+                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 * fontScale, fill: '#8A8578' }}
                         allowDecimals={false} domain={[0, (max: number) => Math.max(1, Math.ceil(max))]}
-                        tickFormatter={v => formatNumber(Number(v))} width={44} />
+                        tickFormatter={v => formatNumber(Number(v))} width={44 * fontScale} />
                       <Tooltip cursor={{ fill: 'rgba(32,48,79,0.05)' }}
                         content={<ChartTooltip unitNote={pinnedId && !pinnedByWeight ? 'pz' : 'conf.'} />} />
                       <Bar dataKey="sold" name="Venduti" fill={SERIES_SOLD} radius={[4, 4, 0, 0]} maxBarSize={24}
@@ -349,7 +351,7 @@ export const Sales = () => {
 
           {!pinnedId && (
             <section className={cn(CARD, "overflow-hidden")}>
-              <div className="px-4 md:px-5 py-3 border-b border-stone-100 hidden md:grid grid-cols-[1fr_90px_110px_150px] gap-3 text-[11px] uppercase tracking-[0.12em] font-semibold text-stone-500">
+              <div className="px-4 md:px-5 py-3 border-b border-stone-100 hidden md:grid grid-cols-[1fr_5.625rem_6.875rem_9.375rem] gap-3 text-[0.6875rem] uppercase tracking-[0.12em] font-semibold text-stone-500">
                 <span>Prodotto</span><span className="text-right">Venduti</span><span className="text-right">Incasso</span><span className="text-right">Usati nei servizi</span>
               </div>
               <h2 className="md:hidden px-4 pt-3 pb-1 text-sm font-medium text-stone-900">Per prodotto</h2>
@@ -357,7 +359,7 @@ export const Sales = () => {
                 <p className="py-8 text-center text-sm text-stone-400">Nessun prodotto venduto o usato nel periodo.</p>
               ) : rows.map(r => (
                 <button key={r.productId} onClick={() => pinProduct(r.productId)}
-                  className="w-full text-left px-4 md:px-5 py-3 border-b border-stone-50 last:border-b-0 hover:bg-stone-50 transition-colors grid grid-cols-3 md:grid-cols-[1fr_90px_110px_150px] gap-x-3 gap-y-1 items-center">
+                  className="w-full text-left px-4 md:px-5 py-3 border-b border-stone-50 last:border-b-0 hover:bg-stone-50 transition-colors grid grid-cols-3 md:grid-cols-[1fr_5.625rem_6.875rem_9.375rem] gap-x-3 gap-y-1 items-center">
                   <span className="col-span-3 md:col-span-1 min-w-0">
                     <span className="block text-sm font-medium text-stone-900 uppercase leading-tight break-words">{r.name}</span>
                     <span className="block text-xs text-stone-500 uppercase"><BrandDot brand={r.brand} />{r.brand}</span>

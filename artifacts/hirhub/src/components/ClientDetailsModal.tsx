@@ -179,7 +179,7 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
               <div>
                 <h3 className="font-serif text-2xl text-stone-900">{client.firstName} {client.lastName}</h3>
                 <div className="flex items-center gap-2 text-stone-500 mt-1 flex-wrap">
-                  <span className="flex items-center gap-1 text-sm"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>
+                  {client.phone && <span className="flex items-center gap-1 text-sm"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>}
                   {client.email && <span className="flex items-center gap-1 text-sm"><Mail className="w-3.5 h-3.5" /> {client.email}</span>}
                 </div>
               </div>
@@ -341,7 +341,7 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
                           const prod = products.find(p => p.id === fp.productId);
                           const unit = prod?.unitType ?? 'g';
                           return (
-                            <span key={i} className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">
+                            <span key={i} className="text-[0.625rem] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">
                               {prod?.name ?? 'Prodotto'} {fp.quantity}{unit}
                             </span>
                           );

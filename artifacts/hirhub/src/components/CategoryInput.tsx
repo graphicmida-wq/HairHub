@@ -136,7 +136,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
       {isOpen && (
         <div
           className="absolute z-50 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden"
-          style={{ maxHeight: '220px', overflowY: 'auto' }}
+          style={{ maxHeight: '13.75rem', overflowY: 'auto' }}
         >
           {allCategories.length === 0 && !addingNew && (
             <div className="px-4 py-3 text-xs text-stone-400 italic">Nessuna categoria disponibile</div>

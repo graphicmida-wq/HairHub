@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths, addDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { getListStockMovementsQueryKey, useListAppointments, useListClients, useListProducts, useListServices, useListStockMovements } from '@workspace/api-client-react';
 import { toPackages } from './stock';
+import { addMinsToTime } from './utils';
 
 export function useStats() {
   const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
@@ -101,15 +102,24 @@ export function useStats() {
       .filter(a => a.date === today && a.status !== 'annullato')
       .sort((a, b) => a.time.localeCompare(b.time));
 
-    const upcomingByDay = Array.from({ length: 5 }, (_, i) => {
-      const dateStr = format(addDays(now, i), 'yyyy-MM-dd');
-      return {
-        dateStr,
-        appts: appointments
-          .filter(a => a.date === dateStr && a.status !== 'annullato')
-          .sort((a, b) => a.time.localeCompare(b.time)),
-      };
-    }).filter(d => d.appts.length > 0);
+    // "Prossimi appuntamenti": what is left of today (running or still to come);
+    // once today is over, the next day that has bookings
+    const nowTime = format(now, 'HH:mm');
+    const byTime = (a: { time: string }, b: { time: string }) => a.time.localeCompare(b.time);
+    const booked = appointments.filter(a => a.status === 'prenotato');
+    const restOfToday = booked
+      .filter(a => a.date === today && addMinsToTime(a.time, a.durationMins) > nowTime)
+      .sort(byTime);
+    const nextDate = restOfToday.length > 0
+      ? today
+      : booked.map(a => a.date).filter(d => d > today).sort()[0];
+    const upcoming = nextDate
+      ? {
+          dateStr: nextDate,
+          appts: nextDate === today ? restOfToday : booked.filter(a => a.date === nextDate).sort(byTime),
+          nowTime,
+        }
+      : null;
 
     const lowStockProducts = products.filter(p => p.quantity <= p.minThreshold);
 
@@ -150,7 +160,7 @@ export function useStats() {
       topServices,
       maxServiceCount,
       todaysAppointments,
-      upcomingByDay,
+      upcoming,
       lowStockProducts,
       salesOfMonth,
     };

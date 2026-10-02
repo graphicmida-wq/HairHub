@@ -92,7 +92,7 @@ export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
       {isOpen && (suggestions.length > 0 || isNew) && (
         <div
           className="absolute z-50 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden"
-          style={{ maxHeight: '200px', overflowY: 'auto' }}
+          style={{ maxHeight: '12.5rem', overflowY: 'auto' }}
         >
           {suggestions.map(brand => (
             <div

@@ -26,81 +26,82 @@ export const timeDiffMins = (start: string, end: string): number => {
 
 interface CalItem { id: string; time: string; durationMins: number; }
 
+const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+
+/** Hours shown by a calendar grid: 9-20, widened to fit appointments outside that range. */
+export function calendarHours(items: CalItem[], fromHour = 9, toHour = 20): { startHour: number; endHour: number } {
+  let startHour = fromHour;
+  let endHour = toHour;
+  for (const it of items) {
+    const s = toMins(it.time);
+    startHour = Math.min(startHour, Math.floor(s / 60));
+    endHour = Math.max(endHour, Math.ceil((s + it.durationMins) / 60));
+  }
+  return { startHour, endHour: Math.min(endHour, 24) };
+}
+
+export interface CalendarBox<T> {
+  item: T;
+  top: number;
+  height: number;
+  /** Cascade level: each level is drawn shifted right, on top of the previous one */
+  depth: number;
+  /** Position among appointments of the same level drawn side by side */
+  slot: number;
+  slots: number;
+  z: number;
+  /** Height in px from the block's top that no later appointment covers */
+  clearPx: number;
+}
+
 /**
- * Cascade layout: overlapping appointments are shown at ~88% width with a
- * growing horizontal pixel offset per overlap level, so text stays readable.
- * Hovering raises the z-index via the caller (trackIndex drives baseZ).
+ * Cascade layout for one calendar column. An appointment that starts while
+ * another is running (e.g. a blow-dry during colour processing) is drawn on
+ * top of it, one level to the right, leaving the earlier one's header and
+ * colour visible. Appointments starting too close together for that (the
+ * later one would cover the earlier one's time and name) share their level
+ * side by side instead.
  */
 export function computeCalendarLayout<T extends CalItem>(
-  items: T[], startHour: number, hourH: number, minH = 22,
-): Array<{ item: T; top: number; height: number; leftPct: number; widthPct: number; trackIndex: number }> {
-  if (items.length === 0) return [];
-  const toM = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  items: T[], startHour: number, hourH: number, { minH = 18, headerPx = 36 } = {},
+): CalendarBox<T>[] {
   const PPM = hourH / 60;
-  const es = items
-    .map((it) => ({ it, s: toM(it.time), e: toM(it.time) + Math.max(it.durationMins, 5) }))
-    .sort((a, b) => a.s - b.s || a.e - b.e);
+  const closeMins = headerPx / PPM;
+  type Group = { depth: number; slotEnds: number[] };
+  type Ev = { it: T; s: number; e: number; depth: number; slot: number; group: Group };
+  const evs: Ev[] = items
+    .map(it => {
+      const s = toMins(it.time);
+      return { it, s, e: s + Math.max(it.durationMins, 5), depth: 0, slot: 0, group: { depth: 0, slotEnds: [] } };
+    })
+    .sort((a, b) => a.s - b.s || b.e - a.e);
 
-  const clusters: Array<typeof es> = [];
-  let current: typeof es = [];
-  let currentEnd = -1;
-
-  for (const ev of es) {
-    if (current.length === 0) {
-      current = [ev];
-      currentEnd = ev.e;
-      continue;
+  evs.forEach((ev, i) => {
+    const running = evs.slice(0, i).filter(p => p.e > ev.s);
+    const close = running.filter(p => ev.s - p.s < closeMins);
+    if (close.length) {
+      const group = close[close.length - 1].group;
+      let slot = group.slotEnds.findIndex(end => end <= ev.s);
+      if (slot === -1) slot = group.slotEnds.length;
+      group.slotEnds[slot] = ev.e;
+      Object.assign(ev, { group, depth: group.depth, slot });
+    } else {
+      const depth = running.length ? Math.max(...running.map(p => p.depth)) + 1 : 0;
+      Object.assign(ev, { depth, slot: 0, group: { depth, slotEnds: [ev.e] } });
     }
-    if (ev.s < currentEnd) {
-      current.push(ev);
-      currentEnd = Math.max(currentEnd, ev.e);
-      continue;
-    }
-    clusters.push(current);
-    current = [ev];
-    currentEnd = ev.e;
-  }
-  if (current.length) clusters.push(current);
-
-  const positions = new Map<string, { col: number; cols: number }>();
-
-  for (const cluster of clusters) {
-    const colsEnd: number[] = [];
-    const colFor = new Map<string, number>();
-
-    for (const ev of cluster) {
-      let placedCol = -1;
-      for (let i = 0; i < colsEnd.length; i += 1) {
-        if (ev.s >= colsEnd[i]) {
-          placedCol = i;
-          break;
-        }
-      }
-      if (placedCol === -1) {
-        placedCol = colsEnd.length;
-        colsEnd.push(ev.e);
-      } else {
-        colsEnd[placedCol] = ev.e;
-      }
-      colFor.set(ev.it.id, placedCol);
-    }
-
-    const cols = Math.max(1, colsEnd.length);
-    for (const ev of cluster) {
-      const col = colFor.get(ev.it.id) ?? 0;
-      positions.set(ev.it.id, { col, cols });
-    }
-  }
-
-  return es.map((e) => {
-    const pos = positions.get(e.it.id) ?? { col: 0, cols: 1 };
-    return {
-      item: e.it,
-      top: (e.s - startHour * 60) * PPM,
-      height: Math.max(e.it.durationMins * PPM, minH),
-      leftPct: pos.col / pos.cols,
-      widthPct: 1 / pos.cols,
-      trackIndex: pos.col,
-    };
   });
+
+  return evs.map((ev, i) => ({
+    item: ev.it,
+    clearPx: evs.slice(i + 1).reduce(
+      (min, o) => (o.depth > ev.depth && o.s < ev.e ? Math.min(min, (o.s - ev.s) * PPM) : min),
+      Infinity,
+    ),
+    top: (ev.s - startHour * 60) * PPM,
+    height: Math.max((ev.e - ev.s) * PPM, minH),
+    depth: ev.depth,
+    slot: ev.slot,
+    slots: ev.group.slotEnds.length,
+    z: i + 1,
+  }));
 }

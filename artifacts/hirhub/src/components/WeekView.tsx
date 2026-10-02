@@ -1,24 +1,11 @@
 import React, { useRef } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Plus } from 'lucide-react';
-import { cn, hexAlpha, computeCalendarLayout, addMinsToTime } from '../lib/utils';
-
-interface Appointment {
-  id: string;
-  clientId: string;
-  serviceIds: string[];
-  staffId?: string | null;
-  date: string;
-  time: string;
-  durationMins: number;
-  status: string;
-  notes?: string | null;
-}
-
-interface Client { id: string; firstName: string; lastName: string; }
-interface Service { id: string; name: string; color: string; }
-interface StaffMember { id: string; name: string; color: string; role?: string | null; }
+import { Plus, ChevronRight } from 'lucide-react';
+import type { Appointment, Client, Service, StaffMember } from '@workspace/api-client-react';
+import { cn, computeCalendarLayout, calendarHours, addMinsToTime } from '../lib/utils';
+import { AppointmentBlock, type BlockInteraction } from './AppointmentBlock';
+import { useFontScale } from '../lib/font-scale';
 
 interface WeekViewProps {
   weekDays: Date[];
@@ -27,16 +14,17 @@ interface WeekViewProps {
   services: Service[];
   staff?: StaffMember[];
   staffFilter?: string | null;
-  onAppointmentClick: (id: string) => void;
+  interaction: BlockInteraction;
+  /** Rows of the phone list open the appointment directly */
+  onAppointmentOpen: (id: string) => void;
   onSlotClick: (date: string, time: string) => void;
+  onDayClick: (day: Date) => void;
 }
 
-const HOURS = Array.from({ length: 11 }, (_, i) =>
-  `${(i + 9).toString().padStart(2, '0')}:00`
-);
-const START_HOUR = 9;
-const HOUR_H = 72;
+/** Height of one hour at the normal text size; it grows with the text size setting */
+const HOUR_H = 96;
 
+/** Week grid on large screens; on phones and portrait tablets a list grouped by day. Rendered inside the agenda's surface. */
 export const WeekView = ({
   weekDays,
   appointments,
@@ -44,46 +32,42 @@ export const WeekView = ({
   services,
   staff = [],
   staffFilter = null,
-  onAppointmentClick,
+  interaction,
+  onAppointmentOpen,
   onSlotClick,
+  onDayClick,
 }: WeekViewProps) => {
+  const scale = useFontScale();
+  const hourH = Math.round(HOUR_H * scale);
   const today = new Date();
   const headerScrollRef = useRef<HTMLDivElement>(null);
-  const bodyScrollRef = useRef<HTMLDivElement>(null);
 
-  const filteredApps = staffFilter
-    ? appointments.filter(a => a.staffId === staffFilter)
-    : appointments;
+  const dayStrings = weekDays.map(d => format(d, 'yyyy-MM-dd'));
+  const weekApps = appointments.filter(a =>
+    dayStrings.includes(a.date) && (!staffFilter || a.staffId === staffFilter)
+  );
+  const { startHour, endHour } = calendarHours(weekApps);
+  const hours = Array.from({ length: endHour - startHour }, (_, i) => `${String(startHour + i).padStart(2, '0')}:00`);
+  const totalH = hours.length * hourH;
 
-  const onBodyScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (headerScrollRef.current) headerScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
-  };
-  const onHeaderScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (bodyScrollRef.current) bodyScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
-  };
-
-  const dayColClass =
-    'shrink-0 w-[calc((100vw-2.5rem)/3)] md:flex-1 md:w-0 border-l border-stone-100 first:border-l-0';
-
-  const totalH = HOURS.length * HOUR_H;
+  const dayColClass = 'flex-1 min-w-[6.25rem] border-l border-stone-100 first:border-l-0';
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-      {/* Day headers */}
-      <div className="flex border-b border-stone-100 sticky top-0 bg-white z-10">
-        <div className="w-10 md:w-14 shrink-0" />
-        <div
-          ref={headerScrollRef}
-          onScroll={onHeaderScroll}
-          className="flex-1 overflow-x-auto no-scrollbar"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          <div className="flex">
+    <>
+      {/* ── Grid (large screens) ───────────────────────────────────────── */}
+      <div className="hidden lg:block">
+        <div className="flex border-b border-stone-100 sticky -top-8 bg-white z-10">
+          <div className="w-14 shrink-0" />
+          <div ref={headerScrollRef} className="flex flex-1 overflow-hidden">
             {weekDays.map(day => {
               const isToday = isSameDay(day, today);
               return (
-                <div key={day.toISOString()} className={cn(dayColClass, 'text-center py-2 px-1')}>
-                  <p className={cn('text-[10px] font-semibold uppercase tracking-wider', isToday ? 'text-brand-dark' : 'text-stone-400')}>
+                <button
+                  key={day.toISOString()}
+                  onClick={() => onDayClick(day)}
+                  className={cn(dayColClass, 'text-center py-2 px-1 hover:bg-stone-50 transition-colors')}
+                >
+                  <p className={cn('text-[0.625rem] font-semibold uppercase tracking-wider', isToday ? 'text-brand-dark' : 'text-stone-400')}>
                     {format(day, 'EEE', { locale: it })}
                   </p>
                   <p className={cn('text-sm font-medium mt-0.5', isToday
@@ -91,45 +75,37 @@ export const WeekView = ({
                     : 'text-stone-700')}>
                     {format(day, 'd')}
                   </p>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
-      </div>
 
-      {/* Body */}
-      <div className="flex">
-        {/* Time gutter */}
-        <div className="w-10 md:w-14 shrink-0 relative" style={{ height: totalH }}>
-          {HOURS.map((hour, i) => (
-            <div key={hour} className="absolute right-1 md:right-2" style={{ top: i * HOUR_H + 4 }}>
-              <span className="text-[9px] md:text-[10px] font-medium text-stone-400 leading-none">{hour}</span>
-            </div>
-          ))}
-        </div>
+        <div className="flex pt-3 pb-2">
+          <div className="w-14 shrink-0 relative" style={{ height: totalH }}>
+            {hours.map((hour, i) => (
+              <div key={hour} className="absolute right-2" style={{ top: i * hourH + 4 * scale }}>
+                <span className="text-[0.625rem] font-medium text-stone-400 leading-none">{hour}</span>
+              </div>
+            ))}
+          </div>
 
-        {/* Day columns */}
-        <div
-          ref={bodyScrollRef}
-          onScroll={onBodyScroll}
-          className="flex-1 overflow-x-auto no-scrollbar"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          <div className="flex" style={{ height: totalH }}>
-            {weekDays.map(day => {
-              const dateStr = format(day, 'yyyy-MM-dd');
-              const dayApps = filteredApps.filter(a => a.date === dateStr);
-              const layout = computeCalendarLayout(dayApps, START_HOUR, HOUR_H, 76);
-
+          <div
+            onScroll={e => { if (headerScrollRef.current) headerScrollRef.current.scrollLeft = e.currentTarget.scrollLeft; }}
+            className="flex flex-1 overflow-x-auto no-scrollbar isolate"
+          >
+            {weekDays.map((day, d) => {
+              const dateStr = dayStrings[d];
+              const layout = computeCalendarLayout(
+                weekApps.filter(a => a.date === dateStr), startHour, hourH, { minH: 18 * scale, headerPx: 26 * scale },
+              );
               return (
-                <div key={day.toISOString()} className={cn(dayColClass, 'relative')}>
-                  {/* Hour grid lines — clickable to add appointment */}
-                  {HOURS.map((hour, i) => (
+                <div key={dateStr} className={cn(dayColClass, 'relative')} style={{ height: totalH }}>
+                  {hours.map((hour, i) => (
                     <div
                       key={hour}
                       className="absolute left-0 right-0 border-b border-stone-50 hover:bg-stone-50/60 transition-colors cursor-pointer group"
-                      style={{ top: i * HOUR_H, height: HOUR_H }}
+                      style={{ top: i * hourH, height: hourH }}
                       onClick={() => onSlotClick(dateStr, hour)}
                     >
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -137,61 +113,86 @@ export const WeekView = ({
                       </div>
                     </div>
                   ))}
-
-                  {/* Appointments — absolutely positioned by time + duration */}
-                  {layout.map(({ item: app, top, height, leftPct, widthPct, trackIndex }) => {
-                    const client = clients.find(c => c.id === app.clientId);
-                    const primaryServiceId = app.serviceIds[0];
-                    const primaryService = primaryServiceId ? services.find(s => s.id === primaryServiceId) : undefined;
-                    const serviceNames = app.serviceIds.map(sid => services.find(s => s.id === sid)?.name).filter(Boolean).join(' · ');
-                    const isCancelled = app.status === 'annullato';
-                    const isNoShow = app.status === 'no-show';
-                    const isCompleted = app.status === 'completato';
-                    const sc = primaryService?.color ?? '#94a3b8';
-                    const baseZ = trackIndex + 1;
-                    const clientName = `${client?.firstName ?? ''} ${client?.lastName ?? ''}`.trim();
-                    return (
-                      <div
-                        key={app.id}
-                        onClick={e => { e.stopPropagation(); onAppointmentClick(app.id); }}
-                        onMouseEnter={e => { e.currentTarget.style.zIndex = '50'; }}
-                        onMouseLeave={e => { e.currentTarget.style.zIndex = String(baseZ); }}
-                        className={cn(
-                          'absolute rounded-lg border border-stone-200 px-2 py-1 cursor-pointer hover:shadow-md transition-shadow overflow-hidden flex flex-col',
-                          isCompleted ? 'bg-stone-50 text-stone-400' : 'text-stone-800',
-                          (isCancelled || isNoShow) && 'text-stone-400',
-                        )}
-                        style={{
-                          top: top + 2,
-                          height: height - 4,
-                          left: `calc(${leftPct * 100}% + 2px)`,
-                          width: `calc(${widthPct * 100}% - 4px)`,
-                          borderLeftColor: sc,
-                          borderLeftWidth: '24px',
-                          zIndex: baseZ,
-                          ...(!isCompleted && {
-                            backgroundColor: '#ffffff',
-                          }),
-                        }}
-                      >
-                        <p className="text-[9px] font-bold leading-none tracking-wide opacity-80">
-                          {app.time} → {addMinsToTime(app.time, app.durationMins)}
-                        </p>
-                        <p className={cn('text-[10px] leading-tight truncate mt-0.5', isCancelled && 'line-through')}>
-                          <span className="font-semibold">{clientName || '(Senza nome)'}</span>
-                        </p>
-                        <p className="text-[9px] leading-tight truncate opacity-50">
-                          {serviceNames}
-                        </p>
-                      </div>
-                    );
-                  })}
+                  {layout.map(box => (
+                    <AppointmentBlock
+                      key={box.item.id}
+                      box={box}
+                      clients={clients}
+                      services={services}
+                      interaction={interaction}
+                      compact
+                    />
+                  ))}
                 </div>
               );
             })}
           </div>
         </div>
       </div>
-    </div>
+
+      {/* ── List grouped by day (phones, portrait tablets) ─────────────── */}
+      <div className="lg:hidden">
+        {weekDays.map((day, d) => {
+          const dayApps = weekApps
+            .filter(a => a.date === dayStrings[d])
+            .sort((a, b) => a.time.localeCompare(b.time));
+          const isToday = isSameDay(day, today);
+          return (
+            <section key={dayStrings[d]} className="border-b border-stone-100 last:border-b-0">
+              <button
+                onClick={() => onDayClick(day)}
+                className="w-full flex items-center justify-between px-4 py-2.5 border-b border-stone-100 bg-stone-50 active:bg-stone-100 sticky -top-6 md:-top-8 z-10"
+              >
+                <span className="flex items-baseline gap-2">
+                  <span className={cn('text-xs font-semibold uppercase tracking-wider', isToday ? 'text-brand-dark' : 'text-stone-500')}>
+                    {format(day, 'EEE d MMM', { locale: it })}
+                  </span>
+                  {isToday && <span className="text-[0.625rem] font-semibold text-white bg-stone-900 px-1.5 py-0.5 rounded-full">Oggi</span>}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-stone-400">
+                  {dayApps.length === 0 ? 'Nessun appuntamento' : `${dayApps.length} appuntament${dayApps.length === 1 ? 'o' : 'i'}`}
+                  <ChevronRight className="w-4 h-4" />
+                </span>
+              </button>
+              {dayApps.map(app => {
+                const client = clients.find(c => c.id === app.clientId);
+                const member = staff.find(m => m.id === app.staffId);
+                const appServices = app.serviceIds.map(sid => services.find(s => s.id === sid)).filter(Boolean) as Service[];
+                const isCancelled = app.status === 'annullato';
+                const isMuted = isCancelled || app.status === 'no-show' || app.status === 'completato';
+                return (
+                  <button
+                    key={app.id}
+                    onClick={() => onAppointmentOpen(app.id)}
+                    className={cn(
+                      'w-full flex items-stretch gap-3 px-4 py-2.5 text-left border-b border-stone-50 last:border-b-0 active:bg-stone-50',
+                      isMuted && 'opacity-60',
+                    )}
+                  >
+                    <span className="w-[4.625rem] shrink-0 text-xs font-semibold text-stone-800 tabular-nums pt-0.5">
+                      {app.time}
+                      <span className="block font-normal text-stone-400">{addMinsToTime(app.time, app.durationMins)}</span>
+                    </span>
+                    <span className="w-1 rounded-full shrink-0" style={{ backgroundColor: appServices[0]?.color ?? '#94a3b8' }} />
+                    <span className="flex-1 min-w-0">
+                      <span className={cn('block text-sm font-semibold text-stone-900 truncate', isCancelled && 'line-through')}>
+                        {client ? `${client.firstName} ${client.lastName}` : '(Senza nome)'}
+                      </span>
+                      <span className="block text-xs text-stone-500 truncate">
+                        {appServices.map(s => s.name).join(' · ') || 'Servizio da inserire'}
+                      </span>
+                    </span>
+                    <span className="shrink-0 flex items-center gap-1 text-[0.6875rem] text-stone-500 self-center">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: member?.color ?? '#94a3b8' }} />
+                      {member?.name ?? '—'}
+                    </span>
+                  </button>
+                );
+              })}
+            </section>
+          );
+        })}
+      </div>
+    </>
   );
 };

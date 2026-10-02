@@ -1,6 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
 @import "tailwindcss";
 
+/* Breakpoints follow the text size setting (lib/font-scale.ts): a larger text
+   size narrows the layout like the browser zoom does, so a portrait tablet at
+   "Molto grande" gets the phone layout instead of a squeezed desktop one.
+   <html data-bp> lists the breakpoints the scaled width reaches. */
+@custom-variant sm (&:where([data-bp~="sm"] *));
+@custom-variant md (&:where([data-bp~="md"] *));
+@custom-variant lg (&:where([data-bp~="lg"] *));
+@custom-variant xl (&:where([data-bp~="xl"] *));
+@custom-variant 2xl (&:where([data-bp~="2xl"] *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
@@ -61,10 +71,29 @@ body {
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* Leave room under scrollable content for the fixed mobile bottom nav (72px)
-   + the floating + button + iOS home indicator, so nothing stays hidden. */
-@media (max-width: 767px) {
-  .pb-mobile-nav { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 2.5rem); }
+/* Phone bottom nav (MobileNav): a floating pill, 4.25rem tall when open and
+   3.5rem when closed, kept clear of the iOS home indicator. */
+:root {
+  --mobile-nav-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Leave room under scrollable content for the nav pill + the floating + button */
+:root:not([data-bp~="md"]) .pb-mobile-nav {
+  padding-bottom: calc(var(--mobile-nav-bottom) + 4.25rem + 2.5rem);
+}
+
+/* The + button sits just above the pill and moves down with it when it closes */
+:root:not([data-bp~="md"]) .fab-dock {
+  bottom: calc(var(--mobile-nav-bottom) + var(--mobile-nav-h, 4.25rem) + 0.75rem);
+  transition: bottom 0.3s ease-out;
+}
+
+/* Dark glass in the brand colour: the page shows through, blurred */
+.nav-glass {
+  background-color: var(--color-brand-dark);
+  background-color: color-mix(in srgb, var(--color-brand-dark) 90%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
 }
 
 @keyframes page-enter {

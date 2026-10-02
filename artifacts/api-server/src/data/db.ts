@@ -763,7 +763,8 @@ export async function dbSearchClients(query: string, limit = 20) {
   if (!q) return Promise.resolve([]);
 
   const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(50, Math.floor(limit))) : 20;
-  const pattern = `%${q}%`;
+  // Every word must match somewhere, so "Gino Rossi" or "Rossi Gino" finds the client
+  const words = q.split(/\s+/).map((w) => `%${w}%`);
 
   if (_useMysql) {
     const { clientsTable } = await import("@workspace/db");
@@ -772,10 +773,14 @@ export async function dbSearchClients(query: string, limit = 20) {
       .select()
       .from(clientsTable)
       .where(
-        or(
-          like(clientsTable.firstName, pattern),
-          like(clientsTable.lastName, pattern),
-          like(clientsTable.phone, pattern),
+        and(
+          ...words.map((pattern) =>
+            or(
+              like(clientsTable.firstName, pattern),
+              like(clientsTable.lastName, pattern),
+              like(clientsTable.phone, pattern),
+            ),
+          ),
         ),
       )
       .orderBy(asc(clientsTable.lastName), asc(clientsTable.firstName))
@@ -788,10 +793,14 @@ export async function dbSearchClients(query: string, limit = 20) {
       .select()
       .from(sqliteClients)
       .where(
-        or(
-          like(sqliteClients.firstName, pattern),
-          like(sqliteClients.lastName, pattern),
-          like(sqliteClients.phone, pattern),
+        and(
+          ...words.map((pattern) =>
+            or(
+              like(sqliteClients.firstName, pattern),
+              like(sqliteClients.lastName, pattern),
+              like(sqliteClients.phone, pattern),
+            ),
+          ),
         ),
       )
       .orderBy(asc(sqliteClients.lastName), asc(sqliteClients.firstName))

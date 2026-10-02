@@ -224,7 +224,7 @@ export const Users = () => {
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-stone-900">{u.username}</span>
-                        {isSelf && <span className="text-[11px] text-stone-400">(tu)</span>}
+                        {isSelf && <span className="text-[0.6875rem] text-stone-400">(tu)</span>}
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <input
@@ -284,7 +284,7 @@ export const Users = () => {
                         <div className="flex flex-col min-w-0">
                           <span className="text-sm font-semibold text-stone-900 truncate">
                             {u.name?.trim() || u.username}
-                            {isSelf && <span className="ml-2 text-[11px] font-normal text-stone-400">(tu)</span>}
+                            {isSelf && <span className="ml-2 text-[0.6875rem] font-normal text-stone-400">(tu)</span>}
                           </span>
                           <span className="text-xs text-stone-400 truncate">
                             @{u.username} · {ROLE_LABEL[u.role]}

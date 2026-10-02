@@ -2,7 +2,7 @@ import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import type { Client } from "@workspace/api-client-react";
-import { getListClientsQueryKey, useCreateClient } from "@workspace/api-client-react";
+import { ApiError, customFetch, getListClientsQueryKey, useCreateClient } from "@workspace/api-client-react";
 
 import { useIsMobile } from "../hooks/use-mobile";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
@@ -28,20 +28,15 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Spinner } from "./ui/spinner";
 
-function apiBaseUrl(): string {
-  const raw = import.meta.env.VITE_API_URL as string | undefined;
-  const fallback = import.meta.env.DEV ? "http://localhost:3001" : "";
-  return (raw ?? fallback).replace(/\/+$/, "");
-}
-
+// Same fetch as the generated hooks: base URL and session cookie included
 async function fetchClientByPhone(phone: string, signal?: AbortSignal): Promise<Client | null> {
-  const base = apiBaseUrl();
-  const url = new URL(`${base}/api/clients/by-phone`, window.location.origin);
-  url.searchParams.set("phone", phone);
-  const res = await fetch(base ? url.toString() : `${url.pathname}${url.search}`, { signal });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as Client;
+  const params = new URLSearchParams({ phone });
+  try {
+    return await customFetch<Client>(`/api/clients/by-phone?${params}`, { signal });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
 }
 
 function clientLabel(c: Client): string {
@@ -105,7 +100,8 @@ export function QuickClientCreate({
     },
   });
 
-  const canSubmit = firstName.trim() !== "" && phone.trim() !== "" && !duplicateClient && !isPending;
+  // Only the name is needed: the phone can be added later from the client card
+  const canSubmit = firstName.trim() !== "" && !duplicateClient && !isPending;
 
   const handleSelectDuplicate = () => {
     if (!duplicateClient) return;
@@ -117,6 +113,8 @@ export function QuickClientCreate({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        // The dialog is portaled, but React still bubbles submit to the parent form (e.g. Nuovo Appuntamento)
+        e.stopPropagation();
         createClient({
           data: {
             firstName: firstName.trim(),
@@ -144,7 +142,7 @@ export function QuickClientCreate({
       </div>
       <div className="grid gap-2">
         <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="quick-client-phone">Telefono</Label>
+          <Label htmlFor="quick-client-phone">Telefono <span className="font-normal text-muted-foreground">(facoltativo)</span></Label>
           {isCheckingPhone ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Spinner className="h-3 w-3" />
@@ -159,7 +157,6 @@ export function QuickClientCreate({
             setPhone(e.target.value);
             setDuplicateFromCreate(null);
           }}
-          required
           inputMode="tel"
           autoComplete="tel"
         />

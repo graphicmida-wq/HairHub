@@ -1,19 +1,6 @@
-import * as React from "react"
+import { useBreakpoint } from "../lib/font-scale"
 
-const MOBILE_BREAKPOINT = 768
-
+/** Below the md breakpoint, measured on the width scaled by the text size setting. */
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
-
-  return !!isMobile
+  return !useBreakpoint("md")
 }

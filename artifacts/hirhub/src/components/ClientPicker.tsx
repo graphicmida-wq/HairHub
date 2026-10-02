@@ -1,12 +1,11 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
-import type { Client } from "@workspace/api-client-react";
+import { customFetch, type Client } from "@workspace/api-client-react";
 
 import { Button } from "./ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -22,22 +21,10 @@ function clientLabel(c: Client): string {
   return `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim();
 }
 
-function apiBaseUrl(): string {
-  const raw = import.meta.env.VITE_API_URL as string | undefined;
-  const fallback = import.meta.env.DEV ? "http://localhost:3001" : "";
-  return (raw ?? fallback).replace(/\/+$/, "");
-}
-
-async function fetchClientSearch(q: string, signal?: AbortSignal): Promise<Client[]> {
-  const base = apiBaseUrl();
-  const url = new URL(`${base}/api/clients/search`, window.location.origin);
-  url.searchParams.set("q", q);
-  url.searchParams.set("limit", "20");
-  const res = await fetch(base ? url.toString() : `${url.pathname}${url.search}`, { signal });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-  return (await res.json()) as Client[];
+// Same fetch as the generated hooks: base URL and session cookie included
+function fetchClientSearch(q: string, signal?: AbortSignal): Promise<Client[]> {
+  const params = new URLSearchParams({ q, limit: "20" });
+  return customFetch<Client[]>(`/api/clients/search?${params}`, { signal });
 }
 
 export function ClientPicker({
@@ -56,7 +43,7 @@ export function ClientPicker({
   const debouncedQuery = useDebouncedValue(query, 200);
 
   const minChars = 2;
-  const { data: results = [], isFetching } = useQuery({
+  const { data: results = [], isFetching, isError } = useQuery({
     queryKey: ["client-search", debouncedQuery],
     enabled: open && debouncedQuery.trim().length >= minChars,
     queryFn: ({ signal }) => fetchClientSearch(debouncedQuery.trim(), signal),
@@ -119,8 +106,16 @@ export function ClientPicker({
                   <span>Ricerca…</span>
                 </div>
               ) : null}
-              {!isFetching && debouncedQuery.trim().length >= minChars && results.length === 0 ? (
-                <CommandEmpty>Nessun cliente trovato</CommandEmpty>
+              {/* Plain divs: CommandEmpty never shows here, "+ Nuovo cliente" always counts as an item */}
+              {!isFetching && isError ? (
+                <div className="px-2 py-2 text-sm text-red-600">
+                  Ricerca non riuscita, riprova
+                </div>
+              ) : null}
+              {!isFetching && !isError && debouncedQuery.trim().length >= minChars && results.length === 0 ? (
+                <div className="px-2 py-2 text-sm text-muted-foreground">
+                  Nessun cliente trovato
+                </div>
               ) : null}
               {results.map((c) => {
                 const label = clientLabel(c);

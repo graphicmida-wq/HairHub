@@ -70,7 +70,7 @@ const ProductCard = ({ product, brandColor, onClick }: { product: Product; brand
         {(product.subcategories ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {product.subcategories!.map(sub => (
-              <span key={sub} className="text-[11px] leading-none px-2 py-1 rounded-full bg-stone-100 text-stone-600">{sub}</span>
+              <span key={sub} className="text-[0.6875rem] leading-none px-2 py-1 rounded-full bg-stone-100 text-stone-600">{sub}</span>
             ))}
           </div>
         )}

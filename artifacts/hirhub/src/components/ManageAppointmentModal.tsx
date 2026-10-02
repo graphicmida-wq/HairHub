@@ -51,7 +51,7 @@ export const ManageAppointmentModal = ({
     .map(sid => services.find(s => s.id === sid))
     .filter(Boolean) as typeof services;
 
-  if (!appointment || !client || appointmentServices.length === 0) return null;
+  if (!appointment || !client) return null;
 
   const handleDelete = () => {
     if (window.confirm('Sei sicuro di voler eliminare questo appuntamento?')) {
@@ -105,6 +105,12 @@ export const ManageAppointmentModal = ({
               Info cliente
             </button>
             <div className="flex flex-wrap gap-1 mt-1">
+              {/* Appointments can be booked without a service, to be filled in later */}
+              {appointmentServices.length === 0 && (
+                <span className="text-sm font-medium text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                  Servizio da inserire
+                </span>
+              )}
               {appointmentServices.map((svc, idx) => {
                 const listPrice = appointment.serviceListPrices?.[idx] ?? svc.price;
                 const applied = appointment.servicePrices?.[idx];
@@ -132,7 +138,7 @@ export const ManageAppointmentModal = ({
               </div>
             </div>
           </div>
-          <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-sm ${
+          <span className={`text-[0.625rem] font-bold uppercase tracking-wide px-2 py-1 rounded-sm ${
             appointment.status === 'completato' ? 'bg-green-100 text-green-700' :
             appointment.status === 'annullato' || appointment.status === 'no-show' ? 'bg-red-100 text-red-700' :
             'bg-yellow-100 text-yellow-700'
