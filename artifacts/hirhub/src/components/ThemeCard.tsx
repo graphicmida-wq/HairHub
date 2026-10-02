@@ -71,8 +71,8 @@ const MiniApp = ({ mode, palette, pageBackground }: { mode: ThemeMode; palette: 
 };
 
 const OPTIONS: { mode: ThemeMode; label: string; description: string }[] = [
-  { mode: 'classico', label: 'Classico', description: "Chiaro, l'aspetto di sempre" },
   { mode: 'premium', label: 'Premium scuro', description: 'Vetro scuro e luci nel colore principale' },
+  { mode: 'classico', label: 'Classico', description: "Chiaro, l'aspetto di prima" },
 ];
 
 /** Impostazioni → Aspetto: classic or Premium look, applied at once, saved on this device. */

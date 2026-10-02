@@ -3,6 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    <!-- Premium look (src/lib/theme.ts) from the very first frame, with the salon's
+         colours saved on this device: without it the page shows light for an
+         instant before the app starts. Same rule as loadTheme(): Premium unless
+         this device chose Classico. -->
+    <script>
+      (function () {
+        var root = document.documentElement, theme = null, colors = null;
+        try {
+          theme = localStorage.getItem('lumii-theme');
+          colors = JSON.parse(localStorage.getItem('lumii-premium-colors') || 'null');
+        } catch (e) {}
+        if (theme === 'classico') return;
+        root.setAttribute('data-theme', 'premium');
+        if (colors) for (var name in colors) root.style.setProperty(name, colors[name]);
+      })();
+    </script>
     <title>Lumii</title>
     <meta name="description" content="Lumii — gestionale salone: clienti, agenda, servizi e magazzino." />
     <meta name="theme-color" content="#20304f" />

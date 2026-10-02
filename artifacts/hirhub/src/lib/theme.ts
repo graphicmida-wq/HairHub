@@ -1,17 +1,22 @@
 import { useSyncExternalStore } from 'react';
 
 /**
- * Look of the app (Impostazioni → Aspetto). "Classico" is the light look the app
- * has always had; "Premium" is a dark, glassy look tinted by the brand colour
- * (theme-premium.css). Saved per device, like the text size: the owner can try
- * it on one screen without changing the others, and switch back at any time.
+ * Look of the app (Impostazioni → Aspetto). "Premium" is a dark, glassy look
+ * tinted by the brand colour (theme-premium.css), the default since 2026-10-02;
+ * "Classico" is the light look the app had before. Saved per device, like the
+ * text size: a device that picks Classico keeps it.
+ *
+ * index.html applies the same rule with a tiny inline script, so the very first
+ * frame is already dark: keep the two in step (keys and default).
  */
 
 export type ThemeMode = 'classico' | 'premium';
 
-export const DEFAULT_THEME: ThemeMode = 'classico';
+export const DEFAULT_THEME: ThemeMode = 'premium';
 
 const LS_KEY = 'lumii-theme';
+/** Last computed --pm-* colours, read by index.html before the app starts */
+const COLORS_KEY = 'lumii-premium-colors';
 const listeners = new Set<() => void>();
 let current: ThemeMode = DEFAULT_THEME;
 /** Page background of the Premium look, for the phone status bar */
@@ -20,7 +25,7 @@ let premiumBackground = '#0b1220';
 let classicStatusBar: string | null = null;
 
 export function normalizeTheme(value: unknown): ThemeMode {
-  return value === 'premium' ? 'premium' : DEFAULT_THEME;
+  return value === 'classico' || value === 'premium' ? value : DEFAULT_THEME;
 }
 
 export function loadTheme(): ThemeMode {
@@ -163,6 +168,9 @@ export function applyPremiumPalette(brandPrimary: string) {
   };
   const root = document.documentElement;
   for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
+  try {
+    localStorage.setItem(COLORS_KEY, JSON.stringify(vars));
+  } catch {}
   premiumBackground = bg0;
   if (current === 'premium') updateStatusBar();
 }

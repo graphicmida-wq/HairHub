@@ -10,6 +10,24 @@
    variables that brand-color.ts / page-background.ts write inline on <html>
    and for the few colours components set in inline styles. */
 
+/* Blu Notte colours, only for the very first start on a device, before
+   lib/theme.ts sets (inline on <html>) the ones of the salon's brand */
+:root {
+  --pm-bg-0: #091023;
+  --pm-bg-1: #152751;
+  --pm-surface: #111b34;
+  --pm-neon: #638ef2;
+  --pm-neon-2: #9480f5;
+  --pm-shade-1: #638ef2;
+  --pm-shade-2: #8087f5;
+  --pm-shade-3: #78b6ed;
+  --pm-shade-4: #9f90ea;
+  --pm-solid: #2b65ee;
+  --pm-solid-2: #4c2bee;
+  --pm-text-brand: #dce2ef;
+  --pm-text-muted: #9ba6bf;
+}
+
 /* Shown only in one of the two looks */
 :root[data-theme="premium"] .classic-only { display: none; }
 :root:not([data-theme="premium"]) .premium-only { display: none; }
