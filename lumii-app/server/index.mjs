@@ -56172,7 +56172,7 @@ var createAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 var createAppointmentBodySoldProductsItemUnitPriceMin = 0;
 var CreateAppointmentBody = objectType({
   clientId: stringType(),
-  serviceIds: arrayType(stringType()).min(1),
+  serviceIds: arrayType(stringType()),
   servicePrices: arrayType(numberType().min(createAppointmentBodyServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(createAppointmentBodyServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -56239,7 +56239,7 @@ var updateAppointmentBodyUsedProductsItemQuantityUsedMin = 0;
 var updateAppointmentBodySoldProductsItemUnitPriceMin = 0;
 var UpdateAppointmentBody = objectType({
   clientId: stringType().optional(),
-  serviceIds: arrayType(stringType()).min(1).optional(),
+  serviceIds: arrayType(stringType()).optional(),
   servicePrices: arrayType(numberType().min(updateAppointmentBodyServicePricesItemMin)).nullish(),
   serviceListPrices: arrayType(numberType().min(updateAppointmentBodyServiceListPricesItemMin)).nullish(),
   staffId: stringType().nullish(),
@@ -59761,24 +59761,32 @@ async function dbSearchClients(query, limit = 20) {
   const q = query.trim();
   if (!q) return Promise.resolve([]);
   const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(50, Math.floor(limit))) : 20;
-  const pattern = `%${q}%`;
+  const words = q.split(/\s+/).map((w) => `%${w}%`);
   if (_useMysql) {
     const { clientsTable: clientsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
     const db = getMysqlDb();
     return db.select().from(clientsTable2).where(
-      or(
-        like(clientsTable2.firstName, pattern),
-        like(clientsTable2.lastName, pattern),
-        like(clientsTable2.phone, pattern)
+      and(
+        ...words.map(
+          (pattern) => or(
+            like(clientsTable2.firstName, pattern),
+            like(clientsTable2.lastName, pattern),
+            like(clientsTable2.phone, pattern)
+          )
+        )
       )
     ).orderBy(asc(clientsTable2.lastName), asc(clientsTable2.firstName)).limit(safeLimit).execute();
   }
   return Promise.resolve(
     getSqliteDb().select().from(clients).where(
-      or(
-        like(clients.firstName, pattern),
-        like(clients.lastName, pattern),
-        like(clients.phone, pattern)
+      and(
+        ...words.map(
+          (pattern) => or(
+            like(clients.firstName, pattern),
+            like(clients.lastName, pattern),
+            like(clients.phone, pattern)
+          )
+        )
       )
     ).orderBy(asc(clients.lastName), asc(clients.firstName)).limit(safeLimit).all()
   );
