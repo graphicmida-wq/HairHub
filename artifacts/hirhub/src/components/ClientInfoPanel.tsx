@@ -185,11 +185,12 @@ export function ClientInfoPanel({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
+        {/* A client with a long history must not push the panel off the screen: the content scrolls */}
+        <DrawerContent className="max-h-[90dvh]">
           <DrawerHeader>
             <DrawerTitle>Scheda cliente</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-4">{content}</div>
+          <div className="px-4 pb-4 overflow-y-auto">{content}</div>
         </DrawerContent>
       </Drawer>
     );
@@ -197,7 +198,7 @@ export function ClientInfoPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Scheda cliente</DialogTitle>
         </DialogHeader>
