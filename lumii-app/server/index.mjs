@@ -20488,27 +20488,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router14;
+    module.exports = Router15;
     module.exports.Route = Route;
-    function Router14(options) {
-      if (!(this instanceof Router14)) {
-        return new Router14(options);
+    function Router15(options) {
+      if (!(this instanceof Router15)) {
+        return new Router15(options);
       }
       const opts = options || {};
-      function router14(req, res, next) {
-        router14.handle(req, res, next);
+      function router15(req, res, next) {
+        router15.handle(req, res, next);
       }
-      Object.setPrototypeOf(router14, this);
-      router14.caseSensitive = opts.caseSensitive;
-      router14.mergeParams = opts.mergeParams;
-      router14.params = {};
-      router14.strict = opts.strict;
-      router14.stack = [];
-      return router14;
+      Object.setPrototypeOf(router15, this);
+      router15.caseSensitive = opts.caseSensitive;
+      router15.mergeParams = opts.mergeParams;
+      router15.params = {};
+      router15.strict = opts.strict;
+      router15.stack = [];
+      return router15;
     }
-    Router14.prototype = function() {
+    Router15.prototype = function() {
     };
-    Router14.prototype.param = function param(name, fn) {
+    Router15.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -20528,7 +20528,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router14.prototype.handle = function handle(req, res, callback) {
+    Router15.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20655,7 +20655,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router14.prototype.use = function use(handler) {
+    Router15.prototype.use = function use(handler) {
       let offset = 0;
       let path3 = "/";
       if (typeof handler !== "function") {
@@ -20688,7 +20688,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router14.prototype.route = function route(path3) {
+    Router15.prototype.route = function route(path3) {
       const route2 = new Route(path3);
       const layer = new Layer(path3, {
         sensitive: this.caseSensitive,
@@ -20703,7 +20703,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router14.prototype[method] = function(path3) {
+      Router15.prototype[method] = function(path3) {
         const route = this.route(path3);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20886,13 +20886,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once2 = require_once();
-    var Router14 = require_router();
+    var Router15 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router14 = null;
+      var router15 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20901,13 +20901,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router14 === null) {
-            router14 = new Router14({
+          if (router15 === null) {
+            router15 = new Router15({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router14;
+          return router15;
         }
       });
     };
@@ -20978,15 +20978,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router14 = this.router;
+      var router15 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router14.use(path3, fn2);
+          return router15.use(path3, fn2);
         }
         debug(".use app under %s", path3);
         fn2.mountpath = path3;
         fn2.parent = this;
-        router14.use(path3, function mounted_app(req, res, next) {
+        router15.use(path3, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23513,7 +23513,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router14 = require_router();
+    var Router15 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23535,8 +23535,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router14.Route;
-    exports.Router = Router14;
+    exports.Route = Router15.Route;
+    exports.Router = Router15;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -27419,8 +27419,8 @@ var require_safe_stable_stringify = __commonJS({
     }
     function configure(options) {
       options = { ...options };
-      const fail = getStrictOption(options);
-      if (fail) {
+      const fail2 = getStrictOption(options);
+      if (fail2) {
         if (options.bigint === void 0) {
           options.bigint = false;
         }
@@ -27531,7 +27531,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail ? fail(value) : "null";
+            return isFinite(value) ? String(value) : fail2 ? fail2(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -27542,7 +27542,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail ? fail(value) : void 0;
+            return fail2 ? fail2(value) : void 0;
         }
       }
       function stringifyArrayReplacer(key, value, stack, replacer, spacer, indentation) {
@@ -27622,7 +27622,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail ? fail(value) : "null";
+            return isFinite(value) ? String(value) : fail2 ? fail2(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -27633,7 +27633,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail ? fail(value) : void 0;
+            return fail2 ? fail2(value) : void 0;
         }
       }
       function stringifyIndent(key, value, stack, spacer, indentation) {
@@ -27734,7 +27734,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail ? fail(value) : "null";
+            return isFinite(value) ? String(value) : fail2 ? fail2(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -27745,7 +27745,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail ? fail(value) : void 0;
+            return fail2 ? fail2(value) : void 0;
         }
       }
       function stringifySimple(key, value, stack) {
@@ -27830,7 +27830,7 @@ ${originalIndentation}`;
             return `{${res}}`;
           }
           case "number":
-            return isFinite(value) ? String(value) : fail ? fail(value) : "null";
+            return isFinite(value) ? String(value) : fail2 ? fail2(value) : "null";
           case "boolean":
             return value === true ? "true" : "false";
           case "undefined":
@@ -27841,7 +27841,7 @@ ${originalIndentation}`;
             }
           // fallthrough
           default:
-            return fail ? fail(value) : void 0;
+            return fail2 ? fail2(value) : void 0;
         }
       }
       function stringify2(value, replacer, space) {
@@ -30408,19 +30408,19 @@ function extractTablesRelationalConfig(schema, configHelpers) {
       const relations2 = value.config(
         configHelpers(value.table)
       );
-      let primaryKey;
+      let primaryKey3;
       for (const [relationName, relation] of Object.entries(relations2)) {
         if (tableName) {
           const tableConfig = tablesConfig[tableName];
           tableConfig.relations[relationName] = relation;
-          if (primaryKey) {
-            tableConfig.primaryKey.push(...primaryKey);
+          if (primaryKey3) {
+            tableConfig.primaryKey.push(...primaryKey3);
           }
         } else {
           if (!(dbName in relationsBuffer)) {
             relationsBuffer[dbName] = {
               relations: {},
-              primaryKey
+              primaryKey: primaryKey3
             };
           }
           relationsBuffer[dbName].relations[relationName] = relation;
@@ -36266,12 +36266,18 @@ var init_table3 = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql2@3.22.3_@types+node@25.3.5_/node_modules/drizzle-orm/mysql-core/primary-keys.js
-var PrimaryKeyBuilder2, PrimaryKey2;
+function primaryKey2(...config2) {
+  if (config2[0].columns) {
+    return new PrimaryKeyBuilder3(config2[0].columns, config2[0].name);
+  }
+  return new PrimaryKeyBuilder3(config2);
+}
+var PrimaryKeyBuilder3, PrimaryKey3;
 var init_primary_keys2 = __esm({
   "../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql2@3.22.3_@types+node@25.3.5_/node_modules/drizzle-orm/mysql-core/primary-keys.js"() {
     init_entity();
     init_table3();
-    PrimaryKeyBuilder2 = class {
+    PrimaryKeyBuilder3 = class {
       static [entityKind] = "MySqlPrimaryKeyBuilder";
       /** @internal */
       columns;
@@ -36283,10 +36289,10 @@ var init_primary_keys2 = __esm({
       }
       /** @internal */
       build(table) {
-        return new PrimaryKey2(table, this.columns, this.name);
+        return new PrimaryKey3(table, this.columns, this.name);
       }
     };
-    PrimaryKey2 = class {
+    PrimaryKey3 = class {
       constructor(table, columns, name) {
         this.table = table;
         this.columns = columns;
@@ -51401,11 +51407,50 @@ var init_brand_colors = __esm({
   }
 });
 
+// ../../lib/db/src/schema/catalog-tags.ts
+var catalogTagsTable;
+var init_catalog_tags = __esm({
+  "../../lib/db/src/schema/catalog-tags.ts"() {
+    "use strict";
+    init_mysql_core();
+    catalogTagsTable = mysqlTable(
+      "catalog_tags",
+      {
+        kind: varchar("kind", { length: 20 }).notNull(),
+        nameKey: varchar("name_key", { length: 100 }).notNull(),
+        name: varchar("name", { length: 100 }).notNull()
+      },
+      (t) => [primaryKey2({ columns: [t.kind, t.nameKey] })]
+    );
+  }
+});
+
+// ../../lib/db/src/schema/catalog-subcategories.ts
+var catalogSubcategoriesTable;
+var init_catalog_subcategories = __esm({
+  "../../lib/db/src/schema/catalog-subcategories.ts"() {
+    "use strict";
+    init_mysql_core();
+    catalogSubcategoriesTable = mysqlTable(
+      "catalog_subcategories",
+      {
+        brandKey: varchar("brand_key", { length: 100 }).notNull(),
+        categoryKey: varchar("category_key", { length: 100 }).notNull(),
+        nameKey: varchar("name_key", { length: 100 }).notNull(),
+        name: varchar("name", { length: 100 }).notNull()
+      },
+      (t) => [primaryKey2({ columns: [t.brandKey, t.categoryKey, t.nameKey] })]
+    );
+  }
+});
+
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
   appointmentsTable: () => appointmentsTable,
   brandColorsTable: () => brandColorsTable,
+  catalogSubcategoriesTable: () => catalogSubcategoriesTable,
+  catalogTagsTable: () => catalogTagsTable,
   clientFormulasTable: () => clientFormulasTable,
   clientsTable: () => clientsTable,
   insertAppointmentSchema: () => insertAppointmentSchema,
@@ -51444,6 +51489,8 @@ var init_schema2 = __esm({
     init_users();
     init_stock_movements();
     init_brand_colors();
+    init_catalog_tags();
+    init_catalog_subcategories();
   }
 });
 
@@ -51825,6 +51872,8 @@ var src_exports = {};
 __export(src_exports, {
   appointmentsTable: () => appointmentsTable,
   brandColorsTable: () => brandColorsTable,
+  catalogSubcategoriesTable: () => catalogSubcategoriesTable,
+  catalogTagsTable: () => catalogTagsTable,
   clientFormulasTable: () => clientFormulasTable,
   clientsTable: () => clientsTable,
   getDb: () => getDb,
@@ -51874,7 +51923,7 @@ var init_src = __esm({
 });
 
 // src/app.ts
-var import_express14 = __toESM(require_express2(), 1);
+var import_express15 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
@@ -51883,7 +51932,7 @@ import path2 from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/routes/index.ts
-var import_express13 = __toESM(require_express2(), 1);
+var import_express14 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -56015,6 +56064,142 @@ var UpdateProductResponse = objectType({
 var DeleteProductParams = objectType({
   id: coerce.string()
 });
+var DeleteProductMovementsParams = objectType({
+  id: coerce.string()
+});
+var DeleteProductMovementsResponse = objectType({
+  deleted: numberType().describe(
+    "How many movements were removed (a whole sale counts all its lines)"
+  )
+});
+var GetCatalogResponse = objectType({
+  subcategories: arrayType(
+    objectType({
+      brand: stringType(),
+      category: stringType(),
+      name: stringType(),
+      count: numberType().describe("Products of that brand and category using it")
+    })
+  ),
+  brands: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  ),
+  productCategories: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  ),
+  serviceCategories: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  )
+});
+var AddCatalogTagBody = objectType({
+  kind: enumType([
+    "brand",
+    "product_category",
+    "service_category",
+    "subcategory"
+  ]),
+  name: stringType(),
+  brand: stringType().nullish().describe("Sub-categories only - the brand they belong to"),
+  category: stringType().nullish().describe("Sub-categories only - the product category they belong to")
+});
+var RenameCatalogTagBody = objectType({
+  kind: enumType([
+    "brand",
+    "product_category",
+    "service_category",
+    "subcategory"
+  ]),
+  from: stringType(),
+  to: stringType(),
+  brand: stringType().nullish().describe("Sub-categories only - the brand they belong to"),
+  category: stringType().nullish().describe("Sub-categories only - the product category they belong to")
+});
+var RenameCatalogTagResponse = objectType({
+  subcategories: arrayType(
+    objectType({
+      brand: stringType(),
+      category: stringType(),
+      name: stringType(),
+      count: numberType().describe("Products of that brand and category using it")
+    })
+  ),
+  brands: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  ),
+  productCategories: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  ),
+  serviceCategories: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  )
+});
+var DeleteCatalogTagBody = objectType({
+  kind: enumType([
+    "brand",
+    "product_category",
+    "service_category",
+    "subcategory"
+  ]),
+  name: stringType(),
+  moveTo: stringType().nullish().describe("Where the products/services still using it go"),
+  brand: stringType().nullish().describe("Sub-categories only - the brand they belong to"),
+  category: stringType().nullish().describe("Sub-categories only - the product category they belong to")
+});
+var DeleteCatalogTagResponse = objectType({
+  subcategories: arrayType(
+    objectType({
+      brand: stringType(),
+      category: stringType(),
+      name: stringType(),
+      count: numberType().describe("Products of that brand and category using it")
+    })
+  ),
+  brands: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  ),
+  productCategories: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  ),
+  serviceCategories: arrayType(
+    objectType({
+      name: stringType(),
+      count: numberType().describe("Products (or services, for service categories) using it"),
+      color: stringType().nullish().describe("Brand colour (brands only)")
+    })
+  )
+});
 var ListBrandColorsResponseItem = objectType({
   brand: stringType().describe(
     "Brand name trimmed and lower-cased (how products are grouped by brand)"
@@ -56084,6 +56269,14 @@ var ListStockMovementsResponseItem = objectType({
 var ListStockMovementsResponse = arrayType(
   ListStockMovementsResponseItem
 );
+var DeleteStockMovementParams = objectType({
+  id: coerce.string()
+});
+var DeleteStockMovementResponse = objectType({
+  deleted: numberType().describe(
+    "How many movements were removed (a whole sale counts all its lines)"
+  )
+});
 var createSaleBodyItemsItemUnitPriceMin = 0;
 var CreateSaleBody = objectType({
   date: stringType().describe("YYYY-MM-DD"),
@@ -58330,6 +58523,8 @@ var sqlite_schema_exports = {};
 __export(sqlite_schema_exports, {
   appointments: () => appointments,
   brandColors: () => brandColors,
+  catalogSubcategories: () => catalogSubcategories,
+  catalogTags: () => catalogTags,
   clientFormulas: () => clientFormulas,
   clients: () => clients,
   products: () => products,
@@ -58970,6 +59165,43 @@ var sqliteTable = (name, columns, extraConfig) => {
   return sqliteTableBase(name, columns, extraConfig);
 };
 
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+better-sqlite3@7.6.13_better-sqlite3@12.9.0_mysql2@3.22.3_@types+node@25.3.5_/node_modules/drizzle-orm/sqlite-core/primary-keys.js
+init_entity();
+function primaryKey(...config2) {
+  if (config2[0].columns) {
+    return new PrimaryKeyBuilder2(config2[0].columns, config2[0].name);
+  }
+  return new PrimaryKeyBuilder2(config2);
+}
+var PrimaryKeyBuilder2 = class {
+  static [entityKind] = "SQLitePrimaryKeyBuilder";
+  /** @internal */
+  columns;
+  /** @internal */
+  name;
+  constructor(columns, name) {
+    this.columns = columns;
+    this.name = name;
+  }
+  /** @internal */
+  build(table) {
+    return new PrimaryKey2(table, this.columns, this.name);
+  }
+};
+var PrimaryKey2 = class {
+  constructor(table, columns, name) {
+    this.table = table;
+    this.columns = columns;
+    this.name = name;
+  }
+  static [entityKind] = "SQLitePrimaryKey";
+  columns;
+  name;
+  getName() {
+    return this.name ?? `${this.table[SQLiteTable.Symbol.Name]}_${this.columns.map((column) => column.name).join("_")}_pk`;
+  }
+};
+
 // src/data/sqlite-schema.ts
 var clients = sqliteTable("clients", {
   id: text("id").primaryKey(),
@@ -59061,6 +59293,17 @@ var brandColors = sqliteTable("brand_colors", {
   brand: text("brand").primaryKey(),
   color: text("color").notNull()
 });
+var catalogSubcategories = sqliteTable("catalog_subcategories", {
+  brandKey: text("brand_key").notNull(),
+  categoryKey: text("category_key").notNull(),
+  nameKey: text("name_key").notNull(),
+  name: text("name").notNull()
+}, (t) => [primaryKey({ columns: [t.brandKey, t.categoryKey, t.nameKey] })]);
+var catalogTags = sqliteTable("catalog_tags", {
+  kind: text("kind").notNull(),
+  nameKey: text("name_key").notNull(),
+  name: text("name").notNull()
+}, (t) => [primaryKey({ columns: [t.kind, t.nameKey] })]);
 var users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -59343,7 +59586,24 @@ async function initSqlite() {
   const sqlite = new Database(dbPath);
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
+  _catalogIsNew = !sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_tags'").get();
+  _subcategoriesAreNew = !sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_subcategories'").get();
   createSqliteTables(sqlite);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS catalog_tags (
+      kind TEXT NOT NULL,
+      name_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      PRIMARY KEY (kind, name_key)
+    );
+    CREATE TABLE IF NOT EXISTS catalog_subcategories (
+      brand_key TEXT NOT NULL,
+      category_key TEXT NOT NULL,
+      name_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      PRIMARY KEY (brand_key, category_key, name_key)
+    );
+  `);
   _sqliteDb = sqliteDrizzle(sqlite, { schema: sqlite_schema_exports });
   seedSqliteIfEmpty(_sqliteDb);
   logger.info({ path: dbPath }, "SQLite database initialized");
@@ -59496,6 +59756,33 @@ async function initMysql() {
     CREATE TABLE IF NOT EXISTS brand_colors (
       brand VARCHAR(100) PRIMARY KEY,
       color VARCHAR(9) NOT NULL
+    )
+  `);
+  const catalogExists = await db.execute(sql`
+    SELECT COUNT(*) AS n FROM information_schema.tables
+    WHERE table_schema = DATABASE() AND table_name = 'catalog_tags'
+  `);
+  _catalogIsNew = Number(catalogExists[0]?.[0]?.n ?? 0) === 0;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS catalog_tags (
+      kind VARCHAR(20) NOT NULL,
+      name_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      PRIMARY KEY (kind, name_key)
+    )
+  `);
+  const subcategoriesExist = await db.execute(sql`
+    SELECT COUNT(*) AS n FROM information_schema.tables
+    WHERE table_schema = DATABASE() AND table_name = 'catalog_subcategories'
+  `);
+  _subcategoriesAreNew = Number(subcategoriesExist[0]?.[0]?.n ?? 0) === 0;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS catalog_subcategories (
+      brand_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      category_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      name_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      PRIMARY KEY (brand_key, category_key, name_key)
     )
   `);
   const migrate = async (statement) => {
@@ -59668,6 +59955,8 @@ async function mysqlSeedIfEmpty() {
   logger.info("MySQL demo seed complete");
 }
 var _useMysql = false;
+var _catalogIsNew = false;
+var _subcategoriesAreNew = false;
 async function ensureAdminUser() {
   const count = await dbCountUsers();
   if (count > 0) return;
@@ -59698,6 +59987,8 @@ async function initDb() {
     await initSqlite();
   }
   await ensureAdminUser();
+  if (_catalogIsNew) await seedCatalog();
+  if (_subcategoriesAreNew) await seedSubcategories();
 }
 async function dbGetClients() {
   if (_useMysql) {
@@ -60293,6 +60584,24 @@ async function dbListStockMovements(filter = {}) {
     getSqliteDb().select().from(t).where(conds.length ? and(...conds) : void 0).orderBy(desc(t.date), desc(t.time), desc(t.createdAt)).all().map((r) => normalizeMovement(r))
   );
 }
+async function dbGetStockMovement(id) {
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const rows = await getMysqlDb().select().from(t).where(eq(t.id, id)).execute();
+    return rows[0] ? normalizeMovement(rows[0]) : void 0;
+  }
+  const row = getSqliteDb().select().from(stockMovements).where(eq(stockMovements.id, id)).get();
+  return Promise.resolve(row ? normalizeMovement(row) : void 0);
+}
+async function dbDeleteStockMovements(ids) {
+  if (ids.length === 0) return;
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().delete(t).where(inArray(t.id, ids));
+    return;
+  }
+  getSqliteDb().delete(stockMovements).where(inArray(stockMovements.id, ids)).run();
+}
 async function dbGetAppointmentIdsWithMovements() {
   if (_useMysql) {
     const { stockMovementsTable: t2 } = await Promise.resolve().then(() => (init_src(), src_exports));
@@ -60338,6 +60647,127 @@ async function dbSetBrandColor(brand, color) {
     getSqliteDb().insert(brandColors).values({ brand: key, color }).onConflictDoUpdate({ target: brandColors.brand, set: { color } }).run();
   }
   return dbGetBrandColors();
+}
+var BUILTIN_TAGS = {
+  brand: [],
+  product_category: ["Lavaggio", "Colore", "Finish", "Trattamento", "Styling", "Altro"],
+  service_category: ["Colore", "Piega", "Taglio", "Trattamento", "Styling", "Altro"]
+};
+async function dbListCatalogTags() {
+  if (_useMysql) {
+    const { catalogTagsTable: catalogTagsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    return await getMysqlDb().select().from(catalogTagsTable2).execute();
+  }
+  return Promise.resolve(getSqliteDb().select().from(catalogTags).all());
+}
+async function dbEnsureCatalogTags(kind, names) {
+  const rows = [...new Map(
+    names.map((n) => n.trim()).filter(Boolean).map((name) => [brandKey(name), { kind, nameKey: brandKey(name), name }])
+  ).values()].filter((r) => r.nameKey.length <= 100);
+  if (rows.length === 0) return;
+  if (_useMysql) {
+    const { catalogTagsTable: catalogTagsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().insert(catalogTagsTable2).ignore().values(rows);
+    return;
+  }
+  getSqliteDb().insert(catalogTags).values(rows).onConflictDoNothing().run();
+}
+async function dbPutCatalogTag(kind, name) {
+  const row = { kind, nameKey: brandKey(name), name: name.trim() };
+  if (_useMysql) {
+    const { catalogTagsTable: catalogTagsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().insert(catalogTagsTable2).values(row).onDuplicateKeyUpdate({ set: { name: row.name } });
+    return;
+  }
+  getSqliteDb().insert(catalogTags).values(row).onConflictDoUpdate({ target: [catalogTags.kind, catalogTags.nameKey], set: { name: row.name } }).run();
+}
+async function dbRemoveCatalogTag(kind, nameKey) {
+  if (_useMysql) {
+    const { catalogTagsTable: t2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().delete(t2).where(and(eq(t2.kind, kind), eq(t2.nameKey, nameKey)));
+    return;
+  }
+  const t = catalogTags;
+  getSqliteDb().delete(t).where(and(eq(t.kind, kind), eq(t.nameKey, nameKey))).run();
+}
+async function dbSetMovementsBrand(ids, brand) {
+  for (let i = 0; i < ids.length; i += 500) {
+    const chunk = ids.slice(i, i + 500);
+    if (_useMysql) {
+      const { stockMovementsTable: t } = await Promise.resolve().then(() => (init_src(), src_exports));
+      await getMysqlDb().update(t).set({ productBrand: brand }).where(inArray(t.id, chunk));
+    } else {
+      getSqliteDb().update(stockMovements).set({ productBrand: brand }).where(inArray(stockMovements.id, chunk)).run();
+    }
+  }
+}
+async function seedCatalog() {
+  try {
+    const products2 = await dbGetProducts();
+    const services2 = await dbGetServices();
+    await dbEnsureCatalogTags("brand", products2.map((p) => p.brand));
+    await dbEnsureCatalogTags("product_category", [...BUILTIN_TAGS.product_category, ...products2.map((p) => p.category)]);
+    await dbEnsureCatalogTags("service_category", [...BUILTIN_TAGS.service_category, ...services2.map((s) => s.category)]);
+    logger.info("Catalog of brands and categories created from existing products and services");
+  } catch (err) {
+    logger.error({ err }, "Could not seed the catalog of brands and categories");
+  }
+}
+async function dbListSubcategoryTags() {
+  if (_useMysql) {
+    const { catalogSubcategoriesTable: catalogSubcategoriesTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    return getMysqlDb().select().from(catalogSubcategoriesTable2).execute();
+  }
+  return Promise.resolve(getSqliteDb().select().from(catalogSubcategories).all());
+}
+async function dbEnsureSubcategoryTags(entries) {
+  const rows = [...new Map(
+    entries.map((e) => ({ brandKey: brandKey(e.brand), categoryKey: brandKey(e.category), nameKey: brandKey(e.name), name: e.name.trim() })).filter((r) => r.brandKey && r.categoryKey && r.nameKey).filter((r) => r.brandKey.length <= 100 && r.categoryKey.length <= 100 && r.nameKey.length <= 100).map((r) => [`${r.brandKey}\0${r.categoryKey}\0${r.nameKey}`, r])
+  ).values()];
+  if (rows.length === 0) return;
+  if (_useMysql) {
+    const { catalogSubcategoriesTable: catalogSubcategoriesTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().insert(catalogSubcategoriesTable2).ignore().values(rows);
+    return;
+  }
+  getSqliteDb().insert(catalogSubcategories).values(rows).onConflictDoNothing().run();
+}
+async function dbPutSubcategoryTag(brand, category, name) {
+  const row = { brandKey: brandKey(brand), categoryKey: brandKey(category), nameKey: brandKey(name), name: name.trim() };
+  if (_useMysql) {
+    const { catalogSubcategoriesTable: catalogSubcategoriesTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().insert(catalogSubcategoriesTable2).values(row).onDuplicateKeyUpdate({ set: { name: row.name } });
+    return;
+  }
+  const t = catalogSubcategories;
+  getSqliteDb().insert(t).values(row).onConflictDoUpdate({ target: [t.brandKey, t.categoryKey, t.nameKey], set: { name: row.name } }).run();
+}
+async function dbRemoveSubcategoryTags(match) {
+  if (!match.brandKey && !match.categoryKey) return;
+  if (_useMysql) {
+    const { catalogSubcategoriesTable: t2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const conds2 = [];
+    if (match.brandKey) conds2.push(eq(t2.brandKey, match.brandKey));
+    if (match.categoryKey) conds2.push(eq(t2.categoryKey, match.categoryKey));
+    if (match.nameKey) conds2.push(eq(t2.nameKey, match.nameKey));
+    await getMysqlDb().delete(t2).where(and(...conds2));
+    return;
+  }
+  const t = catalogSubcategories;
+  const conds = [];
+  if (match.brandKey) conds.push(eq(t.brandKey, match.brandKey));
+  if (match.categoryKey) conds.push(eq(t.categoryKey, match.categoryKey));
+  if (match.nameKey) conds.push(eq(t.nameKey, match.nameKey));
+  getSqliteDb().delete(t).where(and(...conds)).run();
+}
+async function seedSubcategories() {
+  try {
+    const products2 = await dbGetProducts();
+    await dbEnsureSubcategoryTags(products2.flatMap((p) => (p.subcategories ?? []).map((name) => ({ brand: p.brand, category: p.category, name }))));
+    logger.info("Catalog of product sub-categories created from existing products");
+  } catch (err) {
+    logger.error({ err }, "Could not seed the catalog of sub-categories");
+  }
 }
 function parseFormulaRow(f) {
   return {
@@ -60690,6 +61120,7 @@ router4.post("/services", async (req, res) => {
     return;
   }
   const created = await dbCreateService(body.data);
+  await dbEnsureCatalogTags("service_category", [created.category]);
   const parsed = GetServiceResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /services");
@@ -60733,6 +61164,7 @@ router4.put("/services/:id", async (req, res) => {
     res.status(404).json({ message: "Service not found" });
     return;
   }
+  await dbEnsureCatalogTags("service_category", [updated.category]);
   const parsed = UpdateServiceResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /services/:id");
@@ -60809,17 +61241,20 @@ async function applyStockDelta(productId, quantity, unit) {
     await dbUpdateProduct(productId, { quantity: Math.max(0, Math.round(p.quantity + quantity)) });
   }
 }
+function netByProduct(rows) {
+  const totals = /* @__PURE__ */ new Map();
+  for (const r of rows) {
+    const key = `${r.productId}|${r.unit}`;
+    const t = totals.get(key) ?? { productId: r.productId, unit: r.unit, quantity: 0 };
+    t.quantity += r.quantity;
+    totals.set(key, t);
+  }
+  return [...totals.values()];
+}
 async function recordMovements(rows, options) {
   const inserted = await dbInsertStockMovements(rows);
   if (options.applyStock) {
-    const totals = /* @__PURE__ */ new Map();
-    for (const r of rows) {
-      const key = `${r.productId}|${r.unit}`;
-      const t = totals.get(key) ?? { productId: r.productId, unit: r.unit, quantity: 0 };
-      t.quantity += r.quantity;
-      totals.set(key, t);
-    }
-    for (const t of totals.values()) await applyStockDelta(t.productId, t.quantity, t.unit);
+    for (const t of netByProduct(rows)) await applyStockDelta(t.productId, t.quantity, t.unit);
   }
   return inserted;
 }
@@ -61007,6 +61442,22 @@ async function cancelSale(saleId, actor) {
   }));
   return recordMovements(rows, { applyStock: true });
 }
+async function deleteMovement(id) {
+  const m = await dbGetStockMovement(id);
+  if (!m) throw new StockError(404, "Movimento non trovato");
+  if (m.appointmentId) {
+    throw new StockError(409, "Questo movimento viene da un appuntamento: per correggerlo modifica l'appuntamento");
+  }
+  const rows = m.saleId ? await dbListStockMovements({ saleId: m.saleId }) : [m];
+  await dbDeleteStockMovements(rows.map((r) => r.id));
+  for (const t of netByProduct(rows)) await applyStockDelta(t.productId, -t.quantity, t.unit);
+  return rows.length;
+}
+async function deleteProductHistory(productId) {
+  const rows = (await dbListStockMovements({ productId })).filter((m) => !m.appointmentId);
+  await dbDeleteStockMovements(rows.map((r) => r.id));
+  return rows.length;
+}
 async function logInitialStock(p, actor) {
   const s = stockSnapshot(p);
   if (isZero(s.amount)) return;
@@ -61062,6 +61513,9 @@ router5.post("/products", async (req, res) => {
   }
   const created = await dbCreateProduct(body.data);
   await logInitialStock(created, await actorFrom(req));
+  await dbEnsureCatalogTags("brand", [created.brand]);
+  await dbEnsureCatalogTags("product_category", [created.category]);
+  await dbEnsureSubcategoryTags((created.subcategories ?? []).map((name) => ({ brand: created.brand, category: created.category, name })));
   const parsed = GetProductResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /products");
@@ -61108,6 +61562,9 @@ router5.put("/products/:id", async (req, res) => {
     return;
   }
   await logProductStockChange(before, updated, stockChangeReason, stockChangeNote, await actorFrom(req));
+  await dbEnsureCatalogTags("brand", [updated.brand]);
+  await dbEnsureCatalogTags("product_category", [updated.category]);
+  await dbEnsureSubcategoryTags((updated.subcategories ?? []).map((name) => ({ brand: updated.brand, category: updated.category, name })));
   const parsed = UpdateProductResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /products/:id");
@@ -61134,6 +61591,40 @@ var products_default = router5;
 
 // src/routes/stock.ts
 var import_express6 = __toESM(require_express2(), 1);
+
+// src/middlewares/auth.ts
+async function requireAuth(req, res, next) {
+  const raw = req.cookies?.[AUTH_COOKIE];
+  const payload = typeof raw === "string" ? verifyToken(raw) : null;
+  if (!payload) {
+    res.status(401).json({ message: "Non autenticato" });
+    return;
+  }
+  try {
+    const user = await dbGetUser(payload.sub);
+    if (!user) {
+      res.status(401).json({ message: "Non autenticato" });
+      return;
+    }
+    req.user = { ...payload, username: user.username, role: user.role };
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+function requireAdmin(req, res, next) {
+  if (!req.user) {
+    res.status(401).json({ message: "Non autenticato" });
+    return;
+  }
+  if (req.user.role !== "admin") {
+    res.status(403).json({ message: "Accesso riservato agli amministratori" });
+    return;
+  }
+  next();
+}
+
+// src/routes/stock.ts
 var router6 = (0, import_express6.Router)();
 var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 var TIME_RE = /^\d{2}:\d{2}$/;
@@ -61197,6 +61688,32 @@ router6.post("/sales/:saleId/cancel", async (req, res) => {
     res.status(500).json({ message: `Annullamento non riuscito: ${err.message}` });
   }
 });
+router6.delete("/stock-movements/:id", requireAdmin, async (req, res) => {
+  const params = DeleteStockMovementParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  try {
+    const deleted = await deleteMovement(params.data.id);
+    res.json({ deleted });
+  } catch (err) {
+    if (err instanceof StockError) {
+      res.status(err.status).json({ message: err.message });
+      return;
+    }
+    req.log.error({ err }, "Error on DELETE /stock-movements/:id");
+    res.status(500).json({ message: `Eliminazione non riuscita: ${err.message}` });
+  }
+});
+router6.delete("/products/:id/movements", requireAdmin, async (req, res) => {
+  const params = DeleteProductMovementsParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  res.json({ deleted: await deleteProductHistory(params.data.id) });
+});
 var stock_default = router6;
 
 // src/routes/brands.ts
@@ -61232,10 +61749,257 @@ router7.put("/brand-colors", async (req, res) => {
 });
 var brands_default = router7;
 
-// src/routes/staff.ts
+// src/routes/catalog.ts
 var import_express8 = __toESM(require_express2(), 1);
+
+// src/lib/catalog.ts
+var CatalogError = class extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+};
+async function holders(kind) {
+  if (kind === "service_category") return (await dbGetServices()).map((s) => ({ id: s.id, value: s.category }));
+  return (await dbGetProducts()).map((p) => ({ id: p.id, value: kind === "brand" ? p.brand : p.category }));
+}
+var holderWord = (kind, n) => kind === "service_category" ? n === 1 ? "servizio" : "servizi" : n === 1 ? "prodotto" : "prodotti";
+async function getCatalog() {
+  const tags = await dbListCatalogTags();
+  const colors = new Map((await dbGetBrandColors()).map((c) => [c.brand, c.color]));
+  const build = async (kind) => {
+    const entries = /* @__PURE__ */ new Map();
+    for (const t of tags) if (t.kind === kind) entries.set(t.nameKey, { name: t.name, count: 0 });
+    for (const h of await holders(kind)) {
+      const key = brandKey(h.value);
+      if (!key) continue;
+      const entry = entries.get(key) ?? { name: h.value.trim(), count: 0 };
+      entry.count += 1;
+      entries.set(key, entry);
+    }
+    return [...entries].map(([key, e]) => kind === "brand" ? { ...e, color: colors.get(key) ?? null } : e).sort((a, b) => a.name.localeCompare(b.name, "it", { sensitivity: "base" }));
+  };
+  const brands = await build("brand");
+  const productCategories = await build("product_category");
+  return {
+    brands,
+    productCategories,
+    serviceCategories: await build("service_category"),
+    subcategories: await buildSubcategories(brands, productCategories)
+  };
+}
+async function buildSubcategories(brands, categories) {
+  const brandName = new Map(brands.map((b) => [brandKey(b.name), b.name]));
+  const categoryName = new Map(categories.map((c) => [brandKey(c.name), c.name]));
+  const entries = /* @__PURE__ */ new Map();
+  const id = (b, c, n) => `${b}\0${c}\0${n}`;
+  for (const t of await dbListSubcategoryTags()) {
+    entries.set(id(t.brandKey, t.categoryKey, t.nameKey), {
+      brand: brandName.get(t.brandKey) ?? t.brandKey,
+      category: categoryName.get(t.categoryKey) ?? t.categoryKey,
+      name: t.name,
+      count: 0
+    });
+  }
+  for (const p of await dbGetProducts()) {
+    const b = brandKey(p.brand);
+    const c = brandKey(p.category);
+    if (!b || !c) continue;
+    for (const sub of p.subcategories ?? []) {
+      const key = id(b, c, brandKey(sub));
+      const entry = entries.get(key) ?? { brand: brandName.get(b) ?? p.brand.trim(), category: categoryName.get(c) ?? p.category.trim(), name: sub.trim(), count: 0 };
+      entry.count += 1;
+      entries.set(key, entry);
+    }
+  }
+  const cmp = (a, b) => a.localeCompare(b, "it", { sensitivity: "base" });
+  return [...entries.values()].sort((a, b) => cmp(a.brand, b.brand) || cmp(a.category, b.category) || cmp(a.name, b.name));
+}
+async function moveSubcategoryTags(field, fromKey, toName) {
+  const rows = (await dbListSubcategoryTags()).filter((r) => (field === "brand" ? r.brandKey : r.categoryKey) === fromKey);
+  if (rows.length === 0 || brandKey(toName) === fromKey) return;
+  await dbEnsureSubcategoryTags(rows.map((r) => ({
+    brand: field === "brand" ? toName : r.brandKey,
+    category: field === "category" ? toName : r.categoryKey,
+    name: r.name
+  })));
+  await dbRemoveSubcategoryTags(field === "brand" ? { brandKey: fromKey } : { categoryKey: fromKey });
+}
+function cleanName(name) {
+  const clean = name.trim().replace(/\s+/g, " ");
+  if (!clean) throw new CatalogError(400, "Scrivi un nome");
+  if (clean.length > 100) throw new CatalogError(400, "Nome troppo lungo (massimo 100 caratteri)");
+  return clean;
+}
+async function addTag(kind, name) {
+  const clean = cleanName(name);
+  const catalog = await getCatalog();
+  const list = kind === "brand" ? catalog.brands : kind === "product_category" ? catalog.productCategories : catalog.serviceCategories;
+  const existing = list.find((e) => brandKey(e.name) === brandKey(clean));
+  if (existing) throw new CatalogError(409, `\xAB${existing.name}\xBB c'\xE8 gi\xE0`);
+  await dbPutCatalogTag(kind, clean);
+}
+async function renameTag(kind, from, to) {
+  const fromKey = brandKey(from);
+  const toName = cleanName(to);
+  const toKey = brandKey(toName);
+  if (!fromKey) throw new CatalogError(400, "Voce da rinominare mancante");
+  const moving = (await holders(kind)).filter((h) => brandKey(h.value) === fromKey);
+  for (const h of moving) {
+    if (kind === "service_category") await dbUpdateService(h.id, { category: toName });
+    else await dbUpdateProduct(h.id, kind === "brand" ? { brand: toName } : { category: toName });
+  }
+  if (kind === "brand") {
+    const history = (await dbListStockMovements()).filter((m) => brandKey(m.productBrand) === fromKey);
+    await dbSetMovementsBrand(history.map((m) => m.id), toName);
+    if (fromKey !== toKey) {
+      const colors = new Map((await dbGetBrandColors()).map((c) => [c.brand, c.color]));
+      const color = colors.get(fromKey);
+      if (color && !colors.has(toKey)) await dbSetBrandColor(toName, color);
+      if (color) await dbSetBrandColor(fromKey, null);
+    }
+  }
+  if (kind === "brand") await moveSubcategoryTags("brand", fromKey, toName);
+  if (kind === "product_category") await moveSubcategoryTags("category", fromKey, toName);
+  if (fromKey !== toKey) await dbRemoveCatalogTag(kind, fromKey);
+  await dbPutCatalogTag(kind, toName);
+  return moving.length;
+}
+async function deleteTag(kind, name, moveTo) {
+  const key = brandKey(name);
+  if (!key) throw new CatalogError(400, "Voce da eliminare mancante");
+  const using = (await holders(kind)).filter((h) => brandKey(h.value) === key).length;
+  if (using > 0) {
+    if (!moveTo?.trim()) {
+      throw new CatalogError(409, `${using} ${holderWord(kind, using)} usano ancora \xAB${name.trim()}\xBB: scegli dove spostarli`);
+    }
+    if (brandKey(moveTo) === key) throw new CatalogError(400, "Scegli una voce diversa da quella da eliminare");
+    await renameTag(kind, name, moveTo);
+    return;
+  }
+  await dbRemoveCatalogTag(kind, key);
+  if (kind === "brand") {
+    await dbSetBrandColor(key, null);
+    await dbRemoveSubcategoryTags({ brandKey: key });
+  }
+  if (kind === "product_category") await dbRemoveSubcategoryTags({ categoryKey: key });
+}
+function cleanScope(brand, category) {
+  const b = brand?.trim() ?? "";
+  const c = category?.trim() ?? "";
+  if (!b || !c) throw new CatalogError(400, "Scegli la marca e la categoria della sottocategoria");
+  return { brand: b, category: c, bk: brandKey(b), ck: brandKey(c) };
+}
+async function productsInScope(bk, ck) {
+  return (await dbGetProducts()).filter((p) => brandKey(p.brand) === bk && brandKey(p.category) === ck);
+}
+async function addSubcategory(brand, category, name) {
+  const scope = cleanScope(brand, category);
+  const clean = cleanName(name);
+  const key = brandKey(clean);
+  const inList = (await dbListSubcategoryTags()).find((t) => t.brandKey === scope.bk && t.categoryKey === scope.ck && t.nameKey === key)?.name;
+  const inUse = (await productsInScope(scope.bk, scope.ck)).flatMap((p) => p.subcategories ?? []).find((s) => brandKey(s) === key);
+  const existing = inList ?? inUse;
+  if (existing) throw new CatalogError(409, `\xAB${existing.trim()}\xBB c'\xE8 gi\xE0 in ${scope.brand.toUpperCase()} \xB7 ${scope.category}`);
+  await dbPutSubcategoryTag(scope.brand, scope.category, clean);
+}
+async function renameSubcategory(brand, category, from, to) {
+  const scope = cleanScope(brand, category);
+  const fromKey = brandKey(from);
+  const toName = cleanName(to);
+  const toKey = brandKey(toName);
+  if (!fromKey) throw new CatalogError(400, "Sottocategoria da rinominare mancante");
+  for (const p of await productsInScope(scope.bk, scope.ck)) {
+    const subs = p.subcategories ?? [];
+    if (!subs.some((s) => brandKey(s) === fromKey)) continue;
+    const next = [];
+    for (const s of subs) {
+      const name = brandKey(s) === fromKey ? toName : s;
+      if (!next.some((n) => brandKey(n) === brandKey(name))) next.push(name);
+    }
+    await dbUpdateProduct(p.id, { subcategories: next });
+  }
+  if (fromKey !== toKey) await dbRemoveSubcategoryTags({ brandKey: scope.bk, categoryKey: scope.ck, nameKey: fromKey });
+  await dbPutSubcategoryTag(scope.brand, scope.category, toName);
+}
+async function deleteSubcategory(brand, category, name) {
+  const scope = cleanScope(brand, category);
+  const key = brandKey(name);
+  if (!key) throw new CatalogError(400, "Sottocategoria da eliminare mancante");
+  for (const p of await productsInScope(scope.bk, scope.ck)) {
+    const subs = p.subcategories ?? [];
+    if (subs.some((s) => brandKey(s) === key)) await dbUpdateProduct(p.id, { subcategories: subs.filter((s) => brandKey(s) !== key) });
+  }
+  await dbRemoveSubcategoryTags({ brandKey: scope.bk, categoryKey: scope.ck, nameKey: key });
+}
+
+// src/routes/catalog.ts
 var router8 = (0, import_express8.Router)();
-router8.get("/staff", async (req, res) => {
+async function sendCatalog(res, status = 200) {
+  res.status(status).json(GetCatalogResponse.parse(await getCatalog()));
+}
+function fail(res, err, label, log) {
+  if (err instanceof CatalogError) {
+    res.status(err.status).json({ message: err.message });
+    return;
+  }
+  log.error({ err }, `Error on ${label}`);
+  res.status(500).json({ message: `Operazione non riuscita: ${err.message}` });
+}
+router8.get("/catalog", async (_req, res) => {
+  await sendCatalog(res);
+});
+router8.post("/catalog/tags", requireAdmin, async (req, res) => {
+  const body = AddCatalogTagBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  try {
+    const { kind, name, brand, category } = body.data;
+    if (kind === "subcategory") await addSubcategory(brand, category, name);
+    else await addTag(kind, name);
+    await sendCatalog(res, 201);
+  } catch (err) {
+    fail(res, err, "POST /catalog/tags", req.log);
+  }
+});
+router8.put("/catalog/tags", requireAdmin, async (req, res) => {
+  const body = RenameCatalogTagBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  try {
+    const { kind, from, to, brand, category } = body.data;
+    if (kind === "subcategory") await renameSubcategory(brand, category, from, to);
+    else await renameTag(kind, from, to);
+    await sendCatalog(res);
+  } catch (err) {
+    fail(res, err, "PUT /catalog/tags", req.log);
+  }
+});
+router8.post("/catalog/tags/delete", requireAdmin, async (req, res) => {
+  const body = DeleteCatalogTagBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  try {
+    const { kind, name, moveTo, brand, category } = body.data;
+    if (kind === "subcategory") await deleteSubcategory(brand, category, name);
+    else await deleteTag(kind, name, moveTo);
+    await sendCatalog(res);
+  } catch (err) {
+    fail(res, err, "POST /catalog/tags/delete", req.log);
+  }
+});
+var catalog_default = router8;
+
+// src/routes/staff.ts
+var import_express9 = __toESM(require_express2(), 1);
+var router9 = (0, import_express9.Router)();
+router9.get("/staff", async (req, res) => {
   const data = await dbGetStaff();
   const parsed = ListStaffResponse.safeParse(data);
   if (!parsed.success) {
@@ -61245,7 +62009,7 @@ router8.get("/staff", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router8.post("/staff", async (req, res) => {
+router9.post("/staff", async (req, res) => {
   const body = CreateStaffMemberBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -61260,7 +62024,7 @@ router8.post("/staff", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router8.put("/staff/:id", async (req, res) => {
+router9.put("/staff/:id", async (req, res) => {
   const params = UpdateStaffMemberParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61285,7 +62049,7 @@ router8.put("/staff/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router8.delete("/staff/:id", async (req, res) => {
+router9.delete("/staff/:id", async (req, res) => {
   const params = DeleteStaffMemberParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61299,12 +62063,12 @@ router8.delete("/staff/:id", async (req, res) => {
   await dbDeleteStaffMember(params.data.id);
   res.status(204).send();
 });
-var staff_default = router8;
+var staff_default = router9;
 
 // src/routes/appointments.ts
-var import_express9 = __toESM(require_express2(), 1);
-var router9 = (0, import_express9.Router)();
-router9.get("/appointments", async (req, res) => {
+var import_express10 = __toESM(require_express2(), 1);
+var router10 = (0, import_express10.Router)();
+router10.get("/appointments", async (req, res) => {
   const data = await dbGetAppointments();
   const rows = Array.isArray(data) ? data : [];
   const valid = [];
@@ -61330,7 +62094,7 @@ router9.get("/appointments", async (req, res) => {
   }
   res.json(valid);
 });
-router9.post("/appointments", async (req, res) => {
+router10.post("/appointments", async (req, res) => {
   const body = CreateAppointmentBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -61364,7 +62128,7 @@ router9.post("/appointments", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router9.get("/appointments/:id", async (req, res) => {
+router10.get("/appointments/:id", async (req, res) => {
   const params = GetAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61383,7 +62147,7 @@ router9.get("/appointments/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router9.put("/appointments/:id", async (req, res) => {
+router10.put("/appointments/:id", async (req, res) => {
   const params = UpdateAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61433,7 +62197,7 @@ router9.put("/appointments/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router9.delete("/appointments/:id", async (req, res) => {
+router10.delete("/appointments/:id", async (req, res) => {
   const params = DeleteAppointmentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61448,46 +62212,12 @@ router9.delete("/appointments/:id", async (req, res) => {
   await dbDeleteAppointment(params.data.id);
   res.status(204).send();
 });
-var appointments_default = router9;
+var appointments_default = router10;
 
 // src/routes/settings.ts
-var import_express10 = __toESM(require_express2(), 1);
-
-// src/middlewares/auth.ts
-async function requireAuth(req, res, next) {
-  const raw = req.cookies?.[AUTH_COOKIE];
-  const payload = typeof raw === "string" ? verifyToken(raw) : null;
-  if (!payload) {
-    res.status(401).json({ message: "Non autenticato" });
-    return;
-  }
-  try {
-    const user = await dbGetUser(payload.sub);
-    if (!user) {
-      res.status(401).json({ message: "Non autenticato" });
-      return;
-    }
-    req.user = { ...payload, username: user.username, role: user.role };
-    next();
-  } catch (err) {
-    next(err);
-  }
-}
-function requireAdmin(req, res, next) {
-  if (!req.user) {
-    res.status(401).json({ message: "Non autenticato" });
-    return;
-  }
-  if (req.user.role !== "admin") {
-    res.status(403).json({ message: "Accesso riservato agli amministratori" });
-    return;
-  }
-  next();
-}
-
-// src/routes/settings.ts
-var router10 = (0, import_express10.Router)();
-router10.get("/settings", async (req, res) => {
+var import_express11 = __toESM(require_express2(), 1);
+var router11 = (0, import_express11.Router)();
+router11.get("/settings", async (req, res) => {
   const data = await dbGetSettings();
   const parsed = GetSettingsResponse.safeParse(data);
   if (!parsed.success) {
@@ -61497,7 +62227,7 @@ router10.get("/settings", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router10.put("/settings", requireAuth, requireAdmin, async (req, res) => {
+router11.put("/settings", requireAuth, requireAdmin, async (req, res) => {
   const body = UpdateSettingsBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -61512,12 +62242,12 @@ router10.put("/settings", requireAuth, requireAdmin, async (req, res) => {
   }
   res.json(parsed.data);
 });
-var settings_default = router10;
+var settings_default = router11;
 
 // src/routes/client-formulas.ts
-var import_express11 = __toESM(require_express2(), 1);
-var router11 = (0, import_express11.Router)();
-router11.get("/client-formulas", async (req, res) => {
+var import_express12 = __toESM(require_express2(), 1);
+var router12 = (0, import_express12.Router)();
+router12.get("/client-formulas", async (req, res) => {
   const clientId = typeof req.query["clientId"] === "string" ? req.query["clientId"] : void 0;
   const data = await dbGetClientFormulas(clientId);
   const parsed = ListClientFormulasResponse.safeParse(data);
@@ -61528,7 +62258,7 @@ router11.get("/client-formulas", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router11.post("/client-formulas", async (req, res) => {
+router12.post("/client-formulas", async (req, res) => {
   const body = CreateClientFormulaBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
@@ -61555,7 +62285,7 @@ router11.post("/client-formulas", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router11.get("/client-formulas/:id", async (req, res) => {
+router12.get("/client-formulas/:id", async (req, res) => {
   const params = GetClientFormulaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61574,7 +62304,7 @@ router11.get("/client-formulas/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router11.put("/client-formulas/:id", async (req, res) => {
+router12.put("/client-formulas/:id", async (req, res) => {
   const params = UpdateClientFormulaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61611,7 +62341,7 @@ router11.put("/client-formulas/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router11.delete("/client-formulas/:id", async (req, res) => {
+router12.delete("/client-formulas/:id", async (req, res) => {
   const params = DeleteClientFormulaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61625,16 +62355,16 @@ router11.delete("/client-formulas/:id", async (req, res) => {
   await dbDeleteClientFormula(params.data.id);
   res.status(204).send();
 });
-var client_formulas_default = router11;
+var client_formulas_default = router12;
 
 // src/routes/users.ts
-var import_express12 = __toESM(require_express2(), 1);
-var router12 = (0, import_express12.Router)();
-router12.use(requireAdmin);
+var import_express13 = __toESM(require_express2(), 1);
+var router13 = (0, import_express13.Router)();
+router13.use(requireAdmin);
 function toSafeUser(u) {
   return { id: u.id, username: u.username, role: u.role, name: u.name ?? null };
 }
-router12.get("/users", async (req, res) => {
+router13.get("/users", async (req, res) => {
   const data = await dbGetUsers();
   const parsed = ListUsersResponse.safeParse(data.map(toSafeUser));
   if (!parsed.success) {
@@ -61644,7 +62374,7 @@ router12.get("/users", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router12.post("/users", async (req, res) => {
+router13.post("/users", async (req, res) => {
   const body = CreateUserBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Richiesta non valida" });
@@ -61670,7 +62400,7 @@ router12.post("/users", async (req, res) => {
   }
   res.status(201).json(parsed.data);
 });
-router12.put("/users/:id", async (req, res) => {
+router13.put("/users/:id", async (req, res) => {
   const params = UpdateUserParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61727,7 +62457,7 @@ router12.put("/users/:id", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router12.delete("/users/:id", async (req, res) => {
+router13.delete("/users/:id", async (req, res) => {
   const params = DeleteUserParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
@@ -61753,27 +62483,28 @@ router12.delete("/users/:id", async (req, res) => {
   await dbDeleteUser(params.data.id);
   res.status(204).send();
 });
-var users_default = router12;
+var users_default = router13;
 
 // src/routes/index.ts
-var router13 = (0, import_express13.Router)();
-router13.use(health_default);
-router13.use(auth_default);
-router13.use(settings_default);
-router13.use(requireAuth);
-router13.use(clients_default);
-router13.use(services_default);
-router13.use(products_default);
-router13.use(stock_default);
-router13.use(brands_default);
-router13.use(staff_default);
-router13.use(appointments_default);
-router13.use(client_formulas_default);
-router13.use(users_default);
-var routes_default = router13;
+var router14 = (0, import_express14.Router)();
+router14.use(health_default);
+router14.use(auth_default);
+router14.use(settings_default);
+router14.use(requireAuth);
+router14.use(clients_default);
+router14.use(services_default);
+router14.use(products_default);
+router14.use(stock_default);
+router14.use(brands_default);
+router14.use(catalog_default);
+router14.use(staff_default);
+router14.use(appointments_default);
+router14.use(client_formulas_default);
+router14.use(users_default);
+var routes_default = router14;
 
 // src/app.ts
-var app = (0, import_express14.default)();
+var app = (0, import_express15.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -61808,8 +62539,8 @@ if (corsOriginEnv) {
 }
 app.use((0, import_cors.default)({ origin: corsOrigin, credentials: true }));
 app.use((0, import_cookie_parser.default)());
-app.use(import_express14.default.json({ limit: "5mb" }));
-app.use(import_express14.default.urlencoded({ extended: true, limit: "5mb" }));
+app.use(import_express15.default.json({ limit: "5mb" }));
+app.use(import_express15.default.urlencoded({ extended: true, limit: "5mb" }));
 app.use("/api", routes_default);
 var defaultStaticDir = path2.join(
   path2.dirname(fileURLToPath(import.meta.url)),
@@ -61818,7 +62549,7 @@ var defaultStaticDir = path2.join(
 );
 var staticDir = process.env["STATIC_DIR"] ?? defaultStaticDir;
 if (fs.existsSync(path2.join(staticDir, "index.html"))) {
-  app.use(import_express14.default.static(staticDir));
+  app.use(import_express15.default.static(staticDir));
   app.use((req, res, next) => {
     if (req.method !== "GET" && req.method !== "HEAD") return next();
     if (req.path.startsWith("/api")) return next();
