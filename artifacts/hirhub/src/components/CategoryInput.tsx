@@ -1,19 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useListProducts, useListServices } from '@workspace/api-client-react';
 import { Plus, X, ChevronDown, Check } from 'lucide-react';
-
-const PRODUCT_BUILTINS = ['Lavaggio', 'Colore', 'Finish', 'Trattamento', 'Styling', 'Altro'];
-const SERVICE_BUILTINS = ['Colore', 'Piega', 'Taglio', 'Trattamento', 'Styling', 'Altro'];
-
-const LS_PRODUCTS = 'hirhub_suppressed_categories';
-const LS_SERVICES = 'hirhub_suppressed_service_categories';
-
-const loadSuppressed = (key: string): string[] => {
-  try { return JSON.parse(localStorage.getItem(key) ?? '[]'); } catch { return []; }
-};
-const saveSuppressed = (key: string, list: string[]) => {
-  try { localStorage.setItem(key, JSON.stringify(list)); } catch { /* noop */ }
-};
+import { mergeNames, useCatalog } from '../lib/catalog';
 
 interface CategoryInputProps {
   value: string;
@@ -26,17 +14,16 @@ interface CategoryInputCoreProps {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
-  builtins: string[];
-  lsKey: string;
-  existingCategories: string[];
+  /** The salon's list (Impostazioni → Marche e categorie) */
+  categories: string[];
 }
 
-const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existingCategories }: CategoryInputCoreProps) => {
+const CategoryInputCore = ({ value, onChange, required, categories }: CategoryInputCoreProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [addingNew, setAddingNew] = useState(false);
   const [newCategory, setNewCategory] = useState('');
+  // Typed with "Nuova categoria…": listed here until the product is saved, then it is in the salon's list
   const [sessionCategories, setSessionCategories] = useState<string[]>([]);
-  const [suppressed, setSuppressed] = useState<string[]>(() => loadSuppressed(lsKey));
   const containerRef = useRef<HTMLDivElement>(null);
   const newInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,26 +44,8 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
     if (addingNew && newInputRef.current) newInputRef.current.focus();
   }, [addingNew]);
 
-  const allCategories = Array.from(
-    new Set([...builtins, ...existingCategories, ...sessionCategories])
-  )
-    .filter(cat => !suppressed.includes(cat))
-    .sort((a, b) => a.localeCompare(b, 'it'));
-
-  const isBuiltin = (cat: string) => builtins.includes(cat);
-
-  const handleDelete = (cat: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isBuiltin(cat)) return;
-    if (sessionCategories.includes(cat)) {
-      setSessionCategories(prev => prev.filter(c => c !== cat));
-    } else {
-      const next = Array.from(new Set([...suppressed, cat]));
-      setSuppressed(next);
-      saveSuppressed(lsKey, next);
-    }
-    if (value === cat) onChange('');
-  };
+  // The current value stays offered even if it was renamed or removed meanwhile
+  const allCategories = mergeNames(categories, sessionCategories, value ? [value] : []);
 
   const handleSelect = (cat: string) => {
     onChange(cat);
@@ -86,17 +55,13 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
   };
 
   const confirmNew = () => {
-    const trimmed = newCategory.trim();
-    if (!trimmed) return;
-    if (suppressed.includes(trimmed)) {
-      const next = suppressed.filter(s => s !== trimmed);
-      setSuppressed(next);
-      saveSuppressed(lsKey, next);
-    }
-    if (!allCategories.includes(trimmed) && !sessionCategories.includes(trimmed)) {
-      setSessionCategories(prev => [...prev, trimmed]);
-    }
-    onChange(trimmed);
+    const typed = newCategory.trim().replace(/\s+/g, ' ');
+    if (!typed) return;
+    // Typing a category that already exists picks it, with its own spelling
+    const existing = allCategories.find(c => c.toLowerCase() === typed.toLowerCase());
+    const chosen = existing ?? typed;
+    if (!existing) setSessionCategories(prev => [...prev, chosen]);
+    onChange(chosen);
     setAddingNew(false);
     setNewCategory('');
     setIsOpen(false);
@@ -145,7 +110,7 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
           {allCategories.map(cat => (
             <div
               key={cat}
-              className="flex items-center group px-3 py-2.5 cursor-pointer transition-colors hover:bg-stone-50"
+              className="flex items-center px-3 py-2.5 cursor-pointer transition-colors hover:bg-stone-50"
               onClick={() => handleSelect(cat)}
             >
               <Check
@@ -153,16 +118,6 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
                 style={{ color: 'var(--color-brand-dark)', opacity: value === cat ? 1 : 0 }}
               />
               <span className="flex-1 text-sm text-stone-800 truncate">{cat}</span>
-              {!isBuiltin(cat) && (
-                <button
-                  type="button"
-                  onClick={(e) => handleDelete(cat, e)}
-                  className="ml-2 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500 text-stone-400 shrink-0"
-                  title="Rimuovi categoria"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
           ))}
 
@@ -214,16 +169,17 @@ const CategoryInputCore = ({ value, onChange, required, builtins, lsKey, existin
   );
 };
 
-const CategoryInputProducts = (props: Omit<CategoryInputCoreProps, 'builtins' | 'lsKey' | 'existingCategories'>) => {
+// The salon's list, plus any category still found on products/services (while the list loads)
+const CategoryInputProducts = (props: Omit<CategoryInputCoreProps, 'categories'>) => {
+  const { productCategories } = useCatalog();
   const { data: products = [] } = useListProducts();
-  const existingCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
-  return <CategoryInputCore {...props} builtins={PRODUCT_BUILTINS} lsKey={LS_PRODUCTS} existingCategories={existingCategories} />;
+  return <CategoryInputCore {...props} categories={mergeNames(productCategories.map(c => c.name), products.map(p => p.category))} />;
 };
 
-const CategoryInputServices = (props: Omit<CategoryInputCoreProps, 'builtins' | 'lsKey' | 'existingCategories'>) => {
+const CategoryInputServices = (props: Omit<CategoryInputCoreProps, 'categories'>) => {
+  const { serviceCategories } = useCatalog();
   const { data: services = [] } = useListServices();
-  const existingCategories = Array.from(new Set(services.map(s => s.category).filter(Boolean)));
-  return <CategoryInputCore {...props} builtins={SERVICE_BUILTINS} lsKey={LS_SERVICES} existingCategories={existingCategories} />;
+  return <CategoryInputCore {...props} categories={mergeNames(serviceCategories.map(c => c.name), services.map(s => s.category))} />;
 };
 
 export const CategoryInput = ({ source = 'products', ...rest }: CategoryInputProps) => {

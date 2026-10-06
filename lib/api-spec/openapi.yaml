@@ -309,6 +309,113 @@ paths:
         "204":
           description: Deleted
 
+  /products/{id}/movements:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: deleteProductMovements
+      tags: [stock]
+      summary: >-
+        Admin only. Delete a product's history (manual movements and its lines of
+        counter sales), before deleting a product created by mistake. Movements of
+        appointments stay with their appointments.
+      responses:
+        "200":
+          description: Movements deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteMovementsResult"
+
+  /catalog:
+    get:
+      operationId: getCatalog
+      tags: [catalog]
+      summary: The salon's brands, product categories and service categories, with usage counts
+      responses:
+        "200":
+          description: Catalogue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Catalog"
+
+  /catalog/tags:
+    post:
+      operationId: addCatalogTag
+      tags: [catalog]
+      summary: Admin only. Add a brand or category (it can exist with no product yet)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogTagInput"
+      responses:
+        "201":
+          description: Updated catalogue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Catalog"
+        "409":
+          description: Already in the list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    put:
+      operationId: renameCatalogTag
+      tags: [catalog]
+      summary: >-
+        Admin only. Rename a brand or category; renaming it to another existing one
+        merges the two. Products/services using it follow (and, for a brand, its
+        colour and the brand shown in the movement history).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenameCatalogTagInput"
+      responses:
+        "200":
+          description: Updated catalogue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Catalog"
+
+  /catalog/tags/delete:
+    post:
+      operationId: deleteCatalogTag
+      tags: [catalog]
+      summary: >-
+        Admin only. Delete a brand or category. If products/services still use it,
+        moveTo is required and they move there first (409 without it).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteCatalogTagInput"
+      responses:
+        "200":
+          description: Updated catalogue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Catalog"
+        "409":
+          description: Still in use and no moveTo given
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /brand-colors:
     get:
       operationId: listBrandColors
@@ -391,6 +498,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StockMovement"
+
+  /stock-movements/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: deleteStockMovement
+      tags: [stock]
+      summary: >-
+        Admin only. Delete a movement entered by mistake and correct the stock;
+        a counter sale is deleted whole. Movements of an appointment are refused (409).
+      responses:
+        "200":
+          description: Movements deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteMovementsResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Movement of an appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /sales:
     post:
@@ -1279,6 +1419,82 @@ components:
         - rettifica
         - danneggiato
         - altro
+
+    CatalogKind:
+      type: string
+      enum: [brand, product_category, service_category]
+
+    CatalogEntry:
+      type: object
+      required: [name, count]
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+          description: Products (or services, for service categories) using it
+        color:
+          type: string
+          nullable: true
+          description: Brand colour (brands only)
+
+    Catalog:
+      type: object
+      required: [brands, productCategories, serviceCategories]
+      properties:
+        brands:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogEntry"
+        productCategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogEntry"
+        serviceCategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogEntry"
+
+    CatalogTagInput:
+      type: object
+      required: [kind, name]
+      properties:
+        kind:
+          $ref: "#/components/schemas/CatalogKind"
+        name:
+          type: string
+
+    RenameCatalogTagInput:
+      type: object
+      required: [kind, from, to]
+      properties:
+        kind:
+          $ref: "#/components/schemas/CatalogKind"
+        from:
+          type: string
+        to:
+          type: string
+
+    DeleteCatalogTagInput:
+      type: object
+      required: [kind, name]
+      properties:
+        kind:
+          $ref: "#/components/schemas/CatalogKind"
+        name:
+          type: string
+        moveTo:
+          type: string
+          nullable: true
+          description: Where the products/services still using it go
+
+    DeleteMovementsResult:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: integer
+          description: How many movements were removed (a whole sale counts all its lines)
 
     StockUnit:
       type: string

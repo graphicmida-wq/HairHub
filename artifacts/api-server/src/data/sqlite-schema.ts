@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, primaryKey } from "drizzle-orm/sqlite-core";
 
 export const clients = sqliteTable("clients", {
   id: text("id").primaryKey(),
@@ -100,6 +100,12 @@ export const brandColors = sqliteTable("brand_colors", {
   brand: text("brand").primaryKey(),
   color: text("color").notNull(),
 });
+
+export const catalogTags = sqliteTable("catalog_tags", {
+  kind: text("kind").notNull(),
+  nameKey: text("name_key").notNull(),
+  name: text("name").notNull(),
+}, (t) => [primaryKey({ columns: [t.kind, t.nameKey] })]);
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),

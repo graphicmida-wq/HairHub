@@ -21,6 +21,8 @@ import type {
   Appointment,
   AuthUser,
   BrandColor,
+  Catalog,
+  CatalogTagInput,
   Client,
   ClientFormula,
   CreateAppointmentInput,
@@ -31,11 +33,14 @@ import type {
   CreateServiceInput,
   CreateStaffMemberInput,
   CreateUserInput,
+  DeleteCatalogTagInput,
+  DeleteMovementsResult,
   HealthStatus,
   ListClientFormulasParams,
   ListStockMovementsParams,
   LoginInput,
   Product,
+  RenameCatalogTagInput,
   SalonSettings,
   Service,
   SetBrandColorInput,
@@ -1389,6 +1394,421 @@ export const useDeleteProduct = <
 };
 
 /**
+ * @summary Admin only. Delete a product's history (manual movements and its lines of counter sales), before deleting a product created by mistake. Movements of appointments stay with their appointments.
+ */
+export const getDeleteProductMovementsUrl = (id: string) => {
+  return `/api/products/${id}/movements`;
+};
+
+export const deleteProductMovements = async (
+  id: string,
+  options?: RequestInit,
+): Promise<DeleteMovementsResult> => {
+  return customFetch<DeleteMovementsResult>(getDeleteProductMovementsUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteProductMovementsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProductMovements>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteProductMovements>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteProductMovements"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteProductMovements>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteProductMovements(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteProductMovementsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteProductMovements>>
+>;
+
+export type DeleteProductMovementsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin only. Delete a product's history (manual movements and its lines of counter sales), before deleting a product created by mistake. Movements of appointments stay with their appointments.
+ */
+export const useDeleteProductMovements = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProductMovements>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteProductMovements>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteProductMovementsMutationOptions(options));
+};
+
+/**
+ * @summary The salon's brands, product categories and service categories, with usage counts
+ */
+export const getGetCatalogUrl = () => {
+  return `/api/catalog`;
+};
+
+export const getCatalog = async (options?: RequestInit): Promise<Catalog> => {
+  return customFetch<Catalog>(getGetCatalogUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCatalogQueryKey = () => {
+  return [`/api/catalog`] as const;
+};
+
+export const getGetCatalogQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCatalog>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCatalog>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCatalogQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCatalog>>> = ({
+    signal,
+  }) => getCatalog({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCatalog>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCatalogQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCatalog>>
+>;
+export type GetCatalogQueryError = ErrorType<unknown>;
+
+/**
+ * @summary The salon's brands, product categories and service categories, with usage counts
+ */
+
+export function useGetCatalog<
+  TData = Awaited<ReturnType<typeof getCatalog>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCatalog>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCatalogQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin only. Add a brand or category (it can exist with no product yet)
+ */
+export const getAddCatalogTagUrl = () => {
+  return `/api/catalog/tags`;
+};
+
+export const addCatalogTag = async (
+  catalogTagInput: CatalogTagInput,
+  options?: RequestInit,
+): Promise<Catalog> => {
+  return customFetch<Catalog>(getAddCatalogTagUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(catalogTagInput),
+  });
+};
+
+export const getAddCatalogTagMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addCatalogTag>>,
+    TError,
+    { data: BodyType<CatalogTagInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addCatalogTag>>,
+  TError,
+  { data: BodyType<CatalogTagInput> },
+  TContext
+> => {
+  const mutationKey = ["addCatalogTag"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addCatalogTag>>,
+    { data: BodyType<CatalogTagInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return addCatalogTag(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddCatalogTagMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addCatalogTag>>
+>;
+export type AddCatalogTagMutationBody = BodyType<CatalogTagInput>;
+export type AddCatalogTagMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Admin only. Add a brand or category (it can exist with no product yet)
+ */
+export const useAddCatalogTag = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addCatalogTag>>,
+    TError,
+    { data: BodyType<CatalogTagInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addCatalogTag>>,
+  TError,
+  { data: BodyType<CatalogTagInput> },
+  TContext
+> => {
+  return useMutation(getAddCatalogTagMutationOptions(options));
+};
+
+/**
+ * @summary Admin only. Rename a brand or category; renaming it to another existing one merges the two. Products/services using it follow (and, for a brand, its colour and the brand shown in the movement history).
+ */
+export const getRenameCatalogTagUrl = () => {
+  return `/api/catalog/tags`;
+};
+
+export const renameCatalogTag = async (
+  renameCatalogTagInput: RenameCatalogTagInput,
+  options?: RequestInit,
+): Promise<Catalog> => {
+  return customFetch<Catalog>(getRenameCatalogTagUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(renameCatalogTagInput),
+  });
+};
+
+export const getRenameCatalogTagMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof renameCatalogTag>>,
+    TError,
+    { data: BodyType<RenameCatalogTagInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof renameCatalogTag>>,
+  TError,
+  { data: BodyType<RenameCatalogTagInput> },
+  TContext
+> => {
+  const mutationKey = ["renameCatalogTag"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof renameCatalogTag>>,
+    { data: BodyType<RenameCatalogTagInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return renameCatalogTag(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RenameCatalogTagMutationResult = NonNullable<
+  Awaited<ReturnType<typeof renameCatalogTag>>
+>;
+export type RenameCatalogTagMutationBody = BodyType<RenameCatalogTagInput>;
+export type RenameCatalogTagMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin only. Rename a brand or category; renaming it to another existing one merges the two. Products/services using it follow (and, for a brand, its colour and the brand shown in the movement history).
+ */
+export const useRenameCatalogTag = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof renameCatalogTag>>,
+    TError,
+    { data: BodyType<RenameCatalogTagInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof renameCatalogTag>>,
+  TError,
+  { data: BodyType<RenameCatalogTagInput> },
+  TContext
+> => {
+  return useMutation(getRenameCatalogTagMutationOptions(options));
+};
+
+/**
+ * @summary Admin only. Delete a brand or category. If products/services still use it, moveTo is required and they move there first (409 without it).
+ */
+export const getDeleteCatalogTagUrl = () => {
+  return `/api/catalog/tags/delete`;
+};
+
+export const deleteCatalogTag = async (
+  deleteCatalogTagInput: DeleteCatalogTagInput,
+  options?: RequestInit,
+): Promise<Catalog> => {
+  return customFetch<Catalog>(getDeleteCatalogTagUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(deleteCatalogTagInput),
+  });
+};
+
+export const getDeleteCatalogTagMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCatalogTag>>,
+    TError,
+    { data: BodyType<DeleteCatalogTagInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCatalogTag>>,
+  TError,
+  { data: BodyType<DeleteCatalogTagInput> },
+  TContext
+> => {
+  const mutationKey = ["deleteCatalogTag"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCatalogTag>>,
+    { data: BodyType<DeleteCatalogTagInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return deleteCatalogTag(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCatalogTagMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteCatalogTag>>
+>;
+export type DeleteCatalogTagMutationBody = BodyType<DeleteCatalogTagInput>;
+export type DeleteCatalogTagMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Admin only. Delete a brand or category. If products/services still use it, moveTo is required and they move there first (409 without it).
+ */
+export const useDeleteCatalogTag = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCatalogTag>>,
+    TError,
+    { data: BodyType<DeleteCatalogTagInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCatalogTag>>,
+  TError,
+  { data: BodyType<DeleteCatalogTagInput> },
+  TContext
+> => {
+  return useMutation(getDeleteCatalogTagMutationOptions(options));
+};
+
+/**
  * @summary List the colours assigned to brands
  */
 export const getListBrandColorsUrl = () => {
@@ -1645,6 +2065,90 @@ export function useListStockMovements<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Admin only. Delete a movement entered by mistake and correct the stock; a counter sale is deleted whole. Movements of an appointment are refused (409).
+ */
+export const getDeleteStockMovementUrl = (id: string) => {
+  return `/api/stock-movements/${id}`;
+};
+
+export const deleteStockMovement = async (
+  id: string,
+  options?: RequestInit,
+): Promise<DeleteMovementsResult> => {
+  return customFetch<DeleteMovementsResult>(getDeleteStockMovementUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteStockMovementMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStockMovement>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteStockMovement>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteStockMovement"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteStockMovement>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteStockMovement(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteStockMovementMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteStockMovement>>
+>;
+
+export type DeleteStockMovementMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Admin only. Delete a movement entered by mistake and correct the stock; a counter sale is deleted whole. Movements of an appointment are refused (409).
+ */
+export const useDeleteStockMovement = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStockMovement>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteStockMovement>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteStockMovementMutationOptions(options));
+};
 
 /**
  * @summary Record an over-the-counter sale (one movement per item) and deduct stock

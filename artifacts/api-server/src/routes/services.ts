@@ -5,6 +5,7 @@ import {
   dbCreateService,
   dbUpdateService,
   dbDeleteService,
+  dbEnsureCatalogTags,
 } from "../data/db";
 import {
   CreateServiceBody,
@@ -37,6 +38,8 @@ router.post("/services", async (req, res) => {
     return;
   }
   const created = await dbCreateService(body.data);
+  // A category typed on the fly joins the salon's list
+  await dbEnsureCatalogTags("service_category", [created.category]);
   const parsed = GetServiceResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /services");
@@ -82,6 +85,7 @@ router.put("/services/:id", async (req, res) => {
     res.status(404).json({ message: "Service not found" });
     return;
   }
+  await dbEnsureCatalogTags("service_category", [updated.category]);
   const parsed = UpdateServiceResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /services/:id");

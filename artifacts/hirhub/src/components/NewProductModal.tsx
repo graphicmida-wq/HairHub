@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from './Modal';
 import { CategoryInput } from './CategoryInput';
 import { BrandInput, NewBrandColorField } from './BrandInput';
@@ -8,6 +8,7 @@ import { useCreateProduct } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
 import { invalidateStock } from '../lib/stock';
+import { store } from '../lib/store';
 
 const LABEL = "text-sm font-medium text-stone-700";
 const INPUT = "bg-white border border-stone-200 rounded-xl px-4 py-2.5 outline-none focus:border-brand-dark transition-colors w-full text-sm";
@@ -64,6 +65,12 @@ export const NewProductModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
   const [formData, setFormData] = useState<FormData>(emptyForm);
   const [stockGramsManual, setStockGramsManual] = useState(false);
   const [newBrandColor, setNewBrandColor] = useState<string | null>(null);
+
+  // Opened from inside a brand in Magazzino: the brand is already filled in
+  useEffect(() => {
+    const brand = store.newProductBrand;
+    if (isOpen && brand) setFormData(p => ({ ...p, brand }));
+  }, [isOpen]);
 
   const handleQuantityChange = (val: number) => {
     setStockGramsManual(false);

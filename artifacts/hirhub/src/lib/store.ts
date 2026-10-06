@@ -11,9 +11,13 @@ class ModalStore {
     isNewSaleOpen: false,
   };
 
+  /** Brand a new product starts with: set when it is added from inside a brand in Magazzino */
+  newProductBrand: string | null = null;
+
   private listeners: Listener[] = [];
 
-  openModal(modal: keyof typeof this.modalState) {
+  openModal(modal: keyof typeof this.modalState, newProductBrand: string | null = null) {
+    if (modal === 'isNewProductOpen') this.newProductBrand = newProductBrand?.trim() || null;
     this.modalState = { ...this.modalState, [modal]: true };
     this.emit();
   }

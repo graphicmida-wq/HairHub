@@ -2,11 +2,16 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useListProducts } from '@workspace/api-client-react';
 import { Plus, Check } from 'lucide-react';
 import { BrandColorPicker, BrandDot } from '../lib/product-brand-colors';
+import { mergeNames, useCatalog } from '../lib/catalog';
 
-/** Brands already used on products, one spelling each (the most frequent). */
+/**
+ * The salon's brands (Impostazioni → Marche e categorie, including brands with
+ * no product yet), plus brands found on products, one spelling each.
+ */
 function useExistingBrands(): string[] {
   const { data: products = [] } = useListProducts();
-  return useMemo(() => {
+  const { brands: catalogBrands } = useCatalog();
+  const fromProducts = useMemo(() => {
     const variants = new Map<string, Map<string, number>>();
     for (const p of products) {
       const raw = (p.brand ?? '').trim();
@@ -23,8 +28,9 @@ function useExistingBrands(): string[] {
         if (count > bestCount) { best = spelling; bestCount = count; }
       }
       return best;
-    }).sort((a, b) => a.localeCompare(b, 'it'));
+    });
   }, [products]);
+  return useMemo(() => mergeNames(catalogBrands.map(b => b.name), fromProducts), [catalogBrands, fromProducts]);
 }
 
 interface BrandInputProps {
@@ -34,9 +40,10 @@ interface BrandInputProps {
 }
 
 /**
- * Free-text brand field with tag-style suggestions: existing brands (derived
- * from products, deduplicated ignoring case/spaces) are offered while typing;
- * picking one reuses its exact spelling so products group together.
+ * Free-text brand field with tag-style suggestions: the salon's brands
+ * (deduplicated ignoring case/spaces) are offered while typing; picking one
+ * reuses its exact spelling so products group together. A new name typed here
+ * becomes a brand of the salon when the product is saved.
  */
 export const BrandInput = ({ value, onChange, required }: BrandInputProps) => {
   const [isOpen, setIsOpen] = useState(false);

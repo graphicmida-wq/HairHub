@@ -7,6 +7,7 @@ import { EditProductModal } from '../components/EditProductModal';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { BrandColorPicker, solidTileStyle, tintTileStyle, useBrandColors, useSaveBrandColor } from '../lib/product-brand-colors';
 import { toast } from '../components/Toast';
+import { useCatalog } from '../lib/catalog';
 
 function isLowStock(product: Product): boolean {
   if (product.unitSize != null && product.stockGrams != null) {
@@ -97,6 +98,7 @@ export const Inventory = () => {
   const colorOf = useBrandColors();
   const { mutate: saveBrandColor } = useSaveBrandColor();
   const { data: unsortedProducts = [], isLoading, isError } = useListProducts();
+  const { brands: catalogBrands } = useCatalog();
   const products = [...unsortedProducts].sort((a, b) => compareText(a.name, b.name) || compareText(a.brand, b.brand));
 
   // Brands/categories are free text: group them ignoring case and surrounding
@@ -127,6 +129,11 @@ export const Inventory = () => {
   };
 
   const brandNames = groupBy(products.map(p => p.brand));
+  // Brands of the salon with no product yet (Impostazioni → Marche e categorie) get a card too
+  for (const b of catalogBrands) {
+    const key = normalize(b.name);
+    if (key && !brandNames.has(key)) brandNames.set(key, b.name.trim());
+  }
   const brands = Array.from(brandNames, ([key, name]) => {
     const group = products.filter(p => normalize(p.brand) === key);
     return {
@@ -212,7 +219,7 @@ export const Inventory = () => {
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif text-on-page">Magazzino</h1>
-        <button onClick={() => store.openModal('isNewProductOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
+        <button onClick={() => store.openModal('isNewProductOpen', selectedBrand ? selectedBrandName : null)} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <Plus className="w-4 h-4" /> Nuovo Prodotto
         </button>
       </div>
@@ -232,6 +239,14 @@ export const Inventory = () => {
               {brandProducts.length} {brandProducts.length === 1 ? 'prodotto' : 'prodotti'}
             </p>
           </div>
+          {/* Phones: the "Nuovo Prodotto" button above is hidden, this one keeps the brand */}
+          <button
+            onClick={() => store.openModal('isNewProductOpen', selectedBrandName)}
+            className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center bg-white border border-stone-200 rounded-xl text-stone-700 active:scale-95 transition-all"
+            aria-label={`Nuovo prodotto ${selectedBrandName}`}
+          >
+            <Plus className="w-5 h-5" />
+          </button>
           <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
             <PopoverTrigger asChild>
               <button
@@ -241,7 +256,8 @@ export const Inventory = () => {
                 {selectedBrandColor
                   ? <span className="w-5 h-5 rounded-full" style={{ backgroundColor: selectedBrandColor }} />
                   : <Palette className="w-5 h-5 text-stone-400" />}
-                Colore
+                {/* Phones: just the colour, so the brand name keeps its room */}
+                <span className="hidden md:inline">Colore</span>
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72 rounded-2xl">
@@ -336,7 +352,16 @@ export const Inventory = () => {
           <p className="text-sm">Errore nel caricamento del magazzino.</p>
         </div>
       ) : selectedBrand ? (
-        visibleBrandProducts.length === 0 ? (
+        brandProducts.length === 0 ? (
+          <div className="py-12 flex flex-col items-center justify-center text-on-page-muted gap-3">
+            <Box className="w-8 h-8 opacity-50" />
+            <p className="text-sm">Ancora nessun prodotto di questa marca.</p>
+            <button onClick={() => store.openModal('isNewProductOpen', selectedBrandName)}
+              className="btn-brand flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
+              <Plus className="w-4 h-4" /> Aggiungi il primo prodotto
+            </button>
+          </div>
+        ) : visibleBrandProducts.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-on-page-muted gap-2">
             <Box className="w-8 h-8 opacity-50" />
             <p className="text-sm">Nessun prodotto trovato.</p>

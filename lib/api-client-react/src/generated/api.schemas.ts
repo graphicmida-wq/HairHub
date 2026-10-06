@@ -251,6 +251,51 @@ export interface SetBrandColorInput {
   color?: string | null;
 }
 
+export type CatalogKind = (typeof CatalogKind)[keyof typeof CatalogKind];
+
+export const CatalogKind = {
+  brand: "brand",
+  product_category: "product_category",
+  service_category: "service_category",
+} as const;
+
+export interface CatalogEntry {
+  name: string;
+  /** Products (or services, for service categories) using it */
+  count: number;
+  /** Brand colour (brands only) */
+  color?: string | null;
+}
+
+export interface Catalog {
+  brands: CatalogEntry[];
+  productCategories: CatalogEntry[];
+  serviceCategories: CatalogEntry[];
+}
+
+export interface CatalogTagInput {
+  kind: CatalogKind;
+  name: string;
+}
+
+export interface RenameCatalogTagInput {
+  kind: CatalogKind;
+  from: string;
+  to: string;
+}
+
+export interface DeleteCatalogTagInput {
+  kind: CatalogKind;
+  name: string;
+  /** Where the products/services still using it go */
+  moveTo?: string | null;
+}
+
+export interface DeleteMovementsResult {
+  /** How many movements were removed (a whole sale counts all its lines) */
+  deleted: number;
+}
+
 export type StockUnit = (typeof StockUnit)[keyof typeof StockUnit];
 
 export const StockUnit = {

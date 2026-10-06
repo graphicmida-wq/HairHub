@@ -10,12 +10,14 @@
  */
 import type { Request } from "express";
 import {
+  dbDeleteStockMovements,
   dbGetAppointmentIdsWithMovements,
   dbGetAppointments,
   dbGetClient,
   dbGetClients,
   dbGetProduct,
   dbGetProducts,
+  dbGetStockMovement,
   dbGetUser,
   dbInsertStockMovements,
   dbListStockMovements,
@@ -99,18 +101,23 @@ async function applyStockDelta(productId: string, quantity: number, unit: StockU
   // A g/ml movement on a product no longer tracked by weight can't be converted: logged only.
 }
 
+/** Signed total of the rows per product and unit. */
+function netByProduct(rows: { productId: string; unit: string; quantity: number }[]) {
+  const totals = new Map<string, { productId: string; unit: StockUnit; quantity: number }>();
+  for (const r of rows) {
+    const key = `${r.productId}|${r.unit}`;
+    const t = totals.get(key) ?? { productId: r.productId, unit: r.unit as StockUnit, quantity: 0 };
+    t.quantity += r.quantity;
+    totals.set(key, t);
+  }
+  return [...totals.values()];
+}
+
 /** Insert the rows, then move stock once per product/unit. */
 async function recordMovements(rows: NewStockMovement[], options: { applyStock: boolean }) {
   const inserted = await dbInsertStockMovements(rows);
   if (options.applyStock) {
-    const totals = new Map<string, { productId: string; unit: StockUnit; quantity: number }>();
-    for (const r of rows) {
-      const key = `${r.productId}|${r.unit}`;
-      const t = totals.get(key) ?? { productId: r.productId, unit: r.unit, quantity: 0 };
-      t.quantity += r.quantity;
-      totals.set(key, t);
-    }
-    for (const t of totals.values()) await applyStockDelta(t.productId, t.quantity, t.unit);
+    for (const t of netByProduct(rows)) await applyStockDelta(t.productId, t.quantity, t.unit);
   }
   return inserted;
 }
@@ -355,6 +362,38 @@ export async function cancelSale(saleId: string, actor: Actor) {
     userName: actor.userName,
   }));
   return recordMovements(rows, { applyStock: true });
+}
+
+// ── Deleting movements ────────────────────────────────────────────────────────
+
+/**
+ * Delete a movement entered by mistake (or for a test) as if it never happened:
+ * its quantity is taken back out of (or put back into) the product's stock. A
+ * counter sale goes away whole, every line and any cancellation of it. Movements
+ * of an appointment can't be deleted: they follow the appointment (they would be
+ * written again at its next change), so they are corrected by editing it.
+ */
+export async function deleteMovement(id: string): Promise<number> {
+  const m = await dbGetStockMovement(id);
+  if (!m) throw new StockError(404, "Movimento non trovato");
+  if (m.appointmentId) {
+    throw new StockError(409, "Questo movimento viene da un appuntamento: per correggerlo modifica l'appuntamento");
+  }
+  const rows = m.saleId ? await dbListStockMovements({ saleId: m.saleId }) : [m];
+  await dbDeleteStockMovements(rows.map(r => r.id));
+  // A product deleted in the meantime has no stock left to correct (skipped)
+  for (const t of netByProduct(rows)) await applyStockDelta(t.productId, -t.quantity, t.unit);
+  return rows.length;
+}
+
+/**
+ * Before deleting a product: drop its history too (manual movements and its lines
+ * of counter sales). Its appointment movements stay with their appointments.
+ */
+export async function deleteProductHistory(productId: string): Promise<number> {
+  const rows = (await dbListStockMovements({ productId })).filter(m => !m.appointmentId);
+  await dbDeleteStockMovements(rows.map(r => r.id));
+  return rows.length;
 }
 
 // ── Manual product edits ──────────────────────────────────────────────────────

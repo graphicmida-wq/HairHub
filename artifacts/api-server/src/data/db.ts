@@ -9,7 +9,7 @@
 
 import { randomBytes } from "crypto";
 import path from "path";
-import { and, asc, desc, eq, gte, isNotNull, like, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, like, lte, or, sql, type SQL } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { hashPassword, assertAuthSecret } from "../lib/auth";
 
@@ -52,6 +52,7 @@ import {
   users as sqliteUsers,
   stockMovements as sqliteMovements,
   brandColors as sqliteBrandColors,
+  catalogTags as sqliteCatalogTags,
 } from "./sqlite-schema";
 
 type SqliteDb = BetterSQLite3Database<typeof sqliteSchema>;
@@ -258,7 +259,16 @@ async function initSqlite() {
   const sqlite = new Database(dbPath);
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
+  _catalogIsNew = !sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_tags'").get();
   createSqliteTables(sqlite);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS catalog_tags (
+      kind TEXT NOT NULL,
+      name_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      PRIMARY KEY (kind, name_key)
+    )
+  `);
   _sqliteDb = sqliteDrizzle(sqlite, { schema: sqliteSchema });
   seedSqliteIfEmpty(_sqliteDb);
   logger.info({ path: dbPath }, "SQLite database initialized");
@@ -422,6 +432,21 @@ async function initMysql() {
     CREATE TABLE IF NOT EXISTS brand_colors (
       brand VARCHAR(100) PRIMARY KEY,
       color VARCHAR(9) NOT NULL
+    )
+  `);
+  const catalogExists = await db.execute(sql`
+    SELECT COUNT(*) AS n FROM information_schema.tables
+    WHERE table_schema = DATABASE() AND table_name = 'catalog_tags'
+  `);
+  _catalogIsNew = Number((catalogExists as unknown as [Array<{ n: number | string }>])[0]?.[0]?.n ?? 0) === 0;
+  // utf8mb4_bin on the key: names are compared exactly as the app does
+  // (an accent-insensitive collation would merge "Artego" and "Artègo")
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS catalog_tags (
+      kind VARCHAR(20) NOT NULL,
+      name_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      PRIMARY KEY (kind, name_key)
     )
   `);
 
@@ -639,6 +664,8 @@ async function mysqlSeedIfEmpty() {
 // ── Init ───────────────────────────────────────────────────────────────────────
 
 let _useMysql = false;
+/** Set at start-up when the catalog_tags table had to be created (seeded once). */
+let _catalogIsNew = false;
 
 /**
  * Seed an initial admin user when the users table is empty. Gated on
@@ -676,6 +703,7 @@ export async function initDb() {
     await initSqlite();
   }
   await ensureAdminUser();
+  if (_catalogIsNew) await seedCatalog();
 }
 
 // ── Clients ────────────────────────────────────────────────────────────────────
@@ -1496,6 +1524,27 @@ export async function dbListStockMovements(filter: StockMovementFilter = {}) {
   );
 }
 
+export async function dbGetStockMovement(id: string) {
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await import("@workspace/db");
+    const rows = await getMysqlDb().select().from(t).where(eq(t.id, id)).execute();
+    return rows[0] ? normalizeMovement(rows[0] as Record<string, unknown>) : undefined;
+  }
+  const row = getSqliteDb().select().from(sqliteMovements).where(eq(sqliteMovements.id, id)).get();
+  return Promise.resolve(row ? normalizeMovement(row as Record<string, unknown>) : undefined);
+}
+
+/** Remove movements from the history (entered by mistake or for a test). */
+export async function dbDeleteStockMovements(ids: string[]) {
+  if (ids.length === 0) return;
+  if (_useMysql) {
+    const { stockMovementsTable: t } = await import("@workspace/db");
+    await getMysqlDb().delete(t).where(inArray(t.id, ids));
+    return;
+  }
+  getSqliteDb().delete(sqliteMovements).where(inArray(sqliteMovements.id, ids)).run();
+}
+
 /** Ids of every appointment that already has at least one movement. */
 export async function dbGetAppointmentIdsWithMovements(): Promise<Set<string>> {
   if (_useMysql) {
@@ -1558,6 +1607,92 @@ export async function dbSetBrandColor(brand: string, color: string | null) {
       .onConflictDoUpdate({ target: sqliteBrandColors.brand, set: { color } }).run();
   }
   return dbGetBrandColors();
+}
+
+// ── Catalog: brands and categories ─────────────────────────────────────────────
+
+export type CatalogKind = "brand" | "product_category" | "service_category";
+export const CATALOG_KINDS: CatalogKind[] = ["brand", "product_category", "service_category"];
+
+/** The categories the app always offered: the start of every salon's list. */
+const BUILTIN_TAGS: Record<CatalogKind, string[]> = {
+  brand: [],
+  product_category: ["Lavaggio", "Colore", "Finish", "Trattamento", "Styling", "Altro"],
+  service_category: ["Colore", "Piega", "Taglio", "Trattamento", "Styling", "Altro"],
+};
+
+export async function dbListCatalogTags(): Promise<{ kind: CatalogKind; nameKey: string; name: string }[]> {
+  if (_useMysql) {
+    const { catalogTagsTable } = await import("@workspace/db");
+    return (await getMysqlDb().select().from(catalogTagsTable).execute()) as { kind: CatalogKind; nameKey: string; name: string }[];
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteCatalogTags).all() as { kind: CatalogKind; nameKey: string; name: string }[]);
+}
+
+/** Add the names that aren't in the list yet (existing ones are left as they are). */
+export async function dbEnsureCatalogTags(kind: CatalogKind, names: string[]) {
+  const rows = [...new Map(
+    names.map(n => n.trim()).filter(Boolean).map(name => [brandKey(name), { kind, nameKey: brandKey(name), name }]),
+  ).values()].filter(r => r.nameKey.length <= 100);
+  if (rows.length === 0) return;
+  if (_useMysql) {
+    const { catalogTagsTable } = await import("@workspace/db");
+    await getMysqlDb().insert(catalogTagsTable).ignore().values(rows);
+    return;
+  }
+  getSqliteDb().insert(sqliteCatalogTags).values(rows).onConflictDoNothing().run();
+}
+
+/** Set the display name of an entry (adding it if missing). */
+export async function dbPutCatalogTag(kind: CatalogKind, name: string) {
+  const row = { kind, nameKey: brandKey(name), name: name.trim() };
+  if (_useMysql) {
+    const { catalogTagsTable } = await import("@workspace/db");
+    await getMysqlDb().insert(catalogTagsTable).values(row).onDuplicateKeyUpdate({ set: { name: row.name } });
+    return;
+  }
+  getSqliteDb().insert(sqliteCatalogTags).values(row)
+    .onConflictDoUpdate({ target: [sqliteCatalogTags.kind, sqliteCatalogTags.nameKey], set: { name: row.name } }).run();
+}
+
+export async function dbRemoveCatalogTag(kind: CatalogKind, nameKey: string) {
+  if (_useMysql) {
+    const { catalogTagsTable: t } = await import("@workspace/db");
+    await getMysqlDb().delete(t).where(and(eq(t.kind, kind), eq(t.nameKey, nameKey)));
+    return;
+  }
+  const t = sqliteCatalogTags;
+  getSqliteDb().delete(t).where(and(eq(t.kind, kind), eq(t.nameKey, nameKey))).run();
+}
+
+/** Rewrite the brand snapshotted on these movements (a renamed or merged brand). */
+export async function dbSetMovementsBrand(ids: string[], brand: string) {
+  for (let i = 0; i < ids.length; i += 500) {
+    const chunk = ids.slice(i, i + 500);
+    if (_useMysql) {
+      const { stockMovementsTable: t } = await import("@workspace/db");
+      await getMysqlDb().update(t).set({ productBrand: brand }).where(inArray(t.id, chunk));
+    } else {
+      getSqliteDb().update(sqliteMovements).set({ productBrand: brand }).where(inArray(sqliteMovements.id, chunk)).run();
+    }
+  }
+}
+
+/**
+ * First start with the catalogue: the built-in categories plus every brand and
+ * category already used by products and services, so nothing seems to vanish.
+ */
+async function seedCatalog() {
+  try {
+    const products = await dbGetProducts();
+    const services = await dbGetServices();
+    await dbEnsureCatalogTags("brand", products.map(p => p.brand));
+    await dbEnsureCatalogTags("product_category", [...BUILTIN_TAGS.product_category, ...products.map(p => p.category)]);
+    await dbEnsureCatalogTags("service_category", [...BUILTIN_TAGS.service_category, ...services.map(s => s.category)]);
+    logger.info("Catalog of brands and categories created from existing products and services");
+  } catch (err) {
+    logger.error({ err }, "Could not seed the catalog of brands and categories");
+  }
 }
 
 // ── Client Formulas ────────────────────────────────────────────────────────────

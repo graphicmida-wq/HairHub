@@ -6,7 +6,11 @@ import { CategoryInput } from './CategoryInput';
 import { BrandInput, NewBrandColorField } from './BrandInput';
 import { SubcategoryInput } from './SubcategoryInput';
 import { useSaveBrandColor } from '../lib/product-brand-colors';
-import { useListProducts, useUpdateProduct, useDeleteProduct, getListProductsQueryKey, type StockMovementReason } from '@workspace/api-client-react';
+import {
+  useListProducts, useUpdateProduct, useDeleteProduct, useDeleteProductMovements, useListStockMovements,
+  getListProductsQueryKey, getListStockMovementsQueryKey, type StockMovementReason,
+} from '@workspace/api-client-react';
+import { useAuth } from '../lib/auth-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
 import { MANUAL_REASONS, formatNumber, invalidateStock } from '../lib/stock';
@@ -58,19 +62,25 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     },
   });
 
-  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
-        toast.show('Prodotto eliminato');
-        onClose();
-      },
-      onError: (err: unknown) => {
-        const msg = (err as { data?: { message?: string } })?.data?.message;
-        toast.show(msg ?? "Errore durante l'eliminazione", 'error');
-      },
-    },
+  const { mutateAsync: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct();
+  const { mutateAsync: deleteHistory, isPending: isDeletingHistory } = useDeleteProductMovements();
+  const isDeleting = isDeletingProduct || isDeletingHistory;
+
+  // Deleting: an admin may take the product's history with it (a product created
+  // by mistake or for a test); appointment movements always stay
+  const { isAdmin } = useAuth();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [withHistory, setWithHistory] = useState(false);
+  const historyParams = { productId: productId ?? '' };
+  const { data: history = [], isLoading: loadingHistory } = useListStockMovements(historyParams, {
+    query: { queryKey: getListStockMovementsQueryKey(historyParams), enabled: isAdmin && confirmingDelete && !!productId },
   });
+  const deletable = history.filter(m => !m.appointmentId);
+  const deletableSales = new Set(deletable.filter(m => m.saleId && m.quantity < 0).map(m => m.saleId)).size;
+  const keptForAppointments = history.length - deletable.length;
+  useEffect(() => {
+    if (!isOpen) { setConfirmingDelete(false); setWithHistory(false); }
+  }, [isOpen]);
 
   const [formData, setFormData] = useState<FormData>({
     name: '', category: '', brand: '', price: 0, quantity: 0, minThreshold: 5,
@@ -170,9 +180,26 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
     updateProduct({ id: productId, data: payload });
   };
 
+  const runDelete = async (history: boolean) => {
+    if (!productId) return;
+    try {
+      if (history) await deleteHistory({ id: productId });
+      await deleteProduct({ id: productId });
+      queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+      if (history) invalidateStock(queryClient);
+      toast.show(history ? 'Prodotto e storico eliminati' : 'Prodotto eliminato');
+      onClose();
+    } catch (err) {
+      const msg = (err as { data?: { message?: string } })?.data?.message;
+      toast.show(msg ?? "Errore durante l'eliminazione", 'error');
+    }
+  };
+
   const handleDelete = () => {
-    if (!productId || !window.confirm('Sei sicuro di voler eliminare questo prodotto?')) return;
-    deleteProduct({ id: productId });
+    if (!productId) return;
+    // Only an admin can delete the history: everyone else gets the usual question
+    if (isAdmin) { setConfirmingDelete(true); return; }
+    if (window.confirm('Sei sicuro di voler eliminare questo prodotto?')) void runDelete(false);
   };
 
   return (
@@ -330,6 +357,41 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
           </div>
         )}
 
+        {confirmingDelete ? (
+          <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-4 flex flex-col gap-3">
+            <p className="text-sm font-medium text-stone-900">
+              Eliminare <span className="uppercase">{formData.name || 'questo prodotto'}</span>?
+            </p>
+            {loadingHistory ? (
+              <p className="text-sm text-stone-500">Controllo lo storico…</p>
+            ) : deletable.length > 0 ? (
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked={withHistory} onChange={e => setWithHistory(e.target.checked)}
+                  className="mt-0.5 w-5 h-5 shrink-0 accent-red-600" />
+                <span className="text-sm text-stone-700">
+                  Elimina anche lo storico dei movimenti ({deletable.length} {deletable.length === 1 ? 'movimento' : 'movimenti'})
+                  <span className="block text-xs text-stone-500 mt-0.5">
+                    Utile per un prodotto creato per prova o per errore.
+                    {deletableSales > 0 && ` ${deletableSales === 1 ? 'La vendita al banco sparirà' : `Le ${deletableSales} vendite al banco spariranno`} anche dagli incassi.`}
+                    {keptForAppointments > 0 && ' I movimenti degli appuntamenti restano.'}
+                  </span>
+                </span>
+              </label>
+            ) : (
+              <p className="text-sm text-stone-500">Il prodotto non ha movimenti da eliminare.</p>
+            )}
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => { setConfirmingDelete(false); setWithHistory(false); }} disabled={isDeleting}
+                className="flex-1 bg-white border border-stone-200 text-stone-700 font-medium py-3 rounded-xl hover:bg-stone-50 transition-colors disabled:opacity-60">
+                Annulla
+              </button>
+              <button type="button" onClick={() => void runDelete(withHistory)} disabled={isDeleting || loadingHistory}
+                className="flex-1 bg-red-600 text-white font-medium py-3 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60">
+                {isDeleting ? 'Eliminazione…' : 'Elimina prodotto'}
+              </button>
+            </div>
+          </div>
+        ) : (
         <div className="flex items-center gap-2 mt-2">
           <button type="button" onClick={handleDelete} disabled={isDeleting}
             className="flex-1 bg-red-50 text-red-600 font-medium py-3 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-60">
@@ -340,6 +402,7 @@ export const EditProductModal = ({ isOpen, onClose, productId }: { isOpen: boole
             {isUpdating ? 'Salvataggio...' : 'Salva Modifiche'}
           </button>
         </div>
+        )}
       </form>
     </Modal>
   );

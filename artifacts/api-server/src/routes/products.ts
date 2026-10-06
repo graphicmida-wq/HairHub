@@ -5,6 +5,7 @@ import {
   dbCreateProduct,
   dbUpdateProduct,
   dbDeleteProduct,
+  dbEnsureCatalogTags,
 } from "../data/db";
 import {
   CreateProductBody,
@@ -39,6 +40,9 @@ router.post("/products", async (req, res) => {
   }
   const created = await dbCreateProduct(body.data);
   await logInitialStock(created, await actorFrom(req));
+  // A brand or category typed on the fly joins the salon's list
+  await dbEnsureCatalogTags("brand", [created.brand]);
+  await dbEnsureCatalogTags("product_category", [created.category]);
   const parsed = GetProductResponse.safeParse(created);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /products");
@@ -87,6 +91,8 @@ router.put("/products/:id", async (req, res) => {
     return;
   }
   await logProductStockChange(before, updated, stockChangeReason, stockChangeNote, await actorFrom(req));
+  await dbEnsureCatalogTags("brand", [updated.brand]);
+  await dbEnsureCatalogTags("product_category", [updated.category]);
   const parsed = UpdateProductResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /products/:id");

@@ -389,6 +389,143 @@ export const DeleteProductParams = zod.object({
 });
 
 /**
+ * @summary Admin only. Delete a product's history (manual movements and its lines of counter sales), before deleting a product created by mistake. Movements of appointments stay with their appointments.
+ */
+export const DeleteProductMovementsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteProductMovementsResponse = zod.object({
+  deleted: zod
+    .number()
+    .describe(
+      "How many movements were removed (a whole sale counts all its lines)",
+    ),
+});
+
+/**
+ * @summary The salon's brands, product categories and service categories, with usage counts
+ */
+export const GetCatalogResponse = zod.object({
+  brands: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+  productCategories: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+  serviceCategories: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin only. Add a brand or category (it can exist with no product yet)
+ */
+export const AddCatalogTagBody = zod.object({
+  kind: zod.enum(["brand", "product_category", "service_category"]),
+  name: zod.string(),
+});
+
+/**
+ * @summary Admin only. Rename a brand or category; renaming it to another existing one merges the two. Products/services using it follow (and, for a brand, its colour and the brand shown in the movement history).
+ */
+export const RenameCatalogTagBody = zod.object({
+  kind: zod.enum(["brand", "product_category", "service_category"]),
+  from: zod.string(),
+  to: zod.string(),
+});
+
+export const RenameCatalogTagResponse = zod.object({
+  brands: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+  productCategories: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+  serviceCategories: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin only. Delete a brand or category. If products/services still use it, moveTo is required and they move there first (409 without it).
+ */
+export const DeleteCatalogTagBody = zod.object({
+  kind: zod.enum(["brand", "product_category", "service_category"]),
+  name: zod.string(),
+  moveTo: zod
+    .string()
+    .nullish()
+    .describe("Where the products\/services still using it go"),
+});
+
+export const DeleteCatalogTagResponse = zod.object({
+  brands: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+  productCategories: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+  serviceCategories: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products (or services, for service categories) using it"),
+      color: zod.string().nullish().describe("Brand colour (brands only)"),
+    }),
+  ),
+});
+
+/**
  * @summary List the colours assigned to brands
  */
 export const ListBrandColorsResponseItem = zod.object({
@@ -496,6 +633,21 @@ export const ListStockMovementsResponseItem = zod.object({
 export const ListStockMovementsResponse = zod.array(
   ListStockMovementsResponseItem,
 );
+
+/**
+ * @summary Admin only. Delete a movement entered by mistake and correct the stock; a counter sale is deleted whole. Movements of an appointment are refused (409).
+ */
+export const DeleteStockMovementParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteStockMovementResponse = zod.object({
+  deleted: zod
+    .number()
+    .describe(
+      "How many movements were removed (a whole sale counts all its lines)",
+    ),
+});
 
 /**
  * @summary Record an over-the-counter sale (one movement per item) and deduct stock

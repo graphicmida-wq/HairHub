@@ -7,7 +7,7 @@ import {
   AlertCircle, Loader2, Package2, Plus, Receipt, Scissors, Search, ShoppingBag, X,
 } from 'lucide-react';
 import {
-  getListStockMovementsQueryKey, useCancelSale, useListProducts, useListStockMovements,
+  getListStockMovementsQueryKey, useCancelSale, useDeleteStockMovement, useListProducts, useListStockMovements,
   type ListStockMovementsParams, type Product, type StockMovement,
 } from '@workspace/api-client-react';
 import { store } from '../lib/store';
@@ -21,6 +21,7 @@ import { BrandDot, tintTileStyle, useBrandColors } from '../lib/product-brand-co
 import { timeSlots, ymd } from '../lib/period';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
 import { useFontScale } from '../lib/font-scale';
+import { useAuth } from '../lib/auth-context';
 
 const KINDS: { value: MovementKind | 'tutti'; label: string }[] = [
   { value: 'tutti', label: 'Tutti' },
@@ -132,6 +133,21 @@ export const Sales = () => {
     },
   });
 
+  // Admin only: a wrong or test movement goes away and the stock is corrected
+  const { isAdmin } = useAuth();
+  const { mutate: deleteMovement, isPending: isDeleting } = useDeleteStockMovement({
+    mutation: {
+      onSuccess: () => {
+        invalidateStock(queryClient);
+        toast.show('Eliminato dallo storico');
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { data?: { message?: string } })?.data?.message;
+        toast.show(msg ?? "Errore durante l'eliminazione", 'error');
+      },
+    },
+  });
+
   const productById = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
   const colorOf = useBrandColors();
   const pinned: Product | undefined = pinnedId ? productById.get(pinnedId) : undefined;
@@ -222,6 +238,21 @@ export const Sales = () => {
     if (window.confirm(msg)) cancelSale({ saleId: m.saleId });
   };
 
+  const handleDelete = (m: StockMovement) => {
+    const product = productById.get(m.productId);
+    const name = product?.name ?? m.productName;
+    const msg = m.saleId
+      ? openSales.has(m.saleId)
+        ? "Eliminare del tutto questa vendita?\n\nSparisce dallo storico e dagli incassi e i prodotti tornano in magazzino. "
+          + "Se la vendita è avvenuta davvero e il cliente ha reso il prodotto, usa invece «Annulla vendita»."
+        : "Eliminare questa vendita annullata?\n\nSparisce dallo storico; il magazzino non cambia."
+      : `Eliminare questo movimento (${movementLabel(m)} ${formatSignedQty(m.quantity, m.unit)} di ${name})?\n\n`
+        + (product
+          ? `Il magazzino di ${name} viene corretto di ${formatSignedQty(-m.quantity, m.unit)}.`
+          : 'Il prodotto non esiste più: si cancella solo questa riga dallo storico.');
+    if (window.confirm(msg)) deleteMovement({ id: m.id });
+  };
+
   const pinnedByWeight = pinned != null && pinned.unitSize != null && pinned.stockGrams != null;
   const usedValue = pinnedId && pinnedByWeight
     ? (totals.usedByUnit.size ? formatUsed(totals.usedByUnit) : formatQty(0, pinned.unitType ?? 'g'))
@@ -232,6 +263,7 @@ export const Sales = () => {
   const hasChartData = buckets.some(b => Math.abs(b.sold) > 0.005 || Math.abs(b.used) > 0.005);
 
   const shownSaleButtons = new Set<string>();
+  const shownSaleDeletes = new Set<string>();
 
   return (
     <div className="flex flex-col gap-6 page-enter">
@@ -399,6 +431,9 @@ export const Sales = () => {
                 const packages = m.unit !== 'pz' ? toPackages(Math.abs(m.quantity), m.unit, product) : null;
                 const canCancel = m.saleId != null && m.quantity < 0 && openSales.has(m.saleId) && !shownSaleButtons.has(m.saleId);
                 if (canCancel) shownSaleButtons.add(m.saleId!);
+                // Movements of an appointment follow the appointment: corrected by editing it
+                const canDelete = isAdmin && !m.appointmentId && !(m.saleId && shownSaleDeletes.has(m.saleId));
+                if (canDelete && m.saleId) shownSaleDeletes.add(m.saleId);
                 const details = [m.clientName, m.note, m.userName].filter(Boolean).join(' · ');
                 return (
                   <div key={m.id} className="px-4 md:px-5 py-3 border-b border-stone-50 last:border-b-0 flex gap-3">
@@ -414,11 +449,21 @@ export const Sales = () => {
                       )}
                       <p className={cn("text-sm", pinnedId ? "font-medium text-stone-900" : "text-stone-600")}>{movementLabel(m)}</p>
                       {details && <p className="text-xs text-stone-500 break-words">{details}</p>}
-                      {canCancel && (
-                        <button onClick={() => handleCancel(m)} disabled={isCancelling}
-                          className="mt-1 text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50">
-                          Annulla vendita
-                        </button>
+                      {(canCancel || canDelete) && (
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                          {canCancel && (
+                            <button onClick={() => handleCancel(m)} disabled={isCancelling}
+                              className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50">
+                              Annulla vendita
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button onClick={() => handleDelete(m)} disabled={isDeleting}
+                              className="text-xs font-medium text-stone-500 hover:text-red-600 disabled:opacity-50">
+                              {m.saleId ? 'Elimina vendita' : 'Elimina movimento'}
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     <div className="shrink-0 text-right">

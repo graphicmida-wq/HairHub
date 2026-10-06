@@ -10,6 +10,7 @@ import { cn } from '../lib/utils';
 import { toast } from '../components/Toast';
 import { FontSizeCard } from '../components/FontSizeCard';
 import { ThemeCard } from '../components/ThemeCard';
+import { CatalogCard } from '../components/CatalogCard';
 import {
   BRAND_PRESETS,
   paletteFromCustomColor,
@@ -642,6 +643,8 @@ export const Settings = () => {
                 </div>
               </div>
             </div>
+
+            <CatalogCard />
 
             {/* Team card */}
             <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
