@@ -53,6 +53,7 @@ import {
   stockMovements as sqliteMovements,
   brandColors as sqliteBrandColors,
   catalogTags as sqliteCatalogTags,
+  catalogSubcategories as sqliteCatalogSubs,
 } from "./sqlite-schema";
 
 type SqliteDb = BetterSQLite3Database<typeof sqliteSchema>;
@@ -260,6 +261,7 @@ async function initSqlite() {
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
   _catalogIsNew = !sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_tags'").get();
+  _subcategoriesAreNew = !sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_subcategories'").get();
   createSqliteTables(sqlite);
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS catalog_tags (
@@ -267,7 +269,14 @@ async function initSqlite() {
       name_key TEXT NOT NULL,
       name TEXT NOT NULL,
       PRIMARY KEY (kind, name_key)
-    )
+    );
+    CREATE TABLE IF NOT EXISTS catalog_subcategories (
+      brand_key TEXT NOT NULL,
+      category_key TEXT NOT NULL,
+      name_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      PRIMARY KEY (brand_key, category_key, name_key)
+    );
   `);
   _sqliteDb = sqliteDrizzle(sqlite, { schema: sqliteSchema });
   seedSqliteIfEmpty(_sqliteDb);
@@ -447,6 +456,20 @@ async function initMysql() {
       name_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       name VARCHAR(100) NOT NULL,
       PRIMARY KEY (kind, name_key)
+    )
+  `);
+  const subcategoriesExist = await db.execute(sql`
+    SELECT COUNT(*) AS n FROM information_schema.tables
+    WHERE table_schema = DATABASE() AND table_name = 'catalog_subcategories'
+  `);
+  _subcategoriesAreNew = Number((subcategoriesExist as unknown as [Array<{ n: number | string }>])[0]?.[0]?.n ?? 0) === 0;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS catalog_subcategories (
+      brand_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      category_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      name_key VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      name VARCHAR(100) NOT NULL,
+      PRIMARY KEY (brand_key, category_key, name_key)
     )
   `);
 
@@ -666,6 +689,8 @@ async function mysqlSeedIfEmpty() {
 let _useMysql = false;
 /** Set at start-up when the catalog_tags table had to be created (seeded once). */
 let _catalogIsNew = false;
+/** Same for catalog_subcategories (it may arrive after catalog_tags). */
+let _subcategoriesAreNew = false;
 
 /**
  * Seed an initial admin user when the users table is empty. Gated on
@@ -704,6 +729,7 @@ export async function initDb() {
   }
   await ensureAdminUser();
   if (_catalogIsNew) await seedCatalog();
+  if (_subcategoriesAreNew) await seedSubcategories();
 }
 
 // ── Clients ────────────────────────────────────────────────────────────────────
@@ -1692,6 +1718,85 @@ async function seedCatalog() {
     logger.info("Catalog of brands and categories created from existing products and services");
   } catch (err) {
     logger.error({ err }, "Could not seed the catalog of brands and categories");
+  }
+}
+
+// ── Catalog: product sub-categories (per brand and category) ──────────────────
+
+export interface SubcategoryTag {
+  brandKey: string;
+  categoryKey: string;
+  nameKey: string;
+  name: string;
+}
+
+export async function dbListSubcategoryTags(): Promise<SubcategoryTag[]> {
+  if (_useMysql) {
+    const { catalogSubcategoriesTable } = await import("@workspace/db");
+    return getMysqlDb().select().from(catalogSubcategoriesTable).execute();
+  }
+  return Promise.resolve(getSqliteDb().select().from(sqliteCatalogSubs).all());
+}
+
+/** Add the sub-categories that aren't in the list yet (existing ones are left as they are). */
+export async function dbEnsureSubcategoryTags(entries: { brand: string; category: string; name: string }[]) {
+  const rows = [...new Map(
+    entries
+      .map(e => ({ brandKey: brandKey(e.brand), categoryKey: brandKey(e.category), nameKey: brandKey(e.name), name: e.name.trim() }))
+      .filter(r => r.brandKey && r.categoryKey && r.nameKey)
+      .filter(r => r.brandKey.length <= 100 && r.categoryKey.length <= 100 && r.nameKey.length <= 100)
+      .map(r => [`${r.brandKey}\u0000${r.categoryKey}\u0000${r.nameKey}`, r]),
+  ).values()];
+  if (rows.length === 0) return;
+  if (_useMysql) {
+    const { catalogSubcategoriesTable } = await import("@workspace/db");
+    await getMysqlDb().insert(catalogSubcategoriesTable).ignore().values(rows);
+    return;
+  }
+  getSqliteDb().insert(sqliteCatalogSubs).values(rows).onConflictDoNothing().run();
+}
+
+/** Set the display name of a sub-category (adding it if missing). */
+export async function dbPutSubcategoryTag(brand: string, category: string, name: string) {
+  const row = { brandKey: brandKey(brand), categoryKey: brandKey(category), nameKey: brandKey(name), name: name.trim() };
+  if (_useMysql) {
+    const { catalogSubcategoriesTable } = await import("@workspace/db");
+    await getMysqlDb().insert(catalogSubcategoriesTable).values(row).onDuplicateKeyUpdate({ set: { name: row.name } });
+    return;
+  }
+  const t = sqliteCatalogSubs;
+  getSqliteDb().insert(t).values(row)
+    .onConflictDoUpdate({ target: [t.brandKey, t.categoryKey, t.nameKey], set: { name: row.name } }).run();
+}
+
+/** Remove sub-categories from the list: one, or every one of a brand or of a category. */
+export async function dbRemoveSubcategoryTags(match: { brandKey?: string; categoryKey?: string; nameKey?: string }) {
+  if (!match.brandKey && !match.categoryKey) return;
+  if (_useMysql) {
+    const { catalogSubcategoriesTable: t } = await import("@workspace/db");
+    const conds: SQL[] = [];
+    if (match.brandKey) conds.push(eq(t.brandKey, match.brandKey));
+    if (match.categoryKey) conds.push(eq(t.categoryKey, match.categoryKey));
+    if (match.nameKey) conds.push(eq(t.nameKey, match.nameKey));
+    await getMysqlDb().delete(t).where(and(...conds));
+    return;
+  }
+  const t = sqliteCatalogSubs;
+  const conds: SQL[] = [];
+  if (match.brandKey) conds.push(eq(t.brandKey, match.brandKey));
+  if (match.categoryKey) conds.push(eq(t.categoryKey, match.categoryKey));
+  if (match.nameKey) conds.push(eq(t.nameKey, match.nameKey));
+  getSqliteDb().delete(t).where(and(...conds)).run();
+}
+
+/** First start with sub-categories in the list: every one already used by a product. */
+async function seedSubcategories() {
+  try {
+    const products = await dbGetProducts();
+    await dbEnsureSubcategoryTags(products.flatMap(p => (p.subcategories ?? []).map(name => ({ brand: p.brand, category: p.category, name }))));
+    logger.info("Catalog of product sub-categories created from existing products");
+  } catch (err) {
+    logger.error({ err }, "Could not seed the catalog of sub-categories");
   }
 }
 

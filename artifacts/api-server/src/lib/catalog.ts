@@ -6,13 +6,17 @@
  */
 import {
   brandKey,
+  dbEnsureSubcategoryTags,
   dbGetBrandColors,
   dbGetProducts,
   dbGetServices,
   dbListCatalogTags,
   dbListStockMovements,
+  dbListSubcategoryTags,
   dbPutCatalogTag,
+  dbPutSubcategoryTag,
   dbRemoveCatalogTag,
+  dbRemoveSubcategoryTags,
   dbSetBrandColor,
   dbSetMovementsBrand,
   dbUpdateProduct,
@@ -59,11 +63,55 @@ export async function getCatalog() {
       .map(([key, e]) => (kind === "brand" ? { ...e, color: colors.get(key) ?? null } : e))
       .sort((a, b) => a.name.localeCompare(b.name, "it", { sensitivity: "base" }));
   };
+  const brands = await build("brand");
+  const productCategories = await build("product_category");
   return {
-    brands: await build("brand"),
-    productCategories: await build("product_category"),
+    brands,
+    productCategories,
     serviceCategories: await build("service_category"),
+    subcategories: await buildSubcategories(brands, productCategories),
   };
+}
+
+/** Every sub-category with its brand and category (display names) and how many products use it. */
+async function buildSubcategories(brands: Entry[], categories: Entry[]) {
+  const brandName = new Map(brands.map(b => [brandKey(b.name), b.name]));
+  const categoryName = new Map(categories.map(c => [brandKey(c.name), c.name]));
+  const entries = new Map<string, { brand: string; category: string; name: string; count: number }>();
+  const id = (b: string, c: string, n: string) => `${b}\u0000${c}\u0000${n}`;
+  for (const t of await dbListSubcategoryTags()) {
+    entries.set(id(t.brandKey, t.categoryKey, t.nameKey), {
+      brand: brandName.get(t.brandKey) ?? t.brandKey,
+      category: categoryName.get(t.categoryKey) ?? t.categoryKey,
+      name: t.name,
+      count: 0,
+    });
+  }
+  for (const p of await dbGetProducts()) {
+    const b = brandKey(p.brand);
+    const c = brandKey(p.category);
+    if (!b || !c) continue;
+    for (const sub of p.subcategories ?? []) {
+      const key = id(b, c, brandKey(sub));
+      const entry = entries.get(key) ?? { brand: brandName.get(b) ?? p.brand.trim(), category: categoryName.get(c) ?? p.category.trim(), name: sub.trim(), count: 0 };
+      entry.count += 1;
+      entries.set(key, entry);
+    }
+  }
+  const cmp = (a: string, b: string) => a.localeCompare(b, "it", { sensitivity: "base" });
+  return [...entries.values()].sort((a, b) => cmp(a.brand, b.brand) || cmp(a.category, b.category) || cmp(a.name, b.name));
+}
+
+/** The sub-categories of a brand (or of a category) follow it when it is renamed or merged. */
+async function moveSubcategoryTags(field: "brand" | "category", fromKey: string, toName: string) {
+  const rows = (await dbListSubcategoryTags()).filter(r => (field === "brand" ? r.brandKey : r.categoryKey) === fromKey);
+  if (rows.length === 0 || brandKey(toName) === fromKey) return;
+  await dbEnsureSubcategoryTags(rows.map(r => ({
+    brand: field === "brand" ? toName : r.brandKey,
+    category: field === "category" ? toName : r.categoryKey,
+    name: r.name,
+  })));
+  await dbRemoveSubcategoryTags(field === "brand" ? { brandKey: fromKey } : { categoryKey: fromKey });
 }
 
 function cleanName(name: string): string {
@@ -108,6 +156,8 @@ export async function renameTag(kind: CatalogKind, from: string, to: string): Pr
       if (color) await dbSetBrandColor(fromKey, null);
     }
   }
+  if (kind === "brand") await moveSubcategoryTags("brand", fromKey, toName);
+  if (kind === "product_category") await moveSubcategoryTags("category", fromKey, toName);
   if (fromKey !== toKey) await dbRemoveCatalogTag(kind, fromKey);
   await dbPutCatalogTag(kind, toName);
   return moving.length;
@@ -127,5 +177,68 @@ export async function deleteTag(kind: CatalogKind, name: string, moveTo?: string
     return;
   }
   await dbRemoveCatalogTag(kind, key);
-  if (kind === "brand") await dbSetBrandColor(key, null);
+  if (kind === "brand") {
+    await dbSetBrandColor(key, null);
+    await dbRemoveSubcategoryTags({ brandKey: key });
+  }
+  if (kind === "product_category") await dbRemoveSubcategoryTags({ categoryKey: key });
+}
+
+// ── Sub-categories ────────────────────────────────────────────────────────────
+
+function cleanScope(brand: string | null | undefined, category: string | null | undefined) {
+  const b = brand?.trim() ?? "";
+  const c = category?.trim() ?? "";
+  if (!b || !c) throw new CatalogError(400, "Scegli la marca e la categoria della sottocategoria");
+  return { brand: b, category: c, bk: brandKey(b), ck: brandKey(c) };
+}
+
+/** Products of the brand and category, with the sub-category matched by key. */
+async function productsInScope(bk: string, ck: string) {
+  return (await dbGetProducts()).filter(p => brandKey(p.brand) === bk && brandKey(p.category) === ck);
+}
+
+export async function addSubcategory(brand: string | null | undefined, category: string | null | undefined, name: string) {
+  const scope = cleanScope(brand, category);
+  const clean = cleanName(name);
+  const key = brandKey(clean);
+  const inList = (await dbListSubcategoryTags()).find(t => t.brandKey === scope.bk && t.categoryKey === scope.ck && t.nameKey === key)?.name;
+  const inUse = (await productsInScope(scope.bk, scope.ck)).flatMap(p => p.subcategories ?? []).find(s => brandKey(s) === key);
+  const existing = inList ?? inUse;
+  if (existing) throw new CatalogError(409, `«${existing.trim()}» c'è già in ${scope.brand.toUpperCase()} · ${scope.category}`);
+  await dbPutSubcategoryTag(scope.brand, scope.category, clean);
+}
+
+/** Rename a sub-category within its brand and category; renaming it to another one merges them. */
+export async function renameSubcategory(brand: string | null | undefined, category: string | null | undefined, from: string, to: string) {
+  const scope = cleanScope(brand, category);
+  const fromKey = brandKey(from);
+  const toName = cleanName(to);
+  const toKey = brandKey(toName);
+  if (!fromKey) throw new CatalogError(400, "Sottocategoria da rinominare mancante");
+  for (const p of await productsInScope(scope.bk, scope.ck)) {
+    const subs = p.subcategories ?? [];
+    if (!subs.some(s => brandKey(s) === fromKey)) continue;
+    // Keep the product's order; a product that had both ends up with one
+    const next: string[] = [];
+    for (const s of subs) {
+      const name = brandKey(s) === fromKey ? toName : s;
+      if (!next.some(n => brandKey(n) === brandKey(name))) next.push(name);
+    }
+    await dbUpdateProduct(p.id, { subcategories: next });
+  }
+  if (fromKey !== toKey) await dbRemoveSubcategoryTags({ brandKey: scope.bk, categoryKey: scope.ck, nameKey: fromKey });
+  await dbPutSubcategoryTag(scope.brand, scope.category, toName);
+}
+
+/** Delete a sub-category: it is taken off the products that had it (they stay as they are otherwise). */
+export async function deleteSubcategory(brand: string | null | undefined, category: string | null | undefined, name: string) {
+  const scope = cleanScope(brand, category);
+  const key = brandKey(name);
+  if (!key) throw new CatalogError(400, "Sottocategoria da eliminare mancante");
+  for (const p of await productsInScope(scope.bk, scope.ck)) {
+    const subs = p.subcategories ?? [];
+    if (subs.some(s => brandKey(s) === key)) await dbUpdateProduct(p.id, { subcategories: subs.filter(s => brandKey(s) !== key) });
+  }
+  await dbRemoveSubcategoryTags({ brandKey: scope.bk, categoryKey: scope.ck, nameKey: key });
 }

@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { CatalogEntry } from "./catalogEntry";
+import type { SubcategoryEntry } from "./subcategoryEntry";
 
 export interface Catalog {
+  subcategories: SubcategoryEntry[];
   brands: CatalogEntry[];
   productCategories: CatalogEntry[];
   serviceCategories: CatalogEntry[];

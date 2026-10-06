@@ -6,7 +6,9 @@ import {
   RenameCatalogTagBody,
 } from "@workspace/api-zod";
 import { requireAdmin } from "../middlewares/auth";
-import { addTag, CatalogError, deleteTag, getCatalog, renameTag } from "../lib/catalog";
+import {
+  addSubcategory, addTag, CatalogError, deleteSubcategory, deleteTag, getCatalog, renameSubcategory, renameTag,
+} from "../lib/catalog";
 
 const router: IRouter = Router();
 
@@ -36,7 +38,9 @@ router.post("/catalog/tags", requireAdmin, async (req, res) => {
     return;
   }
   try {
-    await addTag(body.data.kind, body.data.name);
+    const { kind, name, brand, category } = body.data;
+    if (kind === "subcategory") await addSubcategory(brand, category, name);
+    else await addTag(kind, name);
     await sendCatalog(res, 201);
   } catch (err) {
     fail(res, err, "POST /catalog/tags", req.log);
@@ -50,7 +54,9 @@ router.put("/catalog/tags", requireAdmin, async (req, res) => {
     return;
   }
   try {
-    await renameTag(body.data.kind, body.data.from, body.data.to);
+    const { kind, from, to, brand, category } = body.data;
+    if (kind === "subcategory") await renameSubcategory(brand, category, from, to);
+    else await renameTag(kind, from, to);
     await sendCatalog(res);
   } catch (err) {
     fail(res, err, "PUT /catalog/tags", req.log);
@@ -64,7 +70,9 @@ router.post("/catalog/tags/delete", requireAdmin, async (req, res) => {
     return;
   }
   try {
-    await deleteTag(body.data.kind, body.data.name, body.data.moveTo);
+    const { kind, name, moveTo, brand, category } = body.data;
+    if (kind === "subcategory") await deleteSubcategory(brand, category, name);
+    else await deleteTag(kind, name, moveTo);
     await sendCatalog(res);
   } catch (err) {
     fail(res, err, "POST /catalog/tags/delete", req.log);

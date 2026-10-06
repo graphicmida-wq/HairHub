@@ -407,6 +407,16 @@ export const DeleteProductMovementsResponse = zod.object({
  * @summary The salon's brands, product categories and service categories, with usage counts
  */
 export const GetCatalogResponse = zod.object({
+  subcategories: zod.array(
+    zod.object({
+      brand: zod.string(),
+      category: zod.string(),
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products of that brand and category using it"),
+    }),
+  ),
   brands: zod.array(
     zod.object({
       name: zod.string(),
@@ -440,20 +450,56 @@ export const GetCatalogResponse = zod.object({
  * @summary Admin only. Add a brand or category (it can exist with no product yet)
  */
 export const AddCatalogTagBody = zod.object({
-  kind: zod.enum(["brand", "product_category", "service_category"]),
+  kind: zod.enum([
+    "brand",
+    "product_category",
+    "service_category",
+    "subcategory",
+  ]),
   name: zod.string(),
+  brand: zod
+    .string()
+    .nullish()
+    .describe("Sub-categories only - the brand they belong to"),
+  category: zod
+    .string()
+    .nullish()
+    .describe("Sub-categories only - the product category they belong to"),
 });
 
 /**
  * @summary Admin only. Rename a brand or category; renaming it to another existing one merges the two. Products/services using it follow (and, for a brand, its colour and the brand shown in the movement history).
  */
 export const RenameCatalogTagBody = zod.object({
-  kind: zod.enum(["brand", "product_category", "service_category"]),
+  kind: zod.enum([
+    "brand",
+    "product_category",
+    "service_category",
+    "subcategory",
+  ]),
   from: zod.string(),
   to: zod.string(),
+  brand: zod
+    .string()
+    .nullish()
+    .describe("Sub-categories only - the brand they belong to"),
+  category: zod
+    .string()
+    .nullish()
+    .describe("Sub-categories only - the product category they belong to"),
 });
 
 export const RenameCatalogTagResponse = zod.object({
+  subcategories: zod.array(
+    zod.object({
+      brand: zod.string(),
+      category: zod.string(),
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products of that brand and category using it"),
+    }),
+  ),
   brands: zod.array(
     zod.object({
       name: zod.string(),
@@ -487,15 +533,38 @@ export const RenameCatalogTagResponse = zod.object({
  * @summary Admin only. Delete a brand or category. If products/services still use it, moveTo is required and they move there first (409 without it).
  */
 export const DeleteCatalogTagBody = zod.object({
-  kind: zod.enum(["brand", "product_category", "service_category"]),
+  kind: zod.enum([
+    "brand",
+    "product_category",
+    "service_category",
+    "subcategory",
+  ]),
   name: zod.string(),
   moveTo: zod
     .string()
     .nullish()
     .describe("Where the products\/services still using it go"),
+  brand: zod
+    .string()
+    .nullish()
+    .describe("Sub-categories only - the brand they belong to"),
+  category: zod
+    .string()
+    .nullish()
+    .describe("Sub-categories only - the product category they belong to"),
 });
 
 export const DeleteCatalogTagResponse = zod.object({
+  subcategories: zod.array(
+    zod.object({
+      brand: zod.string(),
+      category: zod.string(),
+      name: zod.string(),
+      count: zod
+        .number()
+        .describe("Products of that brand and category using it"),
+    }),
+  ),
   brands: zod.array(
     zod.object({
       name: zod.string(),

@@ -47,6 +47,7 @@ export * from "./staffMember";
 export * from "./stockMovement";
 export * from "./stockMovementReason";
 export * from "./stockUnit";
+export * from "./subcategoryEntry";
 export * from "./updateAppointmentInput";
 export * from "./updateClientFormulaInput";
 export * from "./updateClientInput";

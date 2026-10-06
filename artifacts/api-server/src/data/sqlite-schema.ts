@@ -101,6 +101,13 @@ export const brandColors = sqliteTable("brand_colors", {
   color: text("color").notNull(),
 });
 
+export const catalogSubcategories = sqliteTable("catalog_subcategories", {
+  brandKey: text("brand_key").notNull(),
+  categoryKey: text("category_key").notNull(),
+  nameKey: text("name_key").notNull(),
+  name: text("name").notNull(),
+}, (t) => [primaryKey({ columns: [t.brandKey, t.categoryKey, t.nameKey] })]);
+
 export const catalogTags = sqliteTable("catalog_tags", {
   kind: text("kind").notNull(),
   nameKey: text("name_key").notNull(),

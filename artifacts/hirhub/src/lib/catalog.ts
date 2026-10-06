@@ -1,7 +1,7 @@
 import { type QueryClient } from '@tanstack/react-query';
 import { getGetCatalogQueryKey, useGetCatalog, type Catalog } from '@workspace/api-client-react';
 
-const EMPTY: Catalog = { brands: [], productCategories: [], serviceCategories: [] };
+const EMPTY: Catalog = { brands: [], productCategories: [], serviceCategories: [], subcategories: [] };
 
 /**
  * The salon's brands and categories (Impostazioni → Marche e categorie). Read

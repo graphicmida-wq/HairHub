@@ -2,13 +2,15 @@ import React, { useId, useMemo, useState } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { useListProducts } from '@workspace/api-client-react';
 import { cn, compareText } from '../lib/utils';
+import { useCatalog } from '../lib/catalog';
 
 const norm = (s: string) => s.trim().toLowerCase();
 
 /**
  * Optional sub-categories of a product, picked like tags. The chips offered are
- * the ones already used for the same brand and category; a new one can be typed,
- * with the names used for that category in other brands as suggestions.
+ * the ones of the same brand and category (used by products or added in
+ * Impostazioni → Marche e categorie); a new one can be typed, with the names
+ * used for that category in other brands as suggestions.
  */
 export const SubcategoryInput = ({ brand, category, value, onChange }: {
   brand: string;
@@ -17,6 +19,7 @@ export const SubcategoryInput = ({ brand, category, value, onChange }: {
   onChange: (value: string[]) => void;
 }) => {
   const { data: products = [] } = useListProducts();
+  const { subcategories: listed } = useCatalog();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
   const listId = useId();
@@ -24,15 +27,17 @@ export const SubcategoryInput = ({ brand, category, value, onChange }: {
   const { own, others } = useMemo(() => {
     const own = new Map<string, string>();
     const others = new Map<string, string>();
-    for (const p of products) {
-      if (!category.trim() || norm(p.category) !== norm(category)) continue;
-      const target = norm(p.brand) === norm(brand) ? own : others;
-      for (const s of p.subcategories ?? []) {
+    const offer = (entryBrand: string, entryCategory: string, names: string[]) => {
+      if (!category.trim() || norm(entryCategory) !== norm(category)) return;
+      const target = norm(entryBrand) === norm(brand) ? own : others;
+      for (const s of names) {
         if (!target.has(norm(s))) target.set(norm(s), s.trim());
       }
-    }
+    };
+    for (const p of products) offer(p.brand, p.category, p.subcategories ?? []);
+    for (const e of listed) offer(e.brand, e.category, [e.name]);
     return { own, others };
-  }, [products, brand, category]);
+  }, [products, listed, brand, category]);
 
   const selected = new Set(value.map(norm));
   const chips = [...own.values(), ...value.filter(v => !own.has(norm(v)))].sort(compareText);

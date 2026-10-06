@@ -257,6 +257,7 @@ export const CatalogKind = {
   brand: "brand",
   product_category: "product_category",
   service_category: "service_category",
+  subcategory: "subcategory",
 } as const;
 
 export interface CatalogEntry {
@@ -267,7 +268,16 @@ export interface CatalogEntry {
   color?: string | null;
 }
 
+export interface SubcategoryEntry {
+  brand: string;
+  category: string;
+  name: string;
+  /** Products of that brand and category using it */
+  count: number;
+}
+
 export interface Catalog {
+  subcategories: SubcategoryEntry[];
   brands: CatalogEntry[];
   productCategories: CatalogEntry[];
   serviceCategories: CatalogEntry[];
@@ -276,12 +286,20 @@ export interface Catalog {
 export interface CatalogTagInput {
   kind: CatalogKind;
   name: string;
+  /** Sub-categories only - the brand they belong to */
+  brand?: string | null;
+  /** Sub-categories only - the product category they belong to */
+  category?: string | null;
 }
 
 export interface RenameCatalogTagInput {
   kind: CatalogKind;
   from: string;
   to: string;
+  /** Sub-categories only - the brand they belong to */
+  brand?: string | null;
+  /** Sub-categories only - the product category they belong to */
+  category?: string | null;
 }
 
 export interface DeleteCatalogTagInput {
@@ -289,6 +307,10 @@ export interface DeleteCatalogTagInput {
   name: string;
   /** Where the products/services still using it go */
   moveTo?: string | null;
+  /** Sub-categories only - the brand they belong to */
+  brand?: string | null;
+  /** Sub-categories only - the product category they belong to */
+  category?: string | null;
 }
 
 export interface DeleteMovementsResult {

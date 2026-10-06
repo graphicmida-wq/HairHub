@@ -12,4 +12,8 @@ export interface DeleteCatalogTagInput {
   name: string;
   /** Where the products/services still using it go */
   moveTo?: string | null;
+  /** Sub-categories only - the brand they belong to */
+  brand?: string | null;
+  /** Sub-categories only - the product category they belong to */
+  category?: string | null;
 }

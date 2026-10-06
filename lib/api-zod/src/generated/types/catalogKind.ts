@@ -12,4 +12,5 @@ export const CatalogKind = {
   brand: "brand",
   product_category: "product_category",
   service_category: "service_category",
+  subcategory: "subcategory",
 } as const;

@@ -1422,7 +1422,7 @@ components:
 
     CatalogKind:
       type: string
-      enum: [brand, product_category, service_category]
+      enum: [brand, product_category, service_category, subcategory]
 
     CatalogEntry:
       type: object
@@ -1438,10 +1438,28 @@ components:
           nullable: true
           description: Brand colour (brands only)
 
+    SubcategoryEntry:
+      type: object
+      required: [brand, category, name, count]
+      properties:
+        brand:
+          type: string
+        category:
+          type: string
+        name:
+          type: string
+        count:
+          type: integer
+          description: Products of that brand and category using it
+
     Catalog:
       type: object
-      required: [brands, productCategories, serviceCategories]
+      required: [brands, productCategories, serviceCategories, subcategories]
       properties:
+        subcategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubcategoryEntry"
         brands:
           type: array
           items:
@@ -1463,6 +1481,14 @@ components:
           $ref: "#/components/schemas/CatalogKind"
         name:
           type: string
+        brand:
+          type: string
+          nullable: true
+          description: Sub-categories only - the brand they belong to
+        category:
+          type: string
+          nullable: true
+          description: Sub-categories only - the product category they belong to
 
     RenameCatalogTagInput:
       type: object
@@ -1474,6 +1500,14 @@ components:
           type: string
         to:
           type: string
+        brand:
+          type: string
+          nullable: true
+          description: Sub-categories only - the brand they belong to
+        category:
+          type: string
+          nullable: true
+          description: Sub-categories only - the product category they belong to
 
     DeleteCatalogTagInput:
       type: object
@@ -1487,6 +1521,14 @@ components:
           type: string
           nullable: true
           description: Where the products/services still using it go
+        brand:
+          type: string
+          nullable: true
+          description: Sub-categories only - the brand they belong to
+        category:
+          type: string
+          nullable: true
+          description: Sub-categories only - the product category they belong to
 
     DeleteMovementsResult:
       type: object

@@ -10,4 +10,8 @@ import type { CatalogKind } from "./catalogKind";
 export interface CatalogTagInput {
   kind: CatalogKind;
   name: string;
+  /** Sub-categories only - the brand they belong to */
+  brand?: string | null;
+  /** Sub-categories only - the product category they belong to */
+  category?: string | null;
 }
