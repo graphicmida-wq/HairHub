@@ -77,10 +77,10 @@ export const List = ({ children }: { children: React.ReactNode }) => (
 /** True on the print page: every screenshot loads at once, so the printout has them all. */
 export const GuidePrintContext = createContext(false);
 
-const shotUrl = (name: string) => `${import.meta.env.BASE_URL}guida/${name}.webp`;
+const shotUrl = (name: string) => `${import.meta.env.BASE_URL}guida-immagini/${name}.webp`;
 
 /**
- * A screenshot of the app (public/guida/<name>.webp). Tapping it opens it full
+ * A screenshot of the app (public/guida-immagini/<name>.webp). Tapping it opens it full
  * screen, which helps on a phone and for anyone who needs it bigger.
  */
 export const Shot = ({ name, alt, caption, phone, narrow }: {

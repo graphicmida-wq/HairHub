@@ -1,5 +1,5 @@
 /**
- * Width and height of each screenshot in public/guida, so the page keeps their
+ * Width and height of each screenshot in public/guida-immagini, so the page keeps their
  * room before they load (otherwise links to a topic land in the wrong place).
  * Regenerate when the screenshots change.
  */

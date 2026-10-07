@@ -75,7 +75,7 @@ export default defineConfig({
           {
             // Screenshots of the guide: not precached (they would weigh on every
             // install), kept once seen and refreshed in the background
-            urlPattern: ({ url }) => url.pathname.includes("/guida/") && url.pathname.endsWith(".webp"),
+            urlPattern: ({ url }) => url.pathname.includes("/guida-immagini/") && url.pathname.endsWith(".webp"),
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "guida-immagini",

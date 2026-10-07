@@ -10,7 +10,8 @@ import { Steps, Ui, Tip, Warn, List, Shot } from './ui';
 /*
  * The user guide, chapter by chapter. A chapter tied to a section of the app
  * (`section`) is shown only to logins allowed to see that section; `adminOnly`
- * chapters and topics only to admins. Screenshots live in public/guida/.
+ * chapters and topics only to admins. Screenshots live in public/guida-immagini/ (not public/guida:
+ * a folder with the same name as the /guida page would make the server redirect it).
  * When a screen changes, update its topic here (and retake the screenshot).
  */
 
