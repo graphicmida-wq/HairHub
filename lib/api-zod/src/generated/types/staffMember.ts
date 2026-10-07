@@ -12,4 +12,6 @@ export interface StaffMember {
   role?: string | null;
   /** Hex color string, e.g. #e05c5c */
   color: string;
+  /** Has a column in the agenda and can be given appointments */
+  inAgenda: boolean;
 }

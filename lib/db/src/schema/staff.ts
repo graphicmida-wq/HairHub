@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, char } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, char, boolean } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -7,6 +7,8 @@ export const staffMembersTable = mysqlTable("staff_members", {
   name: varchar("name", { length: 100 }).notNull(),
   role: varchar("role", { length: 100 }),
   color: varchar("color", { length: 20 }).notNull().default("#6b7280"),
+  // Off = no column in the agenda (e.g. an admin who doesn't work on clients)
+  inAgenda: boolean("in_agenda").notNull().default(true),
 });
 
 export const insertStaffMemberSchema = createInsertSchema(staffMembersTable).omit({ id: true });

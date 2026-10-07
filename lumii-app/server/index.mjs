@@ -51253,7 +51253,9 @@ var init_staff = __esm({
       id: char("id", { length: 12 }).primaryKey(),
       name: varchar("name", { length: 100 }).notNull(),
       role: varchar("role", { length: 100 }),
-      color: varchar("color", { length: 20 }).notNull().default("#6b7280")
+      color: varchar("color", { length: 20 }).notNull().default("#6b7280"),
+      // Off = no column in the agenda (e.g. an admin who doesn't work on clients)
+      inAgenda: boolean("in_agenda").notNull().default(true)
     });
     insertStaffMemberSchema = createInsertSchema(staffMembersTable).omit({ id: true });
     selectStaffMemberSchema = createSelectSchema(staffMembersTable);
@@ -51349,6 +51351,10 @@ var init_users = __esm({
       passwordHash: varchar("password_hash", { length: 255 }).notNull(),
       role: mysqlEnum("role", ["admin", "user"]).notNull().default("user"),
       name: varchar("name", { length: 100 }),
+      // The person (staff member) this login belongs to
+      staffId: char("staff_id", { length: 12 }),
+      // JSON array of the sections a non-admin can see; NULL = all of them
+      permissions: text2("permissions"),
       createdAt: varchar("created_at", { length: 40 }).notNull()
     });
     insertUserSchema = createInsertSchema(usersTable).omit({ id: true });
@@ -56494,31 +56500,10 @@ var ListStaffResponseItem = objectType({
   id: stringType(),
   name: stringType(),
   role: stringType().nullish(),
-  color: stringType().describe("Hex color string, e.g. #e05c5c")
+  color: stringType().describe("Hex color string, e.g. #e05c5c"),
+  inAgenda: booleanType().describe("Has a column in the agenda and can be given appointments")
 });
 var ListStaffResponse = arrayType(ListStaffResponseItem);
-var CreateStaffMemberBody = objectType({
-  name: stringType(),
-  role: stringType().nullish(),
-  color: stringType()
-});
-var UpdateStaffMemberParams = objectType({
-  id: coerce.string()
-});
-var UpdateStaffMemberBody = objectType({
-  name: stringType().optional(),
-  role: stringType().nullish(),
-  color: stringType().optional()
-});
-var UpdateStaffMemberResponse = objectType({
-  id: stringType(),
-  name: stringType(),
-  role: stringType().nullish(),
-  color: stringType().describe("Hex color string, e.g. #e05c5c")
-});
-var DeleteStaffMemberParams = objectType({
-  id: coerce.string()
-});
 var ListClientFormulasQueryParams = objectType({
   clientId: coerce.string().optional()
 });
@@ -56654,45 +56639,131 @@ var LoginResponse = objectType({
   id: stringType(),
   username: stringType(),
   role: enumType(["admin", "user"]),
-  name: stringType().nullish()
+  name: stringType().nullish(),
+  staffId: stringType().nullish().describe("The person (staff member) this login belongs to"),
+  permissions: arrayType(
+    enumType([
+      "agenda",
+      "clienti",
+      "servizi",
+      "vendite",
+      "incassi",
+      "magazzino"
+    ])
+  ).describe("Sections of the app this login can see (admins see all)")
 });
 var GetCurrentUserResponse = objectType({
   id: stringType(),
   username: stringType(),
   role: enumType(["admin", "user"]),
-  name: stringType().nullish()
+  name: stringType().nullish(),
+  staffId: stringType().nullish().describe("The person (staff member) this login belongs to"),
+  permissions: arrayType(
+    enumType([
+      "agenda",
+      "clienti",
+      "servizi",
+      "vendite",
+      "incassi",
+      "magazzino"
+    ])
+  ).describe("Sections of the app this login can see (admins see all)")
 });
-var ListUsersResponseItem = objectType({
+var ListTeamResponseItem = objectType({
   id: stringType(),
-  username: stringType(),
-  role: enumType(["admin", "user"]),
-  name: stringType().nullish()
+  name: stringType(),
+  role: stringType().nullish(),
+  color: stringType(),
+  inAgenda: booleanType(),
+  access: objectType({
+    userId: stringType(),
+    username: stringType(),
+    level: enumType(["admin", "user"]),
+    permissions: arrayType(
+      enumType([
+        "agenda",
+        "clienti",
+        "servizi",
+        "vendite",
+        "incassi",
+        "magazzino"
+      ])
+    )
+  }).nullable()
 });
-var ListUsersResponse = arrayType(ListUsersResponseItem);
-var createUserBodyPasswordMin = 8;
-var CreateUserBody = objectType({
-  username: stringType().min(1),
-  password: stringType().min(createUserBodyPasswordMin),
-  role: enumType(["admin", "user"]),
-  name: stringType().nullish()
+var ListTeamResponse = arrayType(ListTeamResponseItem);
+var createTeamMemberBodyAccessPasswordMin = 8;
+var CreateTeamMemberBody = objectType({
+  name: stringType().min(1),
+  role: stringType().nullish(),
+  color: stringType(),
+  inAgenda: booleanType(),
+  access: objectType({
+    username: stringType().min(1),
+    password: stringType().min(createTeamMemberBodyAccessPasswordMin),
+    level: enumType(["admin", "user"]),
+    permissions: arrayType(
+      enumType([
+        "agenda",
+        "clienti",
+        "servizi",
+        "vendite",
+        "incassi",
+        "magazzino"
+      ])
+    ).optional()
+  }).nullish()
 });
-var UpdateUserParams = objectType({
+var UpdateTeamMemberParams = objectType({
   id: coerce.string()
 });
-var updateUserBodyPasswordMin = 8;
-var UpdateUserBody = objectType({
-  username: stringType().min(1).optional(),
-  password: stringType().min(updateUserBodyPasswordMin).optional(),
-  role: enumType(["admin", "user"]).optional(),
-  name: stringType().nullish()
-});
-var UpdateUserResponse = objectType({
+var updateTeamMemberBodyAccessPasswordMin = 8;
+var UpdateTeamMemberBody = objectType({
+  name: stringType().min(1).optional(),
+  role: stringType().nullish(),
+  color: stringType().optional(),
+  inAgenda: booleanType().optional(),
+  access: objectType({
+    username: stringType().min(1).optional(),
+    password: stringType().min(updateTeamMemberBodyAccessPasswordMin).optional(),
+    level: enumType(["admin", "user"]).optional(),
+    permissions: arrayType(
+      enumType([
+        "agenda",
+        "clienti",
+        "servizi",
+        "vendite",
+        "incassi",
+        "magazzino"
+      ])
+    ).optional()
+  }).nullish()
+}).describe(
+  "access: null removes the app access; an object gives it (username + password required) or changes it"
+);
+var UpdateTeamMemberResponse = objectType({
   id: stringType(),
-  username: stringType(),
-  role: enumType(["admin", "user"]),
-  name: stringType().nullish()
+  name: stringType(),
+  role: stringType().nullish(),
+  color: stringType(),
+  inAgenda: booleanType(),
+  access: objectType({
+    userId: stringType(),
+    username: stringType(),
+    level: enumType(["admin", "user"]),
+    permissions: arrayType(
+      enumType([
+        "agenda",
+        "clienti",
+        "servizi",
+        "vendite",
+        "incassi",
+        "magazzino"
+      ])
+    )
+  }).nullable()
 });
-var DeleteUserParams = objectType({
+var DeleteTeamMemberParams = objectType({
   id: coerce.string()
 });
 
@@ -59242,7 +59313,8 @@ var staffMembers = sqliteTable("staff_members", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   role: text("role"),
-  color: text("color").notNull().default("#6b7280")
+  color: text("color").notNull().default("#6b7280"),
+  inAgenda: integer("in_agenda", { mode: "boolean" }).notNull().default(true)
 });
 var appointments = sqliteTable("appointments", {
   id: text("id").primaryKey(),
@@ -59310,6 +59382,8 @@ var users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
   name: text("name"),
+  staffId: text("staff_id"),
+  permissions: text("permissions"),
   createdAt: text("created_at").notNull()
 });
 var salonSettings = sqliteTable("salon_settings", {
@@ -59387,7 +59461,8 @@ function createSqliteTables(sqlite) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       role TEXT,
-      color TEXT NOT NULL DEFAULT '#6b7280'
+      color TEXT NOT NULL DEFAULT '#6b7280',
+      in_agenda INTEGER NOT NULL DEFAULT 1
     );
     CREATE TABLE IF NOT EXISTS appointments (
       id TEXT PRIMARY KEY,
@@ -59431,6 +59506,8 @@ function createSqliteTables(sqlite) {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       name TEXT,
+      staff_id TEXT,
+      permissions TEXT,
       created_at TEXT NOT NULL
     );
   `);
@@ -59534,6 +59611,18 @@ function createSqliteTables(sqlite) {
   }
   try {
     sqlite.exec("ALTER TABLE products ADD COLUMN subcategories TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE staff_members ADD COLUMN in_agenda INTEGER NOT NULL DEFAULT 1");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE users ADD COLUMN staff_id TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE users ADD COLUMN permissions TEXT");
   } catch {
   }
   try {
@@ -59663,7 +59752,8 @@ async function initMysql() {
       id CHAR(12) PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
       role VARCHAR(100),
-      color VARCHAR(20) NOT NULL DEFAULT '#6b7280'
+      color VARCHAR(20) NOT NULL DEFAULT '#6b7280',
+      in_agenda TINYINT(1) NOT NULL DEFAULT 1
     )
   `);
   await db.execute(sql`
@@ -59723,6 +59813,8 @@ async function initMysql() {
       password_hash VARCHAR(255) NOT NULL,
       role ENUM('admin','user') NOT NULL DEFAULT 'user',
       name VARCHAR(100),
+      staff_id CHAR(12),
+      permissions TEXT,
       created_at VARCHAR(40) NOT NULL
     )
   `);
@@ -59817,6 +59909,9 @@ async function initMysql() {
   await migrate("ALTER TABLE products ADD COLUMN subcategories JSON");
   await migrate("ALTER TABLE staff_members ADD COLUMN role VARCHAR(100)");
   await migrate("ALTER TABLE staff_members ADD COLUMN color VARCHAR(20) NOT NULL DEFAULT '#6b7280'");
+  await migrate("ALTER TABLE staff_members ADD COLUMN in_agenda TINYINT(1) NOT NULL DEFAULT 1");
+  await migrate("ALTER TABLE users ADD COLUMN staff_id CHAR(12)");
+  await migrate("ALTER TABLE users ADD COLUMN permissions TEXT");
   await migrate("ALTER TABLE salon_settings ADD COLUMN logo_url MEDIUMTEXT");
   await migrate("ALTER TABLE salon_settings ADD COLUMN show_salon_name INT NOT NULL DEFAULT 1");
   await migrate("ALTER TABLE salon_settings ADD COLUMN address VARCHAR(500)");
@@ -59976,6 +60071,31 @@ async function ensureAdminUser() {
     logger.info({ username }, "Seeded initial admin user from ADMIN_USERNAME/ADMIN_PASSWORD");
   }
 }
+async function ensurePeopleForUsers() {
+  const [users2, people] = await Promise.all([dbGetUsers(), dbGetStaff()]);
+  const personIds = new Set(people.map((p) => p.id));
+  const taken = new Set(users2.map((u) => u.staffId).filter((id) => !!id && personIds.has(id)));
+  const key = (s) => (s ?? "").trim().toLowerCase();
+  for (const user of users2) {
+    if (user.staffId && personIds.has(user.staffId)) continue;
+    const names = new Set([key(user.name), key(user.username)].filter(Boolean));
+    const sameName = people.filter((p) => !taken.has(p.id) && names.has(key(p.name)));
+    if (sameName.length === 1) {
+      taken.add(sameName[0].id);
+      await dbUpdateUser(user.id, { staffId: sameName[0].id });
+      logger.info({ username: user.username }, "Linked an existing login to the operator with the same name");
+      continue;
+    }
+    const person = await dbCreateStaffMember({
+      name: user.name?.trim() || user.username,
+      role: null,
+      color: "#6b7280",
+      inAgenda: false
+    });
+    await dbUpdateUser(user.id, { staffId: person.id });
+    logger.info({ username: user.username }, "Created the Team person for an existing login");
+  }
+}
 async function initDb() {
   assertAuthSecret();
   if (process.env["DB_HOST"]) {
@@ -59987,6 +60107,7 @@ async function initDb() {
     await initSqlite();
   }
   await ensureAdminUser();
+  await ensurePeopleForUsers();
   if (_catalogIsNew) await seedCatalog();
   if (_subcategoriesAreNew) await seedSubcategories();
 }
@@ -60287,10 +60408,12 @@ async function dbUpdateStaffMember(id, data) {
 }
 async function dbDeleteStaffMember(id) {
   if (_useMysql) {
-    const { staffMembersTable: staffMembersTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const { staffMembersTable: staffMembersTable2, appointmentsTable: appointmentsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().update(appointmentsTable2).set({ staffId: null }).where(eq(appointmentsTable2.staffId, id));
     await getMysqlDb().delete(staffMembersTable2).where(eq(staffMembersTable2.id, id));
     return;
   }
+  getSqliteDb().update(appointments).set({ staffId: null }).where(eq(appointments.staffId, id)).run();
   getSqliteDb().delete(staffMembers).where(eq(staffMembers.id, id)).run();
 }
 async function dbCountUsers() {
@@ -60331,6 +60454,8 @@ async function dbCreateUser(data) {
     passwordHash: data.passwordHash,
     role: data.role,
     name: data.name ?? null,
+    staffId: data.staffId ?? null,
+    permissions: data.permissions ?? null,
     createdAt
   };
   if (_useMysql) {
@@ -60907,6 +61032,28 @@ async function dbUpdateSettings(data) {
   return dbGetSettings();
 }
 
+// src/lib/permissions.ts
+var APP_SECTIONS = ["agenda", "clienti", "servizi", "vendite", "incassi", "magazzino"];
+function isSection(value) {
+  return typeof value === "string" && APP_SECTIONS.includes(value);
+}
+function parsePermissions(raw) {
+  if (raw == null) return [...APP_SECTIONS];
+  try {
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return [...APP_SECTIONS];
+    return APP_SECTIONS.filter((s) => list.some((v) => isSection(v) && v === s));
+  } catch {
+    return [...APP_SECTIONS];
+  }
+}
+function serializePermissions(list) {
+  return JSON.stringify(APP_SECTIONS.filter((s) => list.includes(s)));
+}
+function effectivePermissions(user) {
+  return user.role === "admin" ? [...APP_SECTIONS] : parsePermissions(user.permissions);
+}
+
 // src/routes/auth.ts
 var router2 = (0, import_express2.Router)();
 function clearAuthCookie(res) {
@@ -60935,7 +61082,9 @@ router2.post("/auth/login", async (req, res) => {
     id: user.id,
     username: user.username,
     role: user.role,
-    name: user.name ?? null
+    name: user.name ?? null,
+    staffId: user.staffId ?? null,
+    permissions: effectivePermissions(user)
   });
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /auth/login");
@@ -60965,7 +61114,9 @@ router2.get("/auth/me", async (req, res) => {
     id: user.id,
     username: user.username,
     role: user.role,
-    name: user.name ?? null
+    name: user.name ?? null,
+    staffId: user.staffId ?? null,
+    permissions: effectivePermissions(user)
   });
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on GET /auth/me");
@@ -62009,60 +62160,6 @@ router9.get("/staff", async (req, res) => {
   }
   res.json(parsed.data);
 });
-router9.post("/staff", async (req, res) => {
-  const body = CreateStaffMemberBody.safeParse(req.body);
-  if (!body.success) {
-    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
-    return;
-  }
-  const created = await dbCreateStaffMember(body.data);
-  const parsed = ListStaffResponseItem.safeParse(created);
-  if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /staff");
-    res.status(500).json({ message: "Internal server error" });
-    return;
-  }
-  res.status(201).json(parsed.data);
-});
-router9.put("/staff/:id", async (req, res) => {
-  const params = UpdateStaffMemberParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ message: "Invalid id" });
-    return;
-  }
-  const body = UpdateStaffMemberBody.safeParse(req.body);
-  if (!body.success) {
-    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
-    return;
-  }
-  const existing = await dbGetStaffMember(params.data.id);
-  if (!existing) {
-    res.status(404).json({ message: "Staff member not found" });
-    return;
-  }
-  const updated = await dbUpdateStaffMember(params.data.id, body.data);
-  const parsed = UpdateStaffMemberResponse.safeParse(updated);
-  if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /staff/:id");
-    res.status(500).json({ message: "Internal server error" });
-    return;
-  }
-  res.json(parsed.data);
-});
-router9.delete("/staff/:id", async (req, res) => {
-  const params = DeleteStaffMemberParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ message: "Invalid id" });
-    return;
-  }
-  const existing = await dbGetStaffMember(params.data.id);
-  if (!existing) {
-    res.status(404).json({ message: "Staff member not found" });
-    return;
-  }
-  await dbDeleteStaffMember(params.data.id);
-  res.status(204).send();
-});
 var staff_default = router9;
 
 // src/routes/appointments.ts
@@ -62357,133 +62454,226 @@ router12.delete("/client-formulas/:id", async (req, res) => {
 });
 var client_formulas_default = router12;
 
-// src/routes/users.ts
+// src/routes/team.ts
 var import_express13 = __toESM(require_express2(), 1);
 var router13 = (0, import_express13.Router)();
-router13.use(requireAdmin);
-function toSafeUser(u) {
-  return { id: u.id, username: u.username, role: u.role, name: u.name ?? null };
+function toTeamMember(person, login) {
+  return {
+    id: person.id,
+    name: person.name,
+    role: person.role ?? null,
+    color: person.color,
+    inAgenda: Boolean(person.inAgenda),
+    access: login ? {
+      userId: login.id,
+      username: login.username,
+      level: login.role,
+      permissions: effectivePermissions(login)
+    } : null
+  };
 }
-router13.get("/users", async (req, res) => {
-  const data = await dbGetUsers();
-  const parsed = ListUsersResponse.safeParse(data.map(toSafeUser));
+async function loadTeamMember(id) {
+  const person = await dbGetStaffMember(id);
+  if (!person) return void 0;
+  const logins = await dbGetUsers();
+  return toTeamMember(person, logins.find((u) => u.staffId === person.id));
+}
+var countAdmins = (logins) => logins.filter((u) => u.role === "admin").length;
+router13.get("/team", requireAdmin, async (req, res) => {
+  const [people, logins] = await Promise.all([dbGetStaff(), dbGetUsers()]);
+  const data = people.map((p) => toTeamMember(p, logins.find((u) => u.staffId === p.id)));
+  const parsed = ListTeamResponse.safeParse(data);
   if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /users");
+    req.log.error({ err: parsed.error }, "Response schema mismatch on GET /team");
     res.status(500).json({ message: "Internal server error" });
     return;
   }
   res.json(parsed.data);
 });
-router13.post("/users", async (req, res) => {
-  const body = CreateUserBody.safeParse(req.body);
+router13.post("/team", requireAdmin, async (req, res) => {
+  const body = CreateTeamMemberBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Richiesta non valida" });
     return;
   }
-  const existing = await dbGetUserByUsername(body.data.username);
-  if (existing) {
-    res.status(409).json({ message: "Username gi\xE0 esistente" });
+  const { access } = body.data;
+  const name = body.data.name.trim();
+  if (!name) {
+    res.status(400).json({ message: "Inserisci il nome" });
     return;
   }
-  const passwordHash = await hashPassword(body.data.password);
-  const created = await dbCreateUser({
-    username: body.data.username,
-    passwordHash,
-    role: body.data.role,
-    name: body.data.name ?? null
+  let login = null;
+  if (access) {
+    const username = access.username.trim();
+    if (!username) {
+      res.status(400).json({ message: "Inserisci il nome utente" });
+      return;
+    }
+    if (await dbGetUserByUsername(username)) {
+      res.status(409).json({ message: "Nome utente gi\xE0 in uso" });
+      return;
+    }
+    login = {
+      username,
+      passwordHash: await hashPassword(access.password),
+      role: access.level,
+      name,
+      permissions: access.level === "admin" || access.permissions === void 0 ? null : serializePermissions(access.permissions)
+    };
+  }
+  const person = await dbCreateStaffMember({
+    name,
+    role: body.data.role?.trim() || null,
+    color: body.data.color,
+    inAgenda: body.data.inAgenda
   });
-  const parsed = ListUsersResponseItem.safeParse(toSafeUser(created));
+  if (login) await dbCreateUser({ ...login, staffId: person.id });
+  const parsed = ListTeamResponseItem.safeParse(await loadTeamMember(person.id));
   if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /users");
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /team");
     res.status(500).json({ message: "Internal server error" });
     return;
   }
   res.status(201).json(parsed.data);
 });
-router13.put("/users/:id", async (req, res) => {
-  const params = UpdateUserParams.safeParse(req.params);
+router13.put("/team/:id", requireAdmin, async (req, res) => {
+  const params = UpdateTeamMemberParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  const body = UpdateUserBody.safeParse(req.body);
+  const body = UpdateTeamMemberBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ message: body.error.issues[0]?.message ?? "Richiesta non valida" });
     return;
   }
-  const existing = await dbGetUser(params.data.id);
-  if (!existing) {
-    res.status(404).json({ message: "Utente non trovato" });
+  const person = await dbGetStaffMember(params.data.id);
+  if (!person) {
+    res.status(404).json({ message: "Persona non trovata" });
     return;
   }
-  const update = {};
-  if (body.data.username !== void 0 && body.data.username !== existing.username) {
-    const dup = await dbGetUserByUsername(body.data.username);
-    if (dup && dup.id !== existing.id) {
-      res.status(409).json({ message: "Username gi\xE0 esistente" });
+  const logins = await dbGetUsers();
+  const login = logins.find((u) => u.staffId === person.id);
+  const isSelf = !!login && req.user?.sub === login.id;
+  const { access } = body.data;
+  const personPatch = {};
+  if (body.data.name !== void 0) {
+    const name = body.data.name.trim();
+    if (!name) {
+      res.status(400).json({ message: "Inserisci il nome" });
       return;
     }
-    update.username = body.data.username;
+    personPatch.name = name;
   }
-  if (body.data.name !== void 0) update.name = body.data.name ?? null;
-  if (body.data.password) update.passwordHash = await hashPassword(body.data.password);
-  if (body.data.role !== void 0 && body.data.role !== existing.role) {
-    if (existing.role === "admin" && body.data.role === "user") {
-      const all = await dbGetUsers();
-      const adminCount = all.filter((u) => u.role === "admin").length;
-      if (adminCount <= 1) {
-        res.status(400).json({ message: "Impossibile rimuovere l'unico amministratore" });
+  if (body.data.role !== void 0) personPatch.role = body.data.role?.trim() || null;
+  if (body.data.color !== void 0) personPatch.color = body.data.color;
+  if (body.data.inAgenda !== void 0) personPatch.inAgenda = body.data.inAgenda;
+  const finalName = personPatch.name ?? person.name;
+  let removeLogin = false;
+  let newLogin = null;
+  const loginPatch = {};
+  if (access === null) {
+    if (login) {
+      if (isSelf) {
+        res.status(400).json({ message: "Non puoi togliere l'accesso a te stesso" });
+        return;
+      }
+      if (login.role === "admin" && countAdmins(logins) <= 1) {
+        res.status(400).json({ message: "Serve almeno un amministratore" });
+        return;
+      }
+      removeLogin = true;
+    }
+  } else if (access) {
+    const username = access.username?.trim();
+    if (access.username !== void 0 && !username) {
+      res.status(400).json({ message: "Inserisci il nome utente" });
+      return;
+    }
+    if (username && username !== login?.username) {
+      const taken = await dbGetUserByUsername(username);
+      if (taken && taken.id !== login?.id) {
+        res.status(409).json({ message: "Nome utente gi\xE0 in uso" });
         return;
       }
     }
-    update.role = body.data.role;
-  }
-  if (Object.keys(update).length === 0) {
-    const same = UpdateUserResponse.safeParse(toSafeUser(existing));
-    if (!same.success) {
-      req.log.error({ err: same.error }, "Response schema mismatch on PUT /users/:id");
-      res.status(500).json({ message: "Internal server error" });
-      return;
+    if (login) {
+      if (username && username !== login.username) loginPatch.username = username;
+      if (access.password) loginPatch.passwordHash = await hashPassword(access.password);
+      const level = access.level ?? login.role;
+      if (level !== login.role) {
+        if (isSelf) {
+          res.status(400).json({ message: "Non puoi cambiare il tuo livello di accesso" });
+          return;
+        }
+        if (login.role === "admin" && countAdmins(logins) <= 1) {
+          res.status(400).json({ message: "Serve almeno un amministratore" });
+          return;
+        }
+        loginPatch.role = level;
+      }
+      if (level === "admin") {
+        if (login.permissions !== null) loginPatch.permissions = null;
+      } else if (access.permissions !== void 0) {
+        loginPatch.permissions = serializePermissions(access.permissions);
+      }
+    } else {
+      if (!username || !access.password) {
+        res.status(400).json({ message: "Per dare l'accesso servono nome utente e password" });
+        return;
+      }
+      const level = access.level ?? "user";
+      newLogin = {
+        username,
+        passwordHash: await hashPassword(access.password),
+        role: level,
+        name: finalName,
+        staffId: person.id,
+        permissions: level === "admin" || access.permissions === void 0 ? null : serializePermissions(access.permissions)
+      };
     }
-    res.json(same.data);
-    return;
   }
-  const updated = await dbUpdateUser(params.data.id, update);
-  const parsed = UpdateUserResponse.safeParse(updated ? toSafeUser(updated) : void 0);
+  if (login && !removeLogin && personPatch.name !== void 0) loginPatch.name = finalName;
+  if (Object.keys(personPatch).length > 0) await dbUpdateStaffMember(person.id, personPatch);
+  if (removeLogin && login) await dbDeleteUser(login.id);
+  if (newLogin) await dbCreateUser(newLogin);
+  if (login && !removeLogin && Object.keys(loginPatch).length > 0) await dbUpdateUser(login.id, loginPatch);
+  const parsed = UpdateTeamMemberResponse.safeParse(await loadTeamMember(person.id));
   if (!parsed.success) {
-    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /users/:id");
+    req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /team/:id");
     res.status(500).json({ message: "Internal server error" });
     return;
   }
   res.json(parsed.data);
 });
-router13.delete("/users/:id", async (req, res) => {
-  const params = DeleteUserParams.safeParse(req.params);
+router13.delete("/team/:id", requireAdmin, async (req, res) => {
+  const params = DeleteTeamMemberParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ message: "Invalid id" });
     return;
   }
-  const existing = await dbGetUser(params.data.id);
-  if (!existing) {
-    res.status(404).json({ message: "Utente non trovato" });
+  const person = await dbGetStaffMember(params.data.id);
+  if (!person) {
+    res.status(404).json({ message: "Persona non trovata" });
     return;
   }
-  if (req.user?.sub === params.data.id) {
-    res.status(400).json({ message: "Non puoi eliminare il tuo account" });
-    return;
-  }
-  if (existing.role === "admin") {
-    const all = await dbGetUsers();
-    const adminCount = all.filter((u) => u.role === "admin").length;
-    if (adminCount <= 1) {
-      res.status(400).json({ message: "Impossibile eliminare l'unico amministratore" });
+  const logins = await dbGetUsers();
+  const login = logins.find((u) => u.staffId === person.id);
+  if (login) {
+    if (req.user?.sub === login.id) {
+      res.status(400).json({ message: "Non puoi eliminare te stesso" });
       return;
     }
+    if (login.role === "admin" && countAdmins(logins) <= 1) {
+      res.status(400).json({ message: "Serve almeno un amministratore" });
+      return;
+    }
+    await dbDeleteUser(login.id);
   }
-  await dbDeleteUser(params.data.id);
+  await dbDeleteStaffMember(person.id);
   res.status(204).send();
 });
-var users_default = router13;
+var team_default = router13;
 
 // src/routes/index.ts
 var router14 = (0, import_express14.Router)();
@@ -62500,7 +62690,7 @@ router14.use(catalog_default);
 router14.use(staff_default);
 router14.use(appointments_default);
 router14.use(client_formulas_default);
-router14.use(users_default);
+router14.use(team_default);
 var routes_default = router14;
 
 // src/app.ts
@@ -62568,7 +62758,7 @@ var app_default = app;
 
 // src/index.ts
 var rawPort = process.env["PORT"];
-var port = rawPort ? Number(rawPort) : 3001;
+var port = rawPort ? Number(rawPort) : 3002;
 if (rawPort && (Number.isNaN(port) || port <= 0)) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }

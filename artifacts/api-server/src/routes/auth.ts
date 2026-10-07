@@ -9,6 +9,7 @@ import {
   verifyToken,
   type Role,
 } from "../lib/auth";
+import { effectivePermissions } from "../lib/permissions";
 
 const router: IRouter = Router();
 
@@ -40,6 +41,8 @@ router.post("/auth/login", async (req, res) => {
     username: user.username,
     role: user.role,
     name: user.name ?? null,
+    staffId: user.staffId ?? null,
+    permissions: effectivePermissions(user),
   });
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on POST /auth/login");
@@ -72,6 +75,8 @@ router.get("/auth/me", async (req, res) => {
     username: user.username,
     role: user.role,
     name: user.name ?? null,
+    staffId: user.staffId ?? null,
+    permissions: effectivePermissions(user),
   });
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on GET /auth/me");

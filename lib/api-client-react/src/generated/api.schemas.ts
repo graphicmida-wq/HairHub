@@ -20,50 +20,31 @@ export const AuthUserRole = {
   user: "user",
 } as const;
 
+export type AppSection = (typeof AppSection)[keyof typeof AppSection];
+
+export const AppSection = {
+  agenda: "agenda",
+  clienti: "clienti",
+  servizi: "servizi",
+  vendite: "vendite",
+  incassi: "incassi",
+  magazzino: "magazzino",
+} as const;
+
 export interface AuthUser {
   id: string;
   username: string;
   role: AuthUserRole;
   name?: string | null;
+  /** The person (staff member) this login belongs to */
+  staffId?: string | null;
+  /** Sections of the app this login can see (admins see all) */
+  permissions: AppSection[];
 }
 
 export interface LoginInput {
   username: string;
   password: string;
-}
-
-export type CreateUserInputRole =
-  (typeof CreateUserInputRole)[keyof typeof CreateUserInputRole];
-
-export const CreateUserInputRole = {
-  admin: "admin",
-  user: "user",
-} as const;
-
-export interface CreateUserInput {
-  /** @minLength 1 */
-  username: string;
-  /** @minLength 8 */
-  password: string;
-  role: CreateUserInputRole;
-  name?: string | null;
-}
-
-export type UpdateUserInputRole =
-  (typeof UpdateUserInputRole)[keyof typeof UpdateUserInputRole];
-
-export const UpdateUserInputRole = {
-  admin: "admin",
-  user: "user",
-} as const;
-
-export interface UpdateUserInput {
-  /** @minLength 1 */
-  username?: string;
-  /** @minLength 8 */
-  password?: string;
-  role?: UpdateUserInputRole;
-  name?: string | null;
 }
 
 export interface Client {
@@ -387,18 +368,87 @@ export interface StaffMember {
   role?: string | null;
   /** Hex color string, e.g. #e05c5c */
   color: string;
+  /** Has a column in the agenda and can be given appointments */
+  inAgenda: boolean;
 }
 
-export interface CreateStaffMemberInput {
+export type TeamAccessLevel =
+  (typeof TeamAccessLevel)[keyof typeof TeamAccessLevel];
+
+export const TeamAccessLevel = {
+  admin: "admin",
+  user: "user",
+} as const;
+
+export interface TeamAccess {
+  userId: string;
+  username: string;
+  level: TeamAccessLevel;
+  permissions: AppSection[];
+}
+
+export interface TeamMember {
+  id: string;
   name: string;
   role?: string | null;
   color: string;
+  inAgenda: boolean;
+  access: TeamAccess | null;
 }
 
-export interface UpdateStaffMemberInput {
+export type CreateTeamMemberInputAccessLevel =
+  (typeof CreateTeamMemberInputAccessLevel)[keyof typeof CreateTeamMemberInputAccessLevel];
+
+export const CreateTeamMemberInputAccessLevel = {
+  admin: "admin",
+  user: "user",
+} as const;
+
+export type CreateTeamMemberInputAccess = {
+  /** @minLength 1 */
+  username: string;
+  /** @minLength 8 */
+  password: string;
+  level: CreateTeamMemberInputAccessLevel;
+  permissions?: AppSection[];
+} | null;
+
+export interface CreateTeamMemberInput {
+  /** @minLength 1 */
+  name: string;
+  role?: string | null;
+  color: string;
+  inAgenda: boolean;
+  access?: CreateTeamMemberInputAccess;
+}
+
+export type UpdateTeamMemberInputAccessLevel =
+  (typeof UpdateTeamMemberInputAccessLevel)[keyof typeof UpdateTeamMemberInputAccessLevel];
+
+export const UpdateTeamMemberInputAccessLevel = {
+  admin: "admin",
+  user: "user",
+} as const;
+
+export type UpdateTeamMemberInputAccess = {
+  /** @minLength 1 */
+  username?: string;
+  /** @minLength 8 */
+  password?: string;
+  level?: UpdateTeamMemberInputAccessLevel;
+  permissions?: AppSection[];
+} | null;
+
+/**
+ * access: null removes the app access; an object gives it (username + password required) or changes it
+ */
+export interface UpdateTeamMemberInput {
+  /** @minLength 1 */
   name?: string;
   role?: string | null;
   color?: string;
+  inAgenda?: boolean;
+  access?: UpdateTeamMemberInputAccess;
 }
 
 export interface UsedProductEntry {

@@ -5,6 +5,7 @@
  * Lumii salon management API
  * OpenAPI spec version: 0.2.0
  */
+import type { AppSection } from "./appSection";
 import type { AuthUserRole } from "./authUserRole";
 
 export interface AuthUser {
@@ -12,4 +13,8 @@ export interface AuthUser {
   username: string;
   role: AuthUserRole;
   name?: string | null;
+  /** The person (staff member) this login belongs to */
+  staffId?: string | null;
+  /** Sections of the app this login can see (admins see all) */
+  permissions: AppSection[];
 }

@@ -73,6 +73,16 @@ export default defineConfig({
         clientsClaim: true,
         runtimeCaching: [
           {
+            // Screenshots of the guide: not precached (they would weigh on every
+            // install), kept once seen and refreshed in the background
+            urlPattern: ({ url }) => url.pathname.includes("/guida/") && url.pathname.endsWith(".webp"),
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "guida-immagini",
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 90 },
+            },
+          },
+          {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "StaleWhileRevalidate",
             options: {
@@ -131,7 +141,8 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        // Deve combaciare con la porta di default dell'API (api-server/src/index.ts).
+        target: "http://localhost:3002",
         changeOrigin: true,
       },
     },

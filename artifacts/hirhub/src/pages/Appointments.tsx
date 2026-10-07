@@ -14,6 +14,8 @@ import { WeekView } from '../components/WeekView';
 import { NewAppointmentModal } from '../components/NewAppointmentModal';
 import { AppointmentBlock, type BlockInteraction } from '../components/AppointmentBlock';
 import { AppointmentPreviewSheet, AppointmentHoverCard } from '../components/AppointmentPreview';
+import { useAuth } from '../lib/auth-context';
+import { GuideLink } from '../components/GuideLink';
 
 type View = 'day' | 'week';
 
@@ -38,6 +40,18 @@ export const Appointments = () => {
   const { data: staff = [] } = useListStaff();
 
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
+  // People with a column in the agenda (others, like an admin who doesn't work
+  // on clients, are only used to show names on past appointments)
+  const agendaStaff = staff.filter(m => m.inAgenda);
+
+  // Opens on the logged-in person's own column; "Tutti" shows everyone
+  const { user } = useAuth();
+  const ownColumnApplied = useRef(false);
+  useEffect(() => {
+    if (ownColumnApplied.current || staff.length === 0) return;
+    ownColumnApplied.current = true;
+    if (user?.staffId && staff.some(m => m.id === user.staffId && m.inAgenda)) setStaffFilter(user.staffId);
+  }, [staff, user?.staffId]);
 
   // Touch: first tap previews an appointment (bottom sheet), second tap opens it.
   // Mouse: hovering previews it (floating card), click opens it.
@@ -70,12 +84,17 @@ export const Appointments = () => {
     setSearchParams(next, { replace: true });
   }, [searchParams, loadingAppts, appointments, setSearchParams]);
 
-  type ResourceColumn = { id: string | null; name: string; color: string };
-  const resourceColumns: ResourceColumn[] = staff.map(m => ({ id: m.id, name: m.name, color: m.color }));
-  const allResourceCols: ResourceColumn[] = [...resourceColumns, { id: null, name: 'Non assegnato', color: '#94a3b8' }];
-
   const isLoading = loadingAppts || loadingClients || loadingServices;
   const dateString = format(selectedDate, 'yyyy-MM-dd');
+
+  // Someone taken out of the agenda keeps a column on days they still have
+  // appointments, so nothing disappears; unknown operators count as unassigned
+  type ResourceColumn = { id: string | null; name: string; color: string };
+  const busyStaffIds = new Set(appointments.filter(a => a.date === dateString && a.staffId).map(a => a.staffId));
+  const columnStaff = staff.filter(m => m.inAgenda || busyStaffIds.has(m.id));
+  const columnStaffIds = new Set(columnStaff.map(m => m.id));
+  const resourceColumns: ResourceColumn[] = columnStaff.map(m => ({ id: m.id, name: m.name, color: m.color }));
+  const allResourceCols: ResourceColumn[] = [...resourceColumns, { id: null, name: 'Non assegnato', color: '#94a3b8' }];
 
   const filteredAppointments = staffFilter
     ? appointments.filter(a => a.staffId === staffFilter)
@@ -193,12 +212,14 @@ export const Appointments = () => {
   const totalH = hours.length * hourH;
 
   // One column per operator (+ unassigned) when showing everyone, otherwise a single column
-  const resourceMode = staff.length > 0 && staffFilter === null;
+  const resourceMode = columnStaff.length > 0 && staffFilter === null;
   const dayColumns = resourceMode
     ? allResourceCols.map(col => ({
         key: col.id ?? '__none__',
         col,
-        apps: dailyAppointments.filter(a => (col.id === null ? !a.staffId : a.staffId === col.id)),
+        apps: dailyAppointments.filter(a =>
+          col.id === null ? !a.staffId || !columnStaffIds.has(a.staffId) : a.staffId === col.id
+        ),
       }))
     : [{ key: 'all', col: null, apps: dailyAppointments }];
   // On phones each operator column is almost full width and snaps while swiping sideways
@@ -235,7 +256,10 @@ export const Appointments = () => {
   return (
     <div className="flex flex-col gap-4 page-enter">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif text-on-page">Agenda</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-serif text-on-page">Agenda</h1>
+          <GuideLink chapter="agenda" />
+        </div>
         <button onClick={() => store.openModal('isNewAppointmentOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <Plus className="w-4 h-4" /> Nuovo Appuntamento
         </button>
@@ -265,7 +289,7 @@ export const Appointments = () => {
           </div>
 
           {/* Staff filter */}
-          {staff.length > 0 && (
+          {agendaStaff.length > 0 && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
               <button
                 onClick={() => setStaffFilter(null)}
@@ -275,7 +299,7 @@ export const Appointments = () => {
               >
                 Tutti
               </button>
-              {staff.map(member => (
+              {agendaStaff.map(member => (
                 <button
                   key={member.id}
                   onClick={() => setStaffFilter(staffFilter === member.id ? null : member.id)}

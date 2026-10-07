@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, char, mysqlEnum } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, char, mysqlEnum, text } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -8,6 +8,10 @@ export const usersTable = mysqlTable("users", {
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   role: mysqlEnum("role", ["admin", "user"]).notNull().default("user"),
   name: varchar("name", { length: 100 }),
+  // The person (staff member) this login belongs to
+  staffId: char("staff_id", { length: 12 }),
+  // JSON array of the sections a non-admin can see; NULL = all of them
+  permissions: text("permissions"),
   createdAt: varchar("created_at", { length: 40 }).notNull(),
 });
 

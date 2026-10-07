@@ -1,0 +1,71 @@
+/* Printing the guide (Guida → Stampa o salva in PDF): only the document, in
+   black on white whatever the app's look, one chapter per page. */
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+
+  html, body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .app-shell {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .app-sidebar,
+  .app-mobile-header,
+  .fab-dock,
+  .guide-noprint,
+  nav[aria-label="Menu principale"] {
+    display: none !important;
+  }
+  .app-content {
+    display: block !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .app-content main {
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+  }
+  .app-content main > div { max-width: none !important; }
+
+  .guide-doc,
+  .guide-doc * {
+    color: #1c1917 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    animation: none !important;
+  }
+  .guide-doc .guide-step-num {
+    background: #1c1917 !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .guide-doc .guide-box,
+  .guide-doc .guide-card,
+  .guide-doc .guide-shot button {
+    border: 1px solid #d6d3d1 !important;
+  }
+  .guide-doc .guide-zoom { display: none !important; }
+  .guide-doc .guide-link { text-decoration: none !important; }
+
+  .guide-chapter { break-before: page; }
+  .guide-topic h2 { break-after: avoid; }
+  .guide-shot { break-inside: avoid; }
+  .guide-shot img {
+    width: auto !important;
+    max-width: 100%;
+    max-height: 105mm;
+    margin: 0 auto;
+  }
+}

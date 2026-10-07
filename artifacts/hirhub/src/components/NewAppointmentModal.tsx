@@ -64,6 +64,8 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
   });
 
   const [formData, setFormData] = useState(makeDefault);
+  // Only people in the agenda, plus whoever this appointment already has
+  const operatorChoices = staff.filter(m => m.inAgenda || m.id === formData.staffId);
   const [endTime, setEndTime] = useState(() => addMinsToTime(defaultTime ?? '10:00', 30));
 
   useEffect(() => {
@@ -264,12 +266,12 @@ export const NewAppointmentModal = ({ isOpen, onClose, defaultDate, defaultTime 
             <input required type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className={INPUT} />
           </div>
         </div>
-        {staff.length > 0 && (
+        {operatorChoices.length > 0 && (
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Operatore <span className="text-stone-400 font-normal">(opzionale)</span></label>
             <select value={formData.staffId ?? ''} onChange={e => setFormData(p => ({...p, staffId: e.target.value || null}))} className={INPUT}>
               <option value="">Nessun operatore</option>
-              {staff.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+              {operatorChoices.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
             </select>
           </div>
         )}

@@ -4,6 +4,7 @@ import { Scissors, Plus, Clock, Euro, AlertCircle, Loader2 } from 'lucide-react'
 import { store } from '../lib/store';
 import { solidTileStyle } from '../lib/product-brand-colors';
 import { EditServiceModal } from '../components/EditServiceModal';
+import { GuideLink } from '../components/GuideLink';
 
 export const Services = () => {
   const { data: services = [], isLoading, isError } = useListServices();
@@ -19,7 +20,10 @@ export const Services = () => {
   return (
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif text-on-page">Servizi</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-serif text-on-page">Servizi</h1>
+          <GuideLink chapter="servizi" />
+        </div>
         <button
           onClick={() => store.openModal('isNewServiceOpen')}
           className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium"

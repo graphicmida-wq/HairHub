@@ -30,8 +30,8 @@ tags:
     description: Client formula management
   - name: auth
     description: Authentication
-  - name: users
-    description: User account management (admin only)
+  - name: team
+    description: People of the salon (agenda + app access), admin only
 
 paths:
   /healthz:
@@ -693,61 +693,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StaffMember"
-    post:
-      operationId: createStaffMember
-      tags: [staff]
-      summary: Create a new staff member
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateStaffMemberInput"
-      responses:
-        "201":
-          description: Created staff member
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StaffMember"
-
-  /staff/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-    put:
-      operationId: updateStaffMember
-      tags: [staff]
-      summary: Update a staff member
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateStaffMemberInput"
-      responses:
-        "200":
-          description: Updated staff member
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StaffMember"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-    delete:
-      operationId: deleteStaffMember
-      tags: [staff]
-      summary: Delete a staff member
-      responses:
-        "204":
-          description: Deleted
 
   /client-formulas:
     get:
@@ -925,37 +870,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
-  /users:
+  /team:
     get:
-      operationId: listUsers
-      tags: [users]
-      summary: List all users (admin only)
+      operationId: listTeam
+      tags: [team]
+      summary: List the people of the salon with their app access (admin only)
       responses:
         "200":
-          description: List of users
+          description: People of the salon
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AuthUser"
+                  $ref: "#/components/schemas/TeamMember"
     post:
-      operationId: createUser
-      tags: [users]
-      summary: Create a new user (admin only)
+      operationId: createTeamMember
+      tags: [team]
+      summary: Add a person, optionally with app access (admin only)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateUserInput"
+              $ref: "#/components/schemas/CreateTeamMemberInput"
       responses:
         "201":
-          description: Created user
+          description: Created person
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthUser"
+                $ref: "#/components/schemas/TeamMember"
         "409":
           description: Username already exists
           content:
@@ -963,7 +908,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
-  /users/{id}:
+  /team/{id}:
     parameters:
       - name: id
         in: path
@@ -971,22 +916,22 @@ paths:
         schema:
           type: string
     put:
-      operationId: updateUser
-      tags: [users]
-      summary: Update a user (admin only)
+      operationId: updateTeamMember
+      tags: [team]
+      summary: Update a person and give, change or remove app access (admin only)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateUserInput"
+              $ref: "#/components/schemas/UpdateTeamMemberInput"
       responses:
         "200":
-          description: Updated user
+          description: Updated person
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthUser"
+                $ref: "#/components/schemas/TeamMember"
         "404":
           description: Not found
           content:
@@ -994,9 +939,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
     delete:
-      operationId: deleteUser
-      tags: [users]
-      summary: Delete a user (admin only)
+      operationId: deleteTeamMember
+      tags: [team]
+      summary: Delete a person and their app access (admin only)
       responses:
         "204":
           description: Deleted
@@ -1032,10 +977,24 @@ components:
         name:
           type: string
           nullable: true
+        staffId:
+          type: string
+          nullable: true
+          description: The person (staff member) this login belongs to
+        permissions:
+          type: array
+          description: Sections of the app this login can see (admins see all)
+          items:
+            $ref: "#/components/schemas/AppSection"
       required:
         - id
         - username
         - role
+        - permissions
+
+    AppSection:
+      type: string
+      enum: [agenda, clienti, servizi, vendite, incassi, magazzino]
 
     LoginInput:
       type: object
@@ -1047,42 +1006,6 @@ components:
       required:
         - username
         - password
-
-    CreateUserInput:
-      type: object
-      properties:
-        username:
-          type: string
-          minLength: 1
-        password:
-          type: string
-          minLength: 8
-        role:
-          type: string
-          enum: [admin, user]
-        name:
-          type: string
-          nullable: true
-      required:
-        - username
-        - password
-        - role
-
-    UpdateUserInput:
-      type: object
-      properties:
-        username:
-          type: string
-          minLength: 1
-        password:
-          type: string
-          minLength: 8
-        role:
-          type: string
-          enum: [admin, user]
-        name:
-          type: string
-          nullable: true
 
     Client:
       type: object
@@ -1666,14 +1589,40 @@ components:
         color:
           type: string
           description: "Hex color string, e.g. #e05c5c"
+        inAgenda:
+          type: boolean
+          description: Has a column in the agenda and can be given appointments
       required:
         - id
         - name
         - color
+        - inAgenda
 
-    CreateStaffMemberInput:
+    TeamAccess:
       type: object
       properties:
+        userId:
+          type: string
+        username:
+          type: string
+        level:
+          type: string
+          enum: [admin, user]
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppSection"
+      required:
+        - userId
+        - username
+        - level
+        - permissions
+
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: string
         name:
           type: string
         role:
@@ -1681,20 +1630,89 @@ components:
           nullable: true
         color:
           type: string
+        inAgenda:
+          type: boolean
+        access:
+          allOf:
+            - $ref: "#/components/schemas/TeamAccess"
+          nullable: true
+      required:
+        - id
+        - name
+        - color
+        - inAgenda
+        - access
+
+    CreateTeamMemberInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          nullable: true
+        color:
+          type: string
+        inAgenda:
+          type: boolean
+        access:
+          type: object
+          nullable: true
+          properties:
+            username:
+              type: string
+              minLength: 1
+            password:
+              type: string
+              minLength: 8
+            level:
+              type: string
+              enum: [admin, user]
+            permissions:
+              type: array
+              items:
+                $ref: "#/components/schemas/AppSection"
+          required:
+            - username
+            - password
+            - level
       required:
         - name
         - color
+        - inAgenda
 
-    UpdateStaffMemberInput:
+    UpdateTeamMemberInput:
       type: object
+      description: "access: null removes the app access; an object gives it (username + password required) or changes it"
       properties:
         name:
           type: string
+          minLength: 1
         role:
           type: string
           nullable: true
         color:
           type: string
+        inAgenda:
+          type: boolean
+        access:
+          type: object
+          nullable: true
+          properties:
+            username:
+              type: string
+              minLength: 1
+            password:
+              type: string
+              minLength: 8
+            level:
+              type: string
+              enum: [admin, user]
+            permissions:
+              type: array
+              items:
+                $ref: "#/components/schemas/AppSection"
 
     UsedProductEntry:
       type: object

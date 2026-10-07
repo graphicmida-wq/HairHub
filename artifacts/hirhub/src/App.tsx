@@ -12,7 +12,8 @@ import { Sales } from './pages/Sales';
 import { Revenue } from './pages/Revenue';
 import { Services } from './pages/Services';
 import { Settings } from './pages/Settings';
-import { Users } from './pages/Users';
+import { Team } from './pages/Team';
+import { GuideIndex, GuideChapterPage, GuidePrint } from './pages/Guide';
 import { Login } from './pages/Login';
 import { Toaster } from './components/Toast';
 import { PwaReloadPrompt } from './components/PwaReloadPrompt';
@@ -54,7 +55,7 @@ function BrandColorSync() {
 }
 
 function AppGate() {
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isAdmin, can } = useAuth();
 
   if (isLoading) {
     return (
@@ -74,14 +75,18 @@ function AppGate() {
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/agenda" element={<Appointments />} />
-        <Route path="/clienti" element={<Clients />} />
-        <Route path="/servizi" element={<Services />} />
-        <Route path="/vendite" element={<Sales />} />
-        <Route path="/incassi" element={<Revenue />} />
-        <Route path="/magazzino" element={<Inventory />} />
+        {can('agenda') && <Route path="/agenda" element={<Appointments />} />}
+        {can('clienti') && <Route path="/clienti" element={<Clients />} />}
+        {can('servizi') && <Route path="/servizi" element={<Services />} />}
+        {can('vendite') && <Route path="/vendite" element={<Sales />} />}
+        {can('incassi') && <Route path="/incassi" element={<Revenue />} />}
+        {can('magazzino') && <Route path="/magazzino" element={<Inventory />} />}
+        <Route path="/guida" element={<GuideIndex />} />
+        <Route path="/guida/stampa" element={<GuidePrint />} />
+        <Route path="/guida/:chapterId" element={<GuideChapterPage />} />
         {isAdmin && <Route path="/impostazioni" element={<Settings />} />}
-        {isAdmin && <Route path="/utenti" element={<Users />} />}
+        {isAdmin && <Route path="/team" element={<Team />} />}
+        {isAdmin && <Route path="/utenti" element={<Navigate to="/team" replace />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

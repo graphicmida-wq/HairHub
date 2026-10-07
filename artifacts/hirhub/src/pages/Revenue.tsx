@@ -15,6 +15,7 @@ import { formatEuro } from '../lib/stock';
 import { previousPeriod, timeSlots, ymd } from '../lib/period';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
 import { useFontScale } from '../lib/font-scale';
+import { GuideLink } from '../components/GuideLink';
 
 // Validated categorical trio (blue / orange / aqua), in this order
 const SERIES = {
@@ -276,7 +277,10 @@ export const Revenue = () => {
 
   return (
     <div className="flex flex-col gap-6 page-enter">
-      <h1 className="text-3xl font-serif text-on-page">Incassi</h1>
+      <div className="flex items-center gap-3 flex-wrap">
+        <h1 className="text-3xl font-serif text-on-page">Incassi</h1>
+        <GuideLink chapter="incassi" />
+      </div>
 
       <div className="flex flex-col gap-3">
         <PeriodPicker period={period} />

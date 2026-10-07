@@ -22,6 +22,7 @@ import { timeSlots, ymd } from '../lib/period';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
 import { useFontScale } from '../lib/font-scale';
 import { useAuth } from '../lib/auth-context';
+import { GuideLink } from '../components/GuideLink';
 
 const KINDS: { value: MovementKind | 'tutti'; label: string }[] = [
   { value: 'tutti', label: 'Tutti' },
@@ -268,7 +269,10 @@ export const Sales = () => {
   return (
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-serif text-on-page">Vendite</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-serif text-on-page">Vendite</h1>
+          <GuideLink chapter="vendite" />
+        </div>
         <button onClick={() => store.openModal('isNewSaleOpen')}
           className="btn-brand flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <Plus className="w-4 h-4" /> Nuova vendita

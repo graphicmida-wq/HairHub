@@ -17,6 +17,8 @@ import { BrandDot } from '../lib/product-brand-colors';
 import { useTheme } from '../lib/theme';
 import { TREND_MONTHS, useKpiTrends } from '../lib/useKpiTrends';
 import { Sparkline } from '../components/Sparkline';
+import { useAuth } from '../lib/auth-context';
+import { GuideLink } from '../components/GuideLink';
 
 const CARD_BORDER = 'var(--color-card-border)';
 const CARD_SHADOW = '0 2px 12px rgba(92,88,112,0.04)';
@@ -113,6 +115,12 @@ export const Dashboard = () => {
   } = useStats();
   const premium = useTheme() === 'premium';
   const trends = useKpiTrends(premium);
+  const { can } = useAuth();
+  const quickActions = [
+    can('clienti') && { label: 'Nuovo Cliente', icon: Users, modal: 'isNewClientOpen' as const },
+    can('magazzino') && { label: 'Nuovo Prodotto', icon: Plus, modal: 'isNewProductOpen' as const },
+    can('vendite') && { label: 'Nuova Vendita', icon: ShoppingBag, modal: 'isNewSaleOpen' as const },
+  ].filter(action => !!action);
 
   const growthBadge = monthGrowthPct !== null ? (
     <span className={cn(
@@ -129,14 +137,17 @@ export const Dashboard = () => {
 
       <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.15em] font-semibold mb-1.5" style={{ color: PAGE_MUTED }}>
-            Bentornato
-          </p>
+          <div className="flex items-center gap-3 mb-1.5">
+            <p className="text-xs uppercase tracking-[0.15em] font-semibold" style={{ color: PAGE_MUTED }}>
+              Bentornato
+            </p>
+            <GuideLink chapter="dashboard" />
+          </div>
           <h1 className="text-4xl" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
             Panoramica del Mese
           </h1>
         </div>
-        <div className="flex gap-3 shrink-0">
+        {can('agenda') && <div className="flex gap-3 shrink-0">
           <Link
             to="/agenda"
             className="px-5 py-2.5 rounded-full border bg-white font-medium text-sm flex items-center gap-2 transition-colors hover:bg-stone-50"
@@ -152,7 +163,7 @@ export const Dashboard = () => {
             <Plus className="w-4 h-4" />
             Nuovo Appuntamento
           </button>
-        </div>
+        </div>}
       </header>
 
       {isLoading ? (
@@ -165,8 +176,8 @@ export const Dashboard = () => {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KpiCard
+          <section className={cn('grid grid-cols-2 gap-4', can('incassi') ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
+            {can('incassi') && <KpiCard
               icon={TrendingUp}
               accent="var(--pm-shade-1)"
               trend={trends.revenue}
@@ -180,7 +191,7 @@ export const Dashboard = () => {
                   <span>Vendite al banco {formatEuro(fatturatoParts.counterRevenue)}</span>
                 </div>
               }
-            />
+            />}
             <KpiCard
               icon={CalendarDays}
               accent="var(--pm-shade-2)"
@@ -210,42 +221,29 @@ export const Dashboard = () => {
             />
           </section>
 
-          <section>
+          {quickActions.length > 0 && <section>
             <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-3" style={{ color: PAGE_MUTED }}>
               Azioni Rapide
             </p>
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => store.openModal('isNewClientOpen')}
-                className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
-                style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
-              >
-                <Users className="w-4 h-4" />
-                Nuovo Cliente
-              </button>
-              <button
-                onClick={() => store.openModal('isNewProductOpen')}
-                className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
-                style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
-              >
-                <Plus className="w-4 h-4" />
-                Nuovo Prodotto
-              </button>
-              <button
-                onClick={() => store.openModal('isNewSaleOpen')}
-                className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
-                style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                Nuova Vendita
-              </button>
+              {quickActions.map(({ label, icon: Icon, modal }) => (
+                <button
+                  key={modal}
+                  onClick={() => store.openModal(modal)}
+                  className="quick-action bg-white px-4 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition-colors hover:bg-stone-50"
+                  style={{ borderColor: CARD_BORDER, color: TEXT_HEADING, boxShadow: CARD_SHADOW }}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </button>
+              ))}
             </div>
-          </section>
+          </section>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <div className="flex flex-col gap-6">
-              <section className="dash-panel">
+              {can('agenda') && <section className="dash-panel">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
                     <span className="premium-only section-icon"><Calendar className="w-4 h-4" /></span>
@@ -341,9 +339,9 @@ export const Dashboard = () => {
                     );
                   })()}
                 </div>
-              </section>
+              </section>}
 
-              <section className="dash-panel">
+              {can('vendite') && <section className="dash-panel">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
                     <span className="premium-only section-icon"><BarChart3 className="w-4 h-4" /></span>
@@ -361,12 +359,12 @@ export const Dashboard = () => {
                   className="bg-white rounded-2xl p-5 flex flex-col gap-5"
                   style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}
                 >
-                  <div className="grid grid-cols-3 gap-3 items-end">
+                  <div className={cn('grid gap-3 items-end', can('incassi') ? 'grid-cols-3' : 'grid-cols-2')}>
                     {[
                       { label: 'Venduti', value: `${formatNumber(salesOfMonth.soldPieces)} pz` },
-                      { label: 'Incasso', value: formatEuro(salesOfMonth.productRevenue) },
+                      can('incassi') && { label: 'Incasso', value: formatEuro(salesOfMonth.productRevenue) },
                       { label: 'Usati servizi', value: `${formatNumber(salesOfMonth.usedPackages)} conf.` },
-                    ].map(({ label, value }) => (
+                    ].filter(stat => !!stat).map(({ label, value }) => (
                       <div key={label} className="min-w-0">
                         <p className="text-xs uppercase tracking-[0.12em] font-semibold mb-1.5" style={{ color: TEXT_MUTED }}>{label}</p>
                         <p className="text-2xl font-semibold leading-none truncate" style={{ fontFamily: '"Playfair Display", serif', color: TEXT_HEADING }}>
@@ -408,7 +406,7 @@ export const Dashboard = () => {
                     <Plus className="w-4 h-4" /> Nuova vendita
                   </button>
                 </div>
-              </section>
+              </section>}
             </div>
 
             <div className="flex flex-col gap-6">
@@ -419,13 +417,13 @@ export const Dashboard = () => {
                     <span className="premium-only section-icon"><TrendingUp className="w-4 h-4" /></span>
                     Servizi più richiesti
                   </h2>
-                  <Link
+                  {can('servizi') && <Link
                     to="/servizi"
                     className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
                     style={{ color: PAGE_LINK }}
                   >
                     Vedi tutti <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  </Link>}
                 </div>
                 <div
                   className="bg-white rounded-2xl overflow-hidden"
@@ -463,7 +461,7 @@ export const Dashboard = () => {
                 </div>
               </section>
 
-              {lowStockProducts.length > 0 && (
+              {can('magazzino') && lowStockProducts.length > 0 && (
                 <section className="dash-panel">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>

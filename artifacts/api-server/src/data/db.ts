@@ -116,7 +116,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       role TEXT,
-      color TEXT NOT NULL DEFAULT '#6b7280'
+      color TEXT NOT NULL DEFAULT '#6b7280',
+      in_agenda INTEGER NOT NULL DEFAULT 1
     );
     CREATE TABLE IF NOT EXISTS appointments (
       id TEXT PRIMARY KEY,
@@ -160,6 +161,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       name TEXT,
+      staff_id TEXT,
+      permissions TEXT,
       created_at TEXT NOT NULL
     );
   `);
@@ -213,6 +216,9 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
   try { sqlite.exec("ALTER TABLE products ADD COLUMN unit_type TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN stock_grams REAL"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE products ADD COLUMN subcategories TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE staff_members ADD COLUMN in_agenda INTEGER NOT NULL DEFAULT 1"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE users ADD COLUMN staff_id TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE users ADD COLUMN permissions TEXT"); } catch { /* already exists */ }
   try { sqlite.exec(`CREATE TABLE IF NOT EXISTS client_formulas (
     id TEXT PRIMARY KEY,
     client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -348,7 +354,8 @@ async function initMysql() {
       id CHAR(12) PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
       role VARCHAR(100),
-      color VARCHAR(20) NOT NULL DEFAULT '#6b7280'
+      color VARCHAR(20) NOT NULL DEFAULT '#6b7280',
+      in_agenda TINYINT(1) NOT NULL DEFAULT 1
     )
   `);
   await db.execute(sql`
@@ -406,6 +413,8 @@ async function initMysql() {
       password_hash VARCHAR(255) NOT NULL,
       role ENUM('admin','user') NOT NULL DEFAULT 'user',
       name VARCHAR(100),
+      staff_id CHAR(12),
+      permissions TEXT,
       created_at VARCHAR(40) NOT NULL
     )
   `);
@@ -526,6 +535,11 @@ async function initMysql() {
   // staff_members: role + colour
   await migrate("ALTER TABLE staff_members ADD COLUMN role VARCHAR(100)");
   await migrate("ALTER TABLE staff_members ADD COLUMN color VARCHAR(20) NOT NULL DEFAULT '#6b7280'");
+  await migrate("ALTER TABLE staff_members ADD COLUMN in_agenda TINYINT(1) NOT NULL DEFAULT 1");
+
+  // users: each login belongs to a person (staff member) + per-login sections
+  await migrate("ALTER TABLE users ADD COLUMN staff_id CHAR(12)");
+  await migrate("ALTER TABLE users ADD COLUMN permissions TEXT");
 
   // salon_settings: branding/contact fields
   await migrate("ALTER TABLE salon_settings ADD COLUMN logo_url MEDIUMTEXT");
@@ -717,6 +731,38 @@ async function ensureAdminUser() {
   }
 }
 
+/**
+ * Every login belongs to a person of the salon (Team page). A login created
+ * before people and accesses were merged is linked to the one operator with the
+ * same name (e.g. login "Emi" and operator "Emi"); otherwise it gets its own
+ * person, kept out of the agenda. Idempotent: only unlinked logins are touched.
+ */
+async function ensurePeopleForUsers() {
+  const [users, people] = await Promise.all([dbGetUsers(), dbGetStaff()]);
+  const personIds = new Set(people.map((p) => p.id));
+  const taken = new Set(users.map((u) => u.staffId).filter((id): id is string => !!id && personIds.has(id)));
+  const key = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+  for (const user of users) {
+    if (user.staffId && personIds.has(user.staffId)) continue;
+    const names = new Set([key(user.name), key(user.username)].filter(Boolean));
+    const sameName = people.filter((p) => !taken.has(p.id) && names.has(key(p.name)));
+    if (sameName.length === 1) {
+      taken.add(sameName[0]!.id);
+      await dbUpdateUser(user.id, { staffId: sameName[0]!.id });
+      logger.info({ username: user.username }, "Linked an existing login to the operator with the same name");
+      continue;
+    }
+    const person = await dbCreateStaffMember({
+      name: user.name?.trim() || user.username,
+      role: null,
+      color: "#6b7280",
+      inAgenda: false,
+    });
+    await dbUpdateUser(user.id, { staffId: person.id });
+    logger.info({ username: user.username }, "Created the Team person for an existing login");
+  }
+}
+
 export async function initDb() {
   assertAuthSecret();
   if (process.env["DB_HOST"]) {
@@ -728,6 +774,7 @@ export async function initDb() {
     await initSqlite();
   }
   await ensureAdminUser();
+  await ensurePeopleForUsers();
   if (_catalogIsNew) await seedCatalog();
   if (_subcategoriesAreNew) await seedSubcategories();
 }
@@ -1124,11 +1171,15 @@ export async function dbUpdateStaffMember(id: string, data: Partial<Omit<typeof 
 }
 
 export async function dbDeleteStaffMember(id: string) {
+  // Their appointments stay, without an operator. Done explicitly because
+  // staff_id columns added by older migrations have no ON DELETE SET NULL.
   if (_useMysql) {
-    const { staffMembersTable } = await import("@workspace/db");
+    const { staffMembersTable, appointmentsTable } = await import("@workspace/db");
+    await getMysqlDb().update(appointmentsTable).set({ staffId: null }).where(eq(appointmentsTable.staffId, id));
     await getMysqlDb().delete(staffMembersTable).where(eq(staffMembersTable.id, id));
     return;
   }
+  getSqliteDb().update(sqliteAppts).set({ staffId: null }).where(eq(sqliteAppts.staffId, id)).run();
   getSqliteDb().delete(sqliteStaff).where(eq(sqliteStaff.id, id)).run();
 }
 
@@ -1141,6 +1192,9 @@ export interface CreateUserData {
   passwordHash: string;
   role: Role;
   name?: string | null;
+  staffId?: string | null;
+  /** JSON array of sections, NULL = all */
+  permissions?: string | null;
 }
 
 export async function dbCountUsers(): Promise<number> {
@@ -1185,6 +1239,8 @@ export async function dbCreateUser(data: CreateUserData) {
     passwordHash: data.passwordHash,
     role: data.role,
     name: data.name ?? null,
+    staffId: data.staffId ?? null,
+    permissions: data.permissions ?? null,
     createdAt,
   };
   if (_useMysql) {
@@ -1198,7 +1254,14 @@ export async function dbCreateUser(data: CreateUserData) {
 
 export async function dbUpdateUser(
   id: string,
-  data: Partial<{ username: string; passwordHash: string; role: Role; name: string | null }>,
+  data: Partial<{
+    username: string;
+    passwordHash: string;
+    role: Role;
+    name: string | null;
+    staffId: string | null;
+    permissions: string | null;
+  }>,
 ) {
   if (_useMysql) {
     const { usersTable } = await import("@workspace/db");

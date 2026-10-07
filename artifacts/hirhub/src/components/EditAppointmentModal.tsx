@@ -64,6 +64,8 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
     date: string; time: string; durationMins: number;
     status: import('@workspace/api-client-react').AppointmentStatus;
   }>({ clientId: '', serviceIds: [], servicePrices: [], serviceListPrices: [], staffId: null, date: '', time: '', durationMins: 30, status: 'prenotato' as import('@workspace/api-client-react').AppointmentStatus });
+  // Only people in the agenda, plus whoever this appointment already has
+  const operatorChoices = staff.filter(m => m.inAgenda || m.id === formData.staffId);
 
   const [endTime, setEndTime] = useState('');
   const selectedClient = clients.find(c => c.id === formData.clientId) ?? null;
@@ -269,12 +271,12 @@ export const EditAppointmentModal = ({ isOpen, onClose, appointmentId }: { isOpe
             <input required type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className={INPUT} />
           </div>
         </div>
-        {staff.length > 0 && (
+        {operatorChoices.length > 0 && (
           <div className="flex flex-col gap-1">
             <label className={LABEL}>Operatore <span className="text-stone-400 font-normal">(opzionale)</span></label>
             <select value={formData.staffId ?? ''} onChange={e => setFormData(p => ({...p, staffId: e.target.value || null}))} className={INPUT}>
               <option value="">Nessun operatore</option>
-              {staff.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+              {operatorChoices.map(m => <option key={m.id} value={m.id}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
             </select>
           </div>
         )}

@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import { BrandColorPicker, solidTileStyle, tintTileStyle, useBrandColors, useSaveBrandColor } from '../lib/product-brand-colors';
 import { toast } from '../components/Toast';
 import { useCatalog } from '../lib/catalog';
+import { GuideLink } from '../components/GuideLink';
 
 function isLowStock(product: Product): boolean {
   if (product.unitSize != null && product.stockGrams != null) {
@@ -218,7 +219,10 @@ export const Inventory = () => {
   return (
     <div className="flex flex-col gap-6 page-enter">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif text-on-page">Magazzino</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-serif text-on-page">Magazzino</h1>
+          <GuideLink chapter="magazzino" />
+        </div>
         <button onClick={() => store.openModal('isNewProductOpen', selectedBrand ? selectedBrandName : null)} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <Plus className="w-4 h-4" /> Nuovo Prodotto
         </button>

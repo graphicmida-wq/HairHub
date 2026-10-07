@@ -43,6 +43,7 @@ export const staffMembers = sqliteTable("staff_members", {
   name: text("name").notNull(),
   role: text("role"),
   color: text("color").notNull().default("#6b7280"),
+  inAgenda: integer("in_agenda", { mode: "boolean" }).notNull().default(true),
 });
 
 export const appointments = sqliteTable("appointments", {
@@ -120,6 +121,8 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
   name: text("name"),
+  staffId: text("staff_id"),
+  permissions: text("permissions"),
   createdAt: text("created_at").notNull(),
 });
 

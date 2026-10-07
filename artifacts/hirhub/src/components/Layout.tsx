@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Home, Package2, Plus, Scissors, Settings, UserCog, LogOut, ShoppingBag, Wallet } from 'lucide-react';
+import { Calendar, Users, Home, Package2, Plus, Scissors, Settings, UserCog, LogOut, ShoppingBag, Wallet, BookOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { store, useModalStore } from '../lib/store';
@@ -28,7 +28,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isFabOpen, setIsFabOpen] = React.useState(false);
   const modalState = useModalStore();
   const { data: settings } = useGetSettings();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, can, logout } = useAuth();
   const { compact: navCompact, onScroll: onMainScroll } = useCompactOnScroll(location.pathname);
 
   const salonName = settings?.salonName ?? "Capelli & Vanitá";
@@ -38,16 +38,26 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const navItems = [
     { icon: Home, label: 'Dashboard', path: '/' },
-    { icon: Calendar, label: 'Agenda', path: '/agenda' },
-    { icon: Users, label: 'Clienti', path: '/clienti' },
-    { icon: Scissors, label: 'Servizi', path: '/servizi' },
-    { icon: ShoppingBag, label: 'Vendite', path: '/vendite' },
-    { icon: Wallet, label: 'Incassi', path: '/incassi' },
-    { icon: Package2, label: 'Magazzino', path: '/magazzino' },
-  ];
+    can('agenda') && { icon: Calendar, label: 'Agenda', path: '/agenda' },
+    can('clienti') && { icon: Users, label: 'Clienti', path: '/clienti' },
+    can('servizi') && { icon: Scissors, label: 'Servizi', path: '/servizi' },
+    can('vendite') && { icon: ShoppingBag, label: 'Vendite', path: '/vendite' },
+    can('incassi') && { icon: Wallet, label: 'Incassi', path: '/incassi' },
+    can('magazzino') && { icon: Package2, label: 'Magazzino', path: '/magazzino' },
+  ].filter(item => !!item);
+
+  // "+" menu, bottom to top: only what this login can see
+  const fabActions = [
+    can('vendite') && { label: 'Nuova Vendita', modal: 'isNewSaleOpen' as const },
+    can('magazzino') && { label: 'Nuovo Prodotto', modal: 'isNewProductOpen' as const },
+    can('servizi') && { label: 'Nuovo Servizio', modal: 'isNewServiceOpen' as const },
+    can('agenda') && { label: 'Nuovo Appuntamento', modal: 'isNewAppointmentOpen' as const },
+    can('clienti') && { label: 'Nuovo Cliente', modal: 'isNewClientOpen' as const },
+  ].filter(action => !!action);
 
   const isSettingsActive = location.pathname === '/impostazioni';
-  const isUsersActive = location.pathname === '/utenti';
+  const isTeamActive = location.pathname === '/team';
+  const isGuideActive = location.pathname.startsWith('/guida');
   const userDisplayName = user?.name?.trim() || user?.username || '';
 
   return (
@@ -118,30 +128,55 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="px-3 pb-6 flex flex-col gap-0.5">
           <InstallAppButton />
 
+          <Link
+            to="/guida"
+            data-active={isGuideActive || undefined}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
+            style={{
+              backgroundColor: isGuideActive ? NAV_ACTIVE_BG : 'transparent',
+              color: isGuideActive ? NAV_ACTIVE_TEXT : NAV_INACTIVE_TEXT,
+            }}
+            onMouseEnter={(e) => {
+              if (!isGuideActive) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = NAV_HOVER_BG;
+                (e.currentTarget as HTMLElement).style.color = '#F5F0E3';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isGuideActive) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLElement).style.color = NAV_INACTIVE_TEXT;
+              }
+            }}
+          >
+            <BookOpen className="w-[1.125rem] h-[1.125rem] shrink-0" />
+            <span>Guida</span>
+          </Link>
+
           {isAdmin && (
             <Link
-              to="/utenti"
-              data-active={isUsersActive || undefined}
+              to="/team"
+              data-active={isTeamActive || undefined}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium"
               style={{
-                backgroundColor: isUsersActive ? NAV_ACTIVE_BG : 'transparent',
-                color: isUsersActive ? NAV_ACTIVE_TEXT : NAV_INACTIVE_TEXT,
+                backgroundColor: isTeamActive ? NAV_ACTIVE_BG : 'transparent',
+                color: isTeamActive ? NAV_ACTIVE_TEXT : NAV_INACTIVE_TEXT,
               }}
               onMouseEnter={(e) => {
-                if (!isUsersActive) {
+                if (!isTeamActive) {
                   (e.currentTarget as HTMLElement).style.backgroundColor = NAV_HOVER_BG;
                   (e.currentTarget as HTMLElement).style.color = '#F5F0E3';
                 }
               }}
               onMouseLeave={(e) => {
-                if (!isUsersActive) {
+                if (!isTeamActive) {
                   (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
                   (e.currentTarget as HTMLElement).style.color = NAV_INACTIVE_TEXT;
                 }
               }}
             >
               <UserCog className="w-[1.125rem] h-[1.125rem] shrink-0" />
-              <span>Utenti</span>
+              <span>Team</span>
             </Link>
           )}
 
@@ -235,9 +270,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
           <div className="flex items-center gap-1 -mr-2">
             <InstallAppButton variant="mobile" />
+            <Link
+              to="/guida"
+              title="Guida"
+              aria-label="Guida"
+              className="p-2 rounded-full transition-colors"
+              style={{ color: 'var(--color-brand-muted)' }}
+              onClick={() => setIsFabOpen(false)}
+            >
+              <BookOpen className="w-5 h-5" />
+            </Link>
             {isAdmin && (
               <Link
-                to="/utenti"
+                to="/team"
+                title="Team"
                 className="p-2 rounded-full transition-colors"
                 style={{ color: 'var(--color-brand-muted)' }}
                 onClick={() => setIsFabOpen(false)}
@@ -273,7 +319,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </main>
       </div>
       {/* On phones it floats just above the nav pill and follows it as it shrinks (index.css) */}
-      <div
+      {fabActions.length > 0 && <div
         className="fixed fab-dock md:bottom-8 right-4 md:right-8 z-40 flex flex-col items-end gap-3"
         style={{ '--mobile-nav-h': navCompact ? '3.5rem' : '4.25rem' } as React.CSSProperties}
       >
@@ -285,41 +331,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               exit={{ opacity: 0, y: 15, scale: 0.9 }}
               className="flex flex-col gap-2 mb-2"
             >
-              <button
-                onClick={() => { setIsFabOpen(false); store.openModal('isNewSaleOpen'); }}
-                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                Nuova Vendita
-              </button>
-              <button
-                onClick={() => { setIsFabOpen(false); store.openModal('isNewProductOpen'); }}
-                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                Nuovo Prodotto
-              </button>
-              <button
-                onClick={() => { setIsFabOpen(false); store.openModal('isNewServiceOpen'); }}
-                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                Nuovo Servizio
-              </button>
-              <button
-                onClick={() => { setIsFabOpen(false); store.openModal('isNewAppointmentOpen'); }}
-                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                Nuovo Appuntamento
-              </button>
-              <button
-                onClick={() => { setIsFabOpen(false); store.openModal('isNewClientOpen'); }}
-                className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
-                style={{ borderColor: 'var(--color-card-border)' }}
-              >
-                Nuovo Cliente
-              </button>
+              {fabActions.map(action => (
+                <button
+                  key={action.modal}
+                  onClick={() => { setIsFabOpen(false); store.openModal(action.modal); }}
+                  className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium border text-stone-700 hover:bg-stone-50 transition-colors"
+                  style={{ borderColor: 'var(--color-card-border)' }}
+                >
+                  {action.label}
+                </button>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -332,7 +353,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <Plus className="w-6 h-6" />
           </motion.div>
         </button>
-      </div>
+      </div>}
       <NewClientModal isOpen={modalState.isNewClientOpen} onClose={() => store.closeModal('isNewClientOpen')} />
       <NewAppointmentModal isOpen={modalState.isNewAppointmentOpen} onClose={() => store.closeModal('isNewAppointmentOpen')} />
       <NewProductModal isOpen={modalState.isNewProductOpen} onClose={() => store.closeModal('isNewProductOpen')} />

@@ -4,6 +4,7 @@ import {
   useGetCurrentUser,
   useLogout,
   getGetCurrentUserQueryKey,
+  type AppSection,
   type AuthUser,
 } from '@workspace/api-client-react';
 
@@ -11,6 +12,8 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAdmin: boolean;
+  /** Whether this login may see a section of the app (admins see everything) */
+  can: (section: AppSection) => boolean;
   isLoggingOut: boolean;
   logout: () => void;
 }
@@ -25,6 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { mutate: logoutMutate, isPending: isLoggingOut } = useLogout();
 
   const user = data ?? null;
+  const isAdmin = user?.role === 'admin';
+  const can = (section: AppSection) => isAdmin || (user?.permissions ?? []).includes(section);
 
   const logout = () => {
     logoutMutate(undefined, {
@@ -39,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAdmin: user?.role === 'admin', isLoggingOut, logout }}
+      value={{ user, isLoading, isAdmin, can, isLoggingOut, logout }}
     >
       {children}
     </AuthContext.Provider>

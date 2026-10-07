@@ -11,7 +11,7 @@ import staffRouter from "./staff";
 import appointmentsRouter from "./appointments";
 import settingsRouter from "./settings";
 import clientFormulasRouter from "./client-formulas";
-import usersRouter from "./users";
+import teamRouter from "./team";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -34,7 +34,7 @@ router.use(catalogRouter);
 router.use(staffRouter);
 router.use(appointmentsRouter);
 router.use(clientFormulasRouter);
-// User management is further restricted to admins inside its own router.
-router.use(usersRouter);
+// People and logins: every route is further restricted to admins.
+router.use(teamRouter);
 
 export default router;

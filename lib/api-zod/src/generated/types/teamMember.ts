@@ -5,9 +5,13 @@
  * Lumii salon management API
  * OpenAPI spec version: 0.2.0
  */
+import type { TeamAccess } from "./teamAccess";
 
-export interface CreateStaffMemberInput {
+export interface TeamMember {
+  id: string;
   name: string;
   role?: string | null;
   color: string;
+  inAgenda: boolean;
+  access: TeamAccess | null;
 }

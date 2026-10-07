@@ -1086,44 +1086,11 @@ export const ListStaffResponseItem = zod.object({
   name: zod.string(),
   role: zod.string().nullish(),
   color: zod.string().describe("Hex color string, e.g. #e05c5c"),
+  inAgenda: zod
+    .boolean()
+    .describe("Has a column in the agenda and can be given appointments"),
 });
 export const ListStaffResponse = zod.array(ListStaffResponseItem);
-
-/**
- * @summary Create a new staff member
- */
-export const CreateStaffMemberBody = zod.object({
-  name: zod.string(),
-  role: zod.string().nullish(),
-  color: zod.string(),
-});
-
-/**
- * @summary Update a staff member
- */
-export const UpdateStaffMemberParams = zod.object({
-  id: zod.coerce.string(),
-});
-
-export const UpdateStaffMemberBody = zod.object({
-  name: zod.string().optional(),
-  role: zod.string().nullish(),
-  color: zod.string().optional(),
-});
-
-export const UpdateStaffMemberResponse = zod.object({
-  id: zod.string(),
-  name: zod.string(),
-  role: zod.string().nullish(),
-  color: zod.string().describe("Hex color string, e.g. #e05c5c"),
-});
-
-/**
- * @summary Delete a staff member
- */
-export const DeleteStaffMemberParams = zod.object({
-  id: zod.coerce.string(),
-});
 
 /**
  * @summary List client formulas
@@ -1350,6 +1317,22 @@ export const LoginResponse = zod.object({
   username: zod.string(),
   role: zod.enum(["admin", "user"]),
   name: zod.string().nullish(),
+  staffId: zod
+    .string()
+    .nullish()
+    .describe("The person (staff member) this login belongs to"),
+  permissions: zod
+    .array(
+      zod.enum([
+        "agenda",
+        "clienti",
+        "servizi",
+        "vendite",
+        "incassi",
+        "magazzino",
+      ]),
+    )
+    .describe("Sections of the app this login can see (admins see all)"),
 });
 
 /**
@@ -1360,58 +1343,155 @@ export const GetCurrentUserResponse = zod.object({
   username: zod.string(),
   role: zod.enum(["admin", "user"]),
   name: zod.string().nullish(),
+  staffId: zod
+    .string()
+    .nullish()
+    .describe("The person (staff member) this login belongs to"),
+  permissions: zod
+    .array(
+      zod.enum([
+        "agenda",
+        "clienti",
+        "servizi",
+        "vendite",
+        "incassi",
+        "magazzino",
+      ]),
+    )
+    .describe("Sections of the app this login can see (admins see all)"),
 });
 
 /**
- * @summary List all users (admin only)
+ * @summary List the people of the salon with their app access (admin only)
  */
-export const ListUsersResponseItem = zod.object({
+export const ListTeamResponseItem = zod.object({
   id: zod.string(),
-  username: zod.string(),
-  role: zod.enum(["admin", "user"]),
-  name: zod.string().nullish(),
+  name: zod.string(),
+  role: zod.string().nullish(),
+  color: zod.string(),
+  inAgenda: zod.boolean(),
+  access: zod
+    .object({
+      userId: zod.string(),
+      username: zod.string(),
+      level: zod.enum(["admin", "user"]),
+      permissions: zod.array(
+        zod.enum([
+          "agenda",
+          "clienti",
+          "servizi",
+          "vendite",
+          "incassi",
+          "magazzino",
+        ]),
+      ),
+    })
+    .nullable(),
 });
-export const ListUsersResponse = zod.array(ListUsersResponseItem);
+export const ListTeamResponse = zod.array(ListTeamResponseItem);
 
 /**
- * @summary Create a new user (admin only)
+ * @summary Add a person, optionally with app access (admin only)
  */
 
-export const createUserBodyPasswordMin = 8;
+export const createTeamMemberBodyAccessPasswordMin = 8;
 
-export const CreateUserBody = zod.object({
-  username: zod.string().min(1),
-  password: zod.string().min(createUserBodyPasswordMin),
-  role: zod.enum(["admin", "user"]),
-  name: zod.string().nullish(),
+export const CreateTeamMemberBody = zod.object({
+  name: zod.string().min(1),
+  role: zod.string().nullish(),
+  color: zod.string(),
+  inAgenda: zod.boolean(),
+  access: zod
+    .object({
+      username: zod.string().min(1),
+      password: zod.string().min(createTeamMemberBodyAccessPasswordMin),
+      level: zod.enum(["admin", "user"]),
+      permissions: zod
+        .array(
+          zod.enum([
+            "agenda",
+            "clienti",
+            "servizi",
+            "vendite",
+            "incassi",
+            "magazzino",
+          ]),
+        )
+        .optional(),
+    })
+    .nullish(),
 });
 
 /**
- * @summary Update a user (admin only)
+ * @summary Update a person and give, change or remove app access (admin only)
  */
-export const UpdateUserParams = zod.object({
+export const UpdateTeamMemberParams = zod.object({
   id: zod.coerce.string(),
 });
 
-export const updateUserBodyPasswordMin = 8;
+export const updateTeamMemberBodyAccessPasswordMin = 8;
 
-export const UpdateUserBody = zod.object({
-  username: zod.string().min(1).optional(),
-  password: zod.string().min(updateUserBodyPasswordMin).optional(),
-  role: zod.enum(["admin", "user"]).optional(),
-  name: zod.string().nullish(),
-});
+export const UpdateTeamMemberBody = zod
+  .object({
+    name: zod.string().min(1).optional(),
+    role: zod.string().nullish(),
+    color: zod.string().optional(),
+    inAgenda: zod.boolean().optional(),
+    access: zod
+      .object({
+        username: zod.string().min(1).optional(),
+        password: zod
+          .string()
+          .min(updateTeamMemberBodyAccessPasswordMin)
+          .optional(),
+        level: zod.enum(["admin", "user"]).optional(),
+        permissions: zod
+          .array(
+            zod.enum([
+              "agenda",
+              "clienti",
+              "servizi",
+              "vendite",
+              "incassi",
+              "magazzino",
+            ]),
+          )
+          .optional(),
+      })
+      .nullish(),
+  })
+  .describe(
+    "access: null removes the app access; an object gives it (username + password required) or changes it",
+  );
 
-export const UpdateUserResponse = zod.object({
+export const UpdateTeamMemberResponse = zod.object({
   id: zod.string(),
-  username: zod.string(),
-  role: zod.enum(["admin", "user"]),
-  name: zod.string().nullish(),
+  name: zod.string(),
+  role: zod.string().nullish(),
+  color: zod.string(),
+  inAgenda: zod.boolean(),
+  access: zod
+    .object({
+      userId: zod.string(),
+      username: zod.string(),
+      level: zod.enum(["admin", "user"]),
+      permissions: zod.array(
+        zod.enum([
+          "agenda",
+          "clienti",
+          "servizi",
+          "vendite",
+          "incassi",
+          "magazzino",
+        ]),
+      ),
+    })
+    .nullable(),
 });
 
 /**
- * @summary Delete a user (admin only)
+ * @summary Delete a person and their app access (admin only)
  */
-export const DeleteUserParams = zod.object({
+export const DeleteTeamMemberParams = zod.object({
   id: zod.coerce.string(),
 });

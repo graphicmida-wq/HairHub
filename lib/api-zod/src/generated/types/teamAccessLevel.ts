@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export type UpdateUserInputRole =
-  (typeof UpdateUserInputRole)[keyof typeof UpdateUserInputRole];
+export type TeamAccessLevel =
+  (typeof TeamAccessLevel)[keyof typeof TeamAccessLevel];
 
-export const UpdateUserInputRole = {
+export const TeamAccessLevel = {
   admin: "admin",
   user: "user",
 } as const;

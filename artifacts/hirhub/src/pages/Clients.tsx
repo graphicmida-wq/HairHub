@@ -6,6 +6,7 @@ import { ClientDetailsModal } from '../components/ClientDetailsModal';
 import { AlphabetIndexDesktop, AlphabetIndexMobile } from '../components/AlphabetIndex';
 import { EditClientModal } from '../components/EditClientModal';
 import { cn, compareText } from '../lib/utils';
+import { GuideLink } from '../components/GuideLink';
 
 type SortBy = 'nome' | 'cognome';
 
@@ -100,7 +101,10 @@ export const Clients = () => {
   return (
     <div className="flex flex-col gap-6 page-enter h-full">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif text-on-page">Clienti</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-serif text-on-page">Clienti</h1>
+          <GuideLink chapter="clienti" />
+        </div>
         <button onClick={() => store.openModal('isNewClientOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
           <UserPlus className="w-4 h-4" /> Nuovo Cliente
         </button>
