@@ -51285,7 +51285,8 @@ var init_appointments = __esm({
       status: mysqlEnum("status", ["prenotato", "completato", "annullato", "no-show"]).notNull().default("prenotato"),
       notes: text2("notes"),
       usedProductIds: json("used_product_ids").$type(),
-      usedProducts: json("used_products").$type()
+      usedProducts: json("used_products").$type(),
+      reminderSentAt: varchar("reminder_sent_at", { length: 40 })
     });
     insertAppointmentSchema = createInsertSchema(appointmentsTable).omit({ id: true });
     selectAppointmentSchema = createSelectSchema(appointmentsTable);
@@ -51308,7 +51309,8 @@ var init_settings = __esm({
       phone: varchar("phone", { length: 30 }),
       email: varchar("email", { length: 255 }),
       brandColor: varchar("brand_color", { length: 20 }),
-      backgroundColor: varchar("background_color", { length: 20 })
+      backgroundColor: varchar("background_color", { length: 20 }),
+      reminderTemplate: text2("reminder_template")
     });
     insertSettingsSchema = createInsertSchema(salonSettingsTable).omit({ id: true });
     selectSettingsSchema = createSelectSchema(salonSettingsTable);
@@ -56362,7 +56364,10 @@ var ListAppointmentsResponseItem = objectType({
       quantity: numberType().min(1),
       unitPrice: numberType().min(listAppointmentsResponseSoldProductsItemUnitPriceMin)
     })
-  ).nullish()
+  ).nullish(),
+  reminderSentAt: stringType().nullish().describe(
+    "When the WhatsApp reminder was sent (ISO timestamp); null = not sent"
+  )
 });
 var ListAppointmentsResponse = arrayType(ListAppointmentsResponseItem);
 var createAppointmentBodyServicePricesItemMin = 0;
@@ -56427,7 +56432,10 @@ var GetAppointmentResponse = objectType({
       quantity: numberType().min(1),
       unitPrice: numberType().min(getAppointmentResponseSoldProductsItemUnitPriceMin)
     })
-  ).nullish()
+  ).nullish(),
+  reminderSentAt: stringType().nullish().describe(
+    "When the WhatsApp reminder was sent (ISO timestamp); null = not sent"
+  )
 });
 var UpdateAppointmentParams = objectType({
   id: coerce.string()
@@ -56491,7 +56499,10 @@ var UpdateAppointmentResponse = objectType({
       quantity: numberType().min(1),
       unitPrice: numberType().min(updateAppointmentResponseSoldProductsItemUnitPriceMin)
     })
-  ).nullish()
+  ).nullish(),
+  reminderSentAt: stringType().nullish().describe(
+    "When the WhatsApp reminder was sent (ISO timestamp); null = not sent"
+  )
 });
 var DeleteAppointmentParams = objectType({
   id: coerce.string()
@@ -56589,6 +56600,53 @@ var UpdateClientFormulaResponse = objectType({
 var DeleteClientFormulaParams = objectType({
   id: coerce.string()
 });
+var setAppointmentRemindersBodyAppointmentIdsMax = 50;
+var SetAppointmentRemindersBody = objectType({
+  appointmentIds: arrayType(stringType()).min(1).max(setAppointmentRemindersBodyAppointmentIdsMax),
+  sent: booleanType()
+});
+var setAppointmentRemindersResponseServicePricesItemMin = 0;
+var setAppointmentRemindersResponseServiceListPricesItemMin = 0;
+var setAppointmentRemindersResponseUsedProductsItemQuantityUsedMin = 0;
+var setAppointmentRemindersResponseSoldProductsItemUnitPriceMin = 0;
+var SetAppointmentRemindersResponseItem = objectType({
+  id: stringType(),
+  clientId: stringType(),
+  serviceIds: arrayType(stringType()),
+  servicePrices: arrayType(
+    numberType().min(setAppointmentRemindersResponseServicePricesItemMin)
+  ).nullish(),
+  serviceListPrices: arrayType(
+    numberType().min(setAppointmentRemindersResponseServiceListPricesItemMin)
+  ).nullish(),
+  staffId: stringType().nullish(),
+  date: stringType().describe("YYYY-MM-DD"),
+  time: stringType().describe("HH:MM"),
+  durationMins: numberType(),
+  status: enumType(["prenotato", "completato", "annullato", "no-show"]),
+  notes: stringType().nullish(),
+  usedProductIds: arrayType(stringType()).nullish().describe("Deprecated: use usedProducts instead"),
+  usedProducts: arrayType(
+    objectType({
+      productId: stringType(),
+      quantityUsed: numberType().min(setAppointmentRemindersResponseUsedProductsItemQuantityUsedMin).describe("Amount used in g or ml")
+    })
+  ).nullish(),
+  soldProducts: arrayType(
+    objectType({
+      productId: stringType(),
+      quantity: numberType().min(1),
+      unitPrice: numberType().min(setAppointmentRemindersResponseSoldProductsItemUnitPriceMin)
+    })
+  ).nullish(),
+  reminderSentAt: stringType().nullish().describe(
+    "When the WhatsApp reminder was sent (ISO timestamp); null = not sent"
+  )
+});
+var SetAppointmentRemindersResponse = arrayType(
+  SetAppointmentRemindersResponseItem
+);
+var getSettingsResponseReminderTemplateMax = 2e3;
 var GetSettingsResponse = objectType({
   salonName: stringType(),
   logoUrl: stringType().nullish().describe("Logo image URL or data URL (e.g. data:image/png;base64,...)"),
@@ -56601,8 +56659,12 @@ var GetSettingsResponse = objectType({
   ),
   backgroundColor: stringType().nullish().describe(
     "Hex color of the page background behind the cards; null = default warm grey"
+  ),
+  reminderTemplate: stringType().max(getSettingsResponseReminderTemplateMax).nullish().describe(
+    "WhatsApp reminder text with {nome}, {quando}, {ora}\u2026 placeholders; null = the app's default text"
   )
 });
+var updateSettingsBodyReminderTemplateMax = 2e3;
 var UpdateSettingsBody = objectType({
   salonName: stringType(),
   logoUrl: stringType().nullish().describe("Logo image URL or data URL (e.g. data:image/png;base64,...)"),
@@ -56615,8 +56677,12 @@ var UpdateSettingsBody = objectType({
   ),
   backgroundColor: stringType().nullish().describe(
     "Hex color of the page background behind the cards; null = default warm grey"
+  ),
+  reminderTemplate: stringType().max(updateSettingsBodyReminderTemplateMax).nullish().describe(
+    "WhatsApp reminder text with {nome}, {quando}, {ora}\u2026 placeholders; null = the app's default text"
   )
 });
+var updateSettingsResponseReminderTemplateMax = 2e3;
 var UpdateSettingsResponse = objectType({
   salonName: stringType(),
   logoUrl: stringType().nullish().describe("Logo image URL or data URL (e.g. data:image/png;base64,...)"),
@@ -56629,6 +56695,9 @@ var UpdateSettingsResponse = objectType({
   ),
   backgroundColor: stringType().nullish().describe(
     "Hex color of the page background behind the cards; null = default warm grey"
+  ),
+  reminderTemplate: stringType().max(updateSettingsResponseReminderTemplateMax).nullish().describe(
+    "WhatsApp reminder text with {nome}, {quando}, {ora}\u2026 placeholders; null = the app's default text"
   )
 });
 var LoginBody = objectType({
@@ -59330,7 +59399,8 @@ var appointments = sqliteTable("appointments", {
   notes: text("notes"),
   usedProductIds: text("used_product_ids"),
   usedProducts: text("used_products"),
-  soldProducts: text("sold_products")
+  soldProducts: text("sold_products"),
+  reminderSentAt: text("reminder_sent_at")
 });
 var clientFormulas = sqliteTable("client_formulas", {
   id: text("id").primaryKey(),
@@ -59395,7 +59465,8 @@ var salonSettings = sqliteTable("salon_settings", {
   phone: text("phone"),
   email: text("email"),
   brandColor: text("brand_color"),
-  backgroundColor: text("background_color")
+  backgroundColor: text("background_color"),
+  reminderTemplate: text("reminder_template")
 });
 
 // src/data/db.ts
@@ -59478,7 +59549,8 @@ function createSqliteTables(sqlite) {
       status TEXT NOT NULL DEFAULT 'prenotato',
       notes TEXT,
       used_product_ids TEXT,
-      used_products TEXT
+      used_products TEXT,
+      reminder_sent_at TEXT
     );
     CREATE TABLE IF NOT EXISTS client_formulas (
       id TEXT PRIMARY KEY,
@@ -59498,7 +59570,8 @@ function createSqliteTables(sqlite) {
       phone TEXT,
       email TEXT,
       brand_color TEXT,
-      background_color TEXT
+      background_color TEXT,
+      reminder_template TEXT
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -59623,6 +59696,14 @@ function createSqliteTables(sqlite) {
   }
   try {
     sqlite.exec("ALTER TABLE users ADD COLUMN permissions TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE appointments ADD COLUMN reminder_sent_at TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT");
   } catch {
   }
   try {
@@ -59772,6 +59853,7 @@ async function initMysql() {
       notes TEXT,
       used_product_ids JSON,
       used_products JSON,
+      reminder_sent_at VARCHAR(40),
       CONSTRAINT fk_appointments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
       CONSTRAINT fk_appointments_staff FOREIGN KEY (staff_id) REFERENCES staff_members(id) ON DELETE SET NULL
     )
@@ -59799,7 +59881,8 @@ async function initMysql() {
       phone VARCHAR(30),
       email VARCHAR(255),
       brand_color VARCHAR(20),
-      background_color VARCHAR(20)
+      background_color VARCHAR(20),
+      reminder_template TEXT
     )
   `);
   try {
@@ -59919,6 +60002,7 @@ async function initMysql() {
   await migrate("ALTER TABLE salon_settings ADD COLUMN email VARCHAR(255)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN background_color VARCHAR(20)");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT");
   await migrate("ALTER TABLE appointments ADD COLUMN service_ids JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN service_prices JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN service_list_prices JSON");
@@ -59926,6 +60010,7 @@ async function initMysql() {
   await migrate("ALTER TABLE appointments ADD COLUMN staff_id CHAR(12)");
   await migrate("ALTER TABLE appointments ADD COLUMN used_product_ids JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN used_products JSON");
+  await migrate("ALTER TABLE appointments ADD COLUMN reminder_sent_at VARCHAR(40)");
   await migrate(
     "UPDATE appointments SET service_ids = JSON_ARRAY(service_id) WHERE (service_ids IS NULL OR JSON_LENGTH(service_ids) = 0) AND service_id IS NOT NULL"
   );
@@ -60603,6 +60688,7 @@ async function dbUpdateAppointment(id, data) {
     if (data.notes !== void 0) mysqlPatch.notes = data.notes;
     if (data.usedProductIds !== void 0) mysqlPatch.usedProductIds = data.usedProductIds;
     if (data.usedProducts !== void 0) mysqlPatch["usedProducts"] = data.usedProducts;
+    if (data.reminderSentAt !== void 0) mysqlPatch.reminderSentAt = data.reminderSentAt;
     await getMysqlDb().update(appointmentsTable2).set(mysqlPatch).where(eq(appointmentsTable2.id, id));
     const r = await getMysqlDb().select().from(appointmentsTable2).where(eq(appointmentsTable2.id, id)).execute();
     return r[0] ? normalizeApptRowMysql(r[0]) : void 0;
@@ -60621,8 +60707,20 @@ async function dbUpdateAppointment(id, data) {
   if (data.notes !== void 0) sqlitePatch.notes = data.notes;
   if (data.usedProductIds !== void 0) sqlitePatch.usedProductIds = serializeJson(data.usedProductIds);
   if (data.usedProducts !== void 0) sqlitePatch.usedProducts = serializeJson(data.usedProducts);
+  if (data.reminderSentAt !== void 0) sqlitePatch.reminderSentAt = data.reminderSentAt;
   getSqliteDb().update(appointments).set(sqlitePatch).where(eq(appointments.id, id)).run();
   return dbGetAppointment(id);
+}
+async function dbSetAppointmentsReminder(ids, sentAt) {
+  if (ids.length === 0) return [];
+  if (_useMysql) {
+    const { appointmentsTable: appointmentsTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    await getMysqlDb().update(appointmentsTable2).set({ reminderSentAt: sentAt }).where(inArray(appointmentsTable2.id, ids));
+    const rows = await getMysqlDb().select().from(appointmentsTable2).where(inArray(appointmentsTable2.id, ids)).execute();
+    return rows.map(normalizeApptRowMysql);
+  }
+  getSqliteDb().update(appointments).set({ reminderSentAt: sentAt }).where(inArray(appointments.id, ids)).run();
+  return getSqliteDb().select().from(appointments).where(inArray(appointments.id, ids)).all().map(parseApptRow);
 }
 async function dbDeleteAppointment(id) {
   if (_useMysql) {
@@ -61016,6 +61114,7 @@ async function dbUpdateSettings(data) {
     if (data.email !== void 0) patch2.email = data.email;
     if (data.brandColor !== void 0) patch2.brandColor = data.brandColor;
     if (data.backgroundColor !== void 0) patch2.backgroundColor = data.backgroundColor;
+    if (data.reminderTemplate !== void 0) patch2.reminderTemplate = data.reminderTemplate;
     await getMysqlDb().update(salonSettingsTable2).set(patch2).where(eq(salonSettingsTable2.id, current.id));
     return dbGetSettings();
   }
@@ -61028,6 +61127,7 @@ async function dbUpdateSettings(data) {
   if (data.email !== void 0) patch.email = data.email;
   if (data.brandColor !== void 0) patch.brandColor = data.brandColor;
   if (data.backgroundColor !== void 0) patch.backgroundColor = data.backgroundColor;
+  if (data.reminderTemplate !== void 0) patch.reminderTemplate = data.reminderTemplate;
   getSqliteDb().update(salonSettings).set(patch).where(eq(salonSettings.id, current.id)).run();
   return dbGetSettings();
 }
@@ -62260,9 +62360,13 @@ router10.put("/appointments/:id", async (req, res) => {
     res.status(404).json({ message: "Appointment not found" });
     return;
   }
+  const moved = body.data.date !== void 0 && body.data.date !== existing.date || body.data.time !== void 0 && body.data.time !== existing.time;
   let updated;
   try {
-    updated = await dbUpdateAppointment(params.data.id, body.data);
+    updated = await dbUpdateAppointment(
+      params.data.id,
+      moved && existing.reminderSentAt ? { ...body.data, reminderSentAt: null } : body.data
+    );
   } catch (err) {
     req.log.error({ err }, "DB error on PUT /appointments/:id");
     res.status(500).json({
@@ -62290,6 +62394,24 @@ router10.put("/appointments/:id", async (req, res) => {
     res.status(500).json({
       message: `Modifica salvata ma risposta non valida${issue2 ? ` (${issue2.path.join(".") || "campo"}: ${issue2.message})` : ""}`
     });
+    return;
+  }
+  res.json(parsed.data);
+});
+router10.post("/appointment-reminders", async (req, res) => {
+  const body = SetAppointmentRemindersBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  const updated = await dbSetAppointmentsReminder(
+    [...new Set(body.data.appointmentIds)],
+    body.data.sent ? (/* @__PURE__ */ new Date()).toISOString() : null
+  );
+  const parsed = SetAppointmentRemindersResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointment-reminders");
+    res.status(500).json({ message: "Internal server error" });
     return;
   }
   res.json(parsed.data);

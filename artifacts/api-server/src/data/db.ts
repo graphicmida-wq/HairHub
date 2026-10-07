@@ -133,7 +133,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       status TEXT NOT NULL DEFAULT 'prenotato',
       notes TEXT,
       used_product_ids TEXT,
-      used_products TEXT
+      used_products TEXT,
+      reminder_sent_at TEXT
     );
     CREATE TABLE IF NOT EXISTS client_formulas (
       id TEXT PRIMARY KEY,
@@ -153,7 +154,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       phone TEXT,
       email TEXT,
       brand_color TEXT,
-      background_color TEXT
+      background_color TEXT,
+      reminder_template TEXT
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -219,6 +221,8 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
   try { sqlite.exec("ALTER TABLE staff_members ADD COLUMN in_agenda INTEGER NOT NULL DEFAULT 1"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE users ADD COLUMN staff_id TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE users ADD COLUMN permissions TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE appointments ADD COLUMN reminder_sent_at TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT"); } catch { /* already exists */ }
   try { sqlite.exec(`CREATE TABLE IF NOT EXISTS client_formulas (
     id TEXT PRIMARY KEY,
     client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -374,6 +378,7 @@ async function initMysql() {
       notes TEXT,
       used_product_ids JSON,
       used_products JSON,
+      reminder_sent_at VARCHAR(40),
       CONSTRAINT fk_appointments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
       CONSTRAINT fk_appointments_staff FOREIGN KEY (staff_id) REFERENCES staff_members(id) ON DELETE SET NULL
     )
@@ -401,7 +406,8 @@ async function initMysql() {
       phone VARCHAR(30),
       email VARCHAR(255),
       brand_color VARCHAR(20),
-      background_color VARCHAR(20)
+      background_color VARCHAR(20),
+      reminder_template TEXT
     )
   `);
   // Widen logo_url on pre-existing tables (originally TEXT = 64KB, too small for a base64 logo).
@@ -549,6 +555,8 @@ async function initMysql() {
   await migrate("ALTER TABLE salon_settings ADD COLUMN email VARCHAR(255)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN background_color VARCHAR(20)");
+  // WhatsApp reminder text (NULL = the app's default text)
+  await migrate("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT");
 
   // appointments: the multi-service upgrade (single service_id → service_ids[])
   // plus staff assignment, pricing snapshots and product usage. This is the
@@ -561,6 +569,8 @@ async function initMysql() {
   await migrate("ALTER TABLE appointments ADD COLUMN staff_id CHAR(12)");
   await migrate("ALTER TABLE appointments ADD COLUMN used_product_ids JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN used_products JSON");
+  // When the WhatsApp reminder was sent (ISO timestamp, NULL = not yet)
+  await migrate("ALTER TABLE appointments ADD COLUMN reminder_sent_at VARCHAR(40)");
   // Backfill the new array column from the legacy single value and guarantee it is
   // never NULL BEFORE we get rid of the old column.
   await migrate(
@@ -1433,6 +1443,7 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
   notes: string | null;
   usedProductIds: string[] | null;
   usedProducts: UsedProductEntry[] | null;
+  reminderSentAt: string | null;
 }>) {
   if (_useMysql) {
     const { appointmentsTable } = await import("@workspace/db");
@@ -1450,6 +1461,7 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
     if (data.notes !== undefined) mysqlPatch.notes = data.notes;
     if (data.usedProductIds !== undefined) mysqlPatch.usedProductIds = data.usedProductIds;
     if (data.usedProducts !== undefined) (mysqlPatch as Record<string, unknown>)["usedProducts"] = data.usedProducts;
+    if (data.reminderSentAt !== undefined) mysqlPatch.reminderSentAt = data.reminderSentAt;
     await getMysqlDb().update(appointmentsTable).set(mysqlPatch).where(eq(appointmentsTable.id, id));
     const r = await getMysqlDb().select().from(appointmentsTable).where(eq(appointmentsTable.id, id)).execute();
     return r[0] ? normalizeApptRowMysql(r[0]) : undefined;
@@ -1468,8 +1480,22 @@ export async function dbUpdateAppointment(id: string, data: Partial<{
   if (data.notes !== undefined) sqlitePatch.notes = data.notes;
   if (data.usedProductIds !== undefined) sqlitePatch.usedProductIds = serializeJson(data.usedProductIds);
   if (data.usedProducts !== undefined) sqlitePatch.usedProducts = serializeJson(data.usedProducts);
+  if (data.reminderSentAt !== undefined) sqlitePatch.reminderSentAt = data.reminderSentAt;
   getSqliteDb().update(sqliteAppts).set(sqlitePatch).where(eq(sqliteAppts.id, id)).run();
   return dbGetAppointment(id);
+}
+
+/** Marks (ISO timestamp) or clears (null) the WhatsApp reminder on several appointments at once. */
+export async function dbSetAppointmentsReminder(ids: string[], sentAt: string | null) {
+  if (ids.length === 0) return [];
+  if (_useMysql) {
+    const { appointmentsTable } = await import("@workspace/db");
+    await getMysqlDb().update(appointmentsTable).set({ reminderSentAt: sentAt }).where(inArray(appointmentsTable.id, ids));
+    const rows = await getMysqlDb().select().from(appointmentsTable).where(inArray(appointmentsTable.id, ids)).execute();
+    return rows.map(normalizeApptRowMysql);
+  }
+  getSqliteDb().update(sqliteAppts).set({ reminderSentAt: sentAt }).where(inArray(sqliteAppts.id, ids)).run();
+  return getSqliteDb().select().from(sqliteAppts).where(inArray(sqliteAppts.id, ids)).all().map(parseApptRow);
 }
 
 export async function dbDeleteAppointment(id: string) {
@@ -2010,6 +2036,7 @@ export async function dbUpdateSettings(data: Partial<{
   email: string | null;
   brandColor: string | null;
   backgroundColor: string | null;
+  reminderTemplate: string | null;
 }>) {
   const current = await dbGetSettings();
   if (_useMysql) {
@@ -2023,6 +2050,7 @@ export async function dbUpdateSettings(data: Partial<{
     if (data.email !== undefined) patch.email = data.email;
     if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
     if (data.backgroundColor !== undefined) patch.backgroundColor = data.backgroundColor;
+    if (data.reminderTemplate !== undefined) patch.reminderTemplate = data.reminderTemplate;
     await getMysqlDb().update(salonSettingsTable).set(patch).where(eq(salonSettingsTable.id, current.id));
     return dbGetSettings();
   }
@@ -2035,6 +2063,7 @@ export async function dbUpdateSettings(data: Partial<{
   if (data.email !== undefined) patch.email = data.email;
   if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
   if (data.backgroundColor !== undefined) patch.backgroundColor = data.backgroundColor;
+  if (data.reminderTemplate !== undefined) patch.reminderTemplate = data.reminderTemplate;
   getSqliteDb().update(sqliteSalon).set(patch).where(eq(sqliteSalon.id, current.id)).run();
   return dbGetSettings();
 }

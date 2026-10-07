@@ -5,6 +5,7 @@ import {
   dbCreateAppointment,
   dbUpdateAppointment,
   dbDeleteAppointment,
+  dbSetAppointmentsReminder,
 } from "../data/db";
 import {
   CreateAppointmentBody,
@@ -15,6 +16,8 @@ import {
   ListAppointmentsResponse,
   GetAppointmentResponse,
   UpdateAppointmentResponse,
+  SetAppointmentRemindersBody,
+  SetAppointmentRemindersResponse,
 } from "@workspace/api-zod";
 import { actorFrom, syncAppointmentStock } from "../lib/stock";
 
@@ -127,9 +130,17 @@ router.put("/appointments/:id", async (req, res) => {
     return;
   }
 
+  // A reminder sent for the old day or time no longer holds once the appointment moves
+  const moved =
+    (body.data.date !== undefined && body.data.date !== existing.date) ||
+    (body.data.time !== undefined && body.data.time !== existing.time);
+
   let updated: Awaited<ReturnType<typeof dbUpdateAppointment>>;
   try {
-    updated = await dbUpdateAppointment(params.data.id, body.data);
+    updated = await dbUpdateAppointment(
+      params.data.id,
+      moved && existing.reminderSentAt ? { ...body.data, reminderSentAt: null } : body.data,
+    );
   } catch (err) {
     req.log.error({ err }, "DB error on PUT /appointments/:id");
     res.status(500).json({
@@ -160,6 +171,27 @@ router.put("/appointments/:id", async (req, res) => {
     res.status(500).json({
       message: `Modifica salvata ma risposta non valida${issue ? ` (${issue.path.join(".") || "campo"}: ${issue.message})` : ""}`,
     });
+    return;
+  }
+  res.json(parsed.data);
+});
+
+// The WhatsApp reminder itself is sent by hand from the user's own WhatsApp:
+// this only records that it went out (or clears the mark).
+router.post("/appointment-reminders", async (req, res) => {
+  const body = SetAppointmentRemindersBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  const updated = await dbSetAppointmentsReminder(
+    [...new Set(body.data.appointmentIds)],
+    body.data.sent ? new Date().toISOString() : null,
+  );
+  const parsed = SetAppointmentRemindersResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /appointment-reminders");
+    res.status(500).json({ message: "Internal server error" });
     return;
   }
   res.json(parsed.data);

@@ -18,4 +18,9 @@ export interface SalonSettings {
   brandColor?: string | null;
   /** Hex color of the page background behind the cards; null = default warm grey */
   backgroundColor?: string | null;
+  /**
+   * WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text
+   * @maxLength 2000
+   */
+  reminderTemplate?: string | null;
 }

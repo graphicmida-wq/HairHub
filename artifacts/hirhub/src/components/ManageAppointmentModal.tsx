@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { useListAppointments, useListClients, useListServices, useListProducts, useDeleteAppointment, getListAppointmentsQueryKey } from '@workspace/api-client-react';
+import { useListAppointments, useListClients, useListServices, useListProducts, useListStaff, useGetSettings, useDeleteAppointment, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Calendar, Text, CheckCircle2, Edit2, Trash2, Box } from 'lucide-react';
 import { toast } from './Toast';
@@ -9,6 +9,8 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { addMinsToTime } from '../lib/utils';
 import { ClientInfoPanel } from './ClientInfoPanel';
+import { buildReminder } from '../lib/whatsapp';
+import { ReminderLink, ReminderNumberProblem, ReminderSentNote } from './Reminder';
 
 export const ManageAppointmentModal = ({
   isOpen,
@@ -28,6 +30,8 @@ export const ManageAppointmentModal = ({
   const { data: clients = [] } = useListClients();
   const { data: services = [] } = useListServices();
   const { data: products = [] } = useListProducts();
+  const { data: staff = [] } = useListStaff();
+  const { data: settings } = useGetSettings();
   const [isClientInfoOpen, setIsClientInfoOpen] = React.useState(false);
 
   const { mutate: deleteAppointment } = useDeleteAppointment({
@@ -80,6 +84,11 @@ export const ManageAppointmentModal = ({
   }, 0);
 
   const grandTotal = servicesTotal + soldTotal;
+
+  // WhatsApp reminder: only for bookings still to come
+  const reminder = appointment.status === 'prenotato' && appointment.date >= format(new Date(), 'yyyy-MM-dd')
+    ? buildReminder([appointment], { clients, services, staff, settings })
+    : null;
 
   const soldProds = appointment.soldProducts?.length
     ? appointment.soldProducts
@@ -205,6 +214,20 @@ export const ManageAppointmentModal = ({
         )}
 
         <div className="flex flex-col gap-2 mt-2">
+          {reminder && (
+            reminder.sentAt ? (
+              <div className="flex flex-col items-center gap-2 mb-1">
+                <ReminderSentNote reminder={reminder} className="justify-center" />
+                <ReminderLink reminder={reminder} className="w-full py-3">Invia di nuovo</ReminderLink>
+              </div>
+            ) : reminder.number.kind === 'ok' ? (
+              <ReminderLink reminder={reminder} className="w-full py-3.5 mb-1">Invia promemoria WhatsApp</ReminderLink>
+            ) : (
+              <p className="text-center text-sm text-stone-400 mb-1">
+                Promemoria WhatsApp: <ReminderNumberProblem reminder={reminder} />
+              </p>
+            )
+          )}
           {appointment.status !== 'completato' && (
             <button
               onClick={() => { onClose(); onComplete(appointment.id); }}

@@ -486,6 +486,8 @@ export interface Appointment {
   usedProductIds?: string[] | null;
   usedProducts?: UsedProductEntry[] | null;
   soldProducts?: SoldProductEntry[] | null;
+  /** When the WhatsApp reminder was sent (ISO timestamp); null = not sent */
+  reminderSentAt?: string | null;
 }
 
 export interface CreateAppointmentInput {
@@ -557,6 +559,15 @@ export interface UpdateClientFormulaInput {
   notes?: string | null;
 }
 
+export interface SetAppointmentRemindersInput {
+  /**
+   * @minItems 1
+   * @maxItems 50
+   */
+  appointmentIds: string[];
+  sent: boolean;
+}
+
 export interface SalonSettings {
   salonName: string;
   /** Logo image URL or data URL (e.g. data:image/png;base64,...) */
@@ -569,6 +580,11 @@ export interface SalonSettings {
   brandColor?: string | null;
   /** Hex color of the page background behind the cards; null = default warm grey */
   backgroundColor?: string | null;
+  /**
+   * WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text
+   * @maxLength 2000
+   */
+  reminderTemplate?: string | null;
 }
 
 export type ListStockMovementsParams = {

@@ -42,6 +42,7 @@ import type {
   RenameCatalogTagInput,
   SalonSettings,
   Service,
+  SetAppointmentRemindersInput,
   SetBrandColorInput,
   StaffMember,
   StockMovement,
@@ -3246,6 +3247,93 @@ export const useDeleteClientFormula = <
   TContext
 > => {
   return useMutation(getDeleteClientFormulaMutationOptions(options));
+};
+
+/**
+ * @summary Mark the WhatsApp reminder of some appointments as sent (or clear the mark)
+ */
+export const getSetAppointmentRemindersUrl = () => {
+  return `/api/appointment-reminders`;
+};
+
+export const setAppointmentReminders = async (
+  setAppointmentRemindersInput: SetAppointmentRemindersInput,
+  options?: RequestInit,
+): Promise<Appointment[]> => {
+  return customFetch<Appointment[]>(getSetAppointmentRemindersUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setAppointmentRemindersInput),
+  });
+};
+
+export const getSetAppointmentRemindersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setAppointmentReminders>>,
+    TError,
+    { data: BodyType<SetAppointmentRemindersInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setAppointmentReminders>>,
+  TError,
+  { data: BodyType<SetAppointmentRemindersInput> },
+  TContext
+> => {
+  const mutationKey = ["setAppointmentReminders"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setAppointmentReminders>>,
+    { data: BodyType<SetAppointmentRemindersInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return setAppointmentReminders(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetAppointmentRemindersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setAppointmentReminders>>
+>;
+export type SetAppointmentRemindersMutationBody =
+  BodyType<SetAppointmentRemindersInput>;
+export type SetAppointmentRemindersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark the WhatsApp reminder of some appointments as sent (or clear the mark)
+ */
+export const useSetAppointmentReminders = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setAppointmentReminders>>,
+    TError,
+    { data: BodyType<SetAppointmentRemindersInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setAppointmentReminders>>,
+  TError,
+  { data: BodyType<SetAppointmentRemindersInput> },
+  TContext
+> => {
+  return useMutation(getSetAppointmentRemindersMutationOptions(options));
 };
 
 /**

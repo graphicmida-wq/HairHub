@@ -787,6 +787,27 @@ paths:
         "204":
           description: Deleted
 
+  /appointment-reminders:
+    post:
+      operationId: setAppointmentReminders
+      tags: [appointments]
+      summary: Mark the WhatsApp reminder of some appointments as sent (or clear the mark)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAppointmentRemindersInput"
+      responses:
+        "200":
+          description: The updated appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+
   /settings:
     get:
       operationId: getSettings
@@ -1798,6 +1819,10 @@ components:
           items:
             $ref: "#/components/schemas/SoldProductEntry"
           nullable: true
+        reminderSentAt:
+          type: string
+          nullable: true
+          description: "When the WhatsApp reminder was sent (ISO timestamp); null = not sent"
       required:
         - id
         - clientId
@@ -1998,6 +2023,21 @@ components:
           type: string
           nullable: true
 
+    SetAppointmentRemindersInput:
+      type: object
+      properties:
+        appointmentIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: string
+        sent:
+          type: boolean
+      required:
+        - appointmentIds
+        - sent
+
     SalonSettings:
       type: object
       properties:
@@ -2027,5 +2067,10 @@ components:
           type: string
           nullable: true
           description: "Hex color of the page background behind the cards; null = default warm grey"
+        reminderTemplate:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text"
       required:
         - salonName

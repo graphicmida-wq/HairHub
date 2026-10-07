@@ -4,7 +4,7 @@ import { store } from '../lib/store';
 import { useListAppointments, useListClients, useListServices, useListStaff } from '@workspace/api-client-react';
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, eachDayOfInterval, endOfWeek, isSameDay, isSameWeek } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2, MessageCircle, Plus } from 'lucide-react';
 import { cn, computeCalendarLayout, calendarHours } from '../lib/utils';
 import { useFontScale } from '../lib/font-scale';
 import { ManageAppointmentModal } from '../components/ManageAppointmentModal';
@@ -16,6 +16,7 @@ import { AppointmentBlock, type BlockInteraction } from '../components/Appointme
 import { AppointmentPreviewSheet, AppointmentHoverCard } from '../components/AppointmentPreview';
 import { useAuth } from '../lib/auth-context';
 import { GuideLink } from '../components/GuideLink';
+import { RemindersModal } from '../components/RemindersModal';
 
 type View = 'day' | 'week';
 
@@ -33,6 +34,7 @@ export const Appointments = () => {
   const [slotDate, setSlotDate] = useState<string | undefined>(undefined);
   const [slotTime, setSlotTime] = useState<string | undefined>(undefined);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
+  const [isRemindersOpen, setIsRemindersOpen] = useState(false);
 
   const { data: appointments = [], isLoading: loadingAppts, isError: errorAppts } = useListAppointments();
   const { data: clients = [], isLoading: loadingClients } = useListClients();
@@ -260,9 +262,17 @@ export const Appointments = () => {
           <h1 className="text-3xl font-serif text-on-page">Agenda</h1>
           <GuideLink chapter="agenda" />
         </div>
-        <button onClick={() => store.openModal('isNewAppointmentOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
-          <Plus className="w-4 h-4" /> Nuovo Appuntamento
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsRemindersOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" /> Promemoria
+          </button>
+          <button onClick={() => store.openModal('isNewAppointmentOpen')} className="btn-brand hidden md:flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
+            <Plus className="w-4 h-4" /> Nuovo Appuntamento
+          </button>
+        </div>
       </div>
 
       {/* Toolbar and calendar share one surface; on phones it runs edge to edge (cancelling <main>'s p-6) */}
@@ -433,6 +443,7 @@ export const Appointments = () => {
         defaultDate={slotDate}
         defaultTime={slotTime}
       />
+      <RemindersModal isOpen={isRemindersOpen} onClose={() => setIsRemindersOpen(false)} />
     </div>
   );
 };

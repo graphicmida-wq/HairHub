@@ -7,6 +7,7 @@ import { toast } from '../components/Toast';
 import { FontSizeCard } from '../components/FontSizeCard';
 import { ThemeCard } from '../components/ThemeCard';
 import { CatalogCard } from '../components/CatalogCard';
+import { ReminderTemplateCard } from '../components/ReminderTemplateCard';
 import {
   BRAND_PRESETS,
   paletteFromCustomColor,
@@ -53,7 +54,7 @@ function saveInfoFallback(info: SalonInfo) {
 const inputClass =
   'w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-300 placeholder:text-stone-400 transition';
 
-function BrandPreview({ palette, background }: { palette: BrandPalette; background: string }) {
+function BrandPreview({ palette, background, salonName }: { palette: BrandPalette; background: string; salonName: string }) {
   const iconBg = mixWithWhite(palette.primary, 0.82);
   const onPage = needsLightText(background) ? '#fafaf9' : '#292524';
   return (
@@ -65,7 +66,7 @@ function BrandPreview({ palette, background }: { palette: BrandPalette; backgrou
         <div className="flex items-center gap-2">
           <span style={{ color: palette.muted, fontSize: '0.85rem', lineHeight: 1 }}>♥</span>
           <span className="text-white text-sm font-semibold" style={{ fontFamily: '"Playfair Display", serif' }}>
-            Capelli &amp; Vanità
+            {salonName}
           </span>
         </div>
         <div className="flex flex-col items-start gap-0.5 ml-4">
@@ -419,6 +420,8 @@ export const Settings = () => {
               </div>
             </div>
 
+            <ReminderTemplateCard />
+
             <FontSizeCard />
 
             <ThemeCard palette={activePalette} pageBackground={background} />
@@ -570,7 +573,7 @@ export const Settings = () => {
                   <label className="block text-xs font-medium text-stone-600 mb-3 uppercase tracking-wide">
                     Anteprima
                   </label>
-                  <BrandPreview palette={activePalette} background={background} />
+                  <BrandPreview palette={activePalette} background={background} salonName={salonName.trim() || 'Il tuo salone'} />
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-stone-100">

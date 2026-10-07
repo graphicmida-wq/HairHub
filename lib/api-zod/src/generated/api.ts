@@ -846,6 +846,12 @@ export const ListAppointmentsResponseItem = zod.object({
       }),
     )
     .nullish(),
+  reminderSentAt: zod
+    .string()
+    .nullish()
+    .describe(
+      "When the WhatsApp reminder was sent (ISO timestamp); null = not sent",
+    ),
 });
 export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
 
@@ -957,6 +963,12 @@ export const GetAppointmentResponse = zod.object({
       }),
     )
     .nullish(),
+  reminderSentAt: zod
+    .string()
+    .nullish()
+    .describe(
+      "When the WhatsApp reminder was sent (ISO timestamp); null = not sent",
+    ),
 });
 
 /**
@@ -1069,6 +1081,12 @@ export const UpdateAppointmentResponse = zod.object({
       }),
     )
     .nullish(),
+  reminderSentAt: zod
+    .string()
+    .nullish()
+    .describe(
+      "When the WhatsApp reminder was sent (ISO timestamp); null = not sent",
+    ),
 });
 
 /**
@@ -1227,8 +1245,88 @@ export const DeleteClientFormulaParams = zod.object({
 });
 
 /**
+ * @summary Mark the WhatsApp reminder of some appointments as sent (or clear the mark)
+ */
+export const setAppointmentRemindersBodyAppointmentIdsMax = 50;
+
+export const SetAppointmentRemindersBody = zod.object({
+  appointmentIds: zod
+    .array(zod.string())
+    .min(1)
+    .max(setAppointmentRemindersBodyAppointmentIdsMax),
+  sent: zod.boolean(),
+});
+
+export const setAppointmentRemindersResponseServicePricesItemMin = 0;
+
+export const setAppointmentRemindersResponseServiceListPricesItemMin = 0;
+
+export const setAppointmentRemindersResponseUsedProductsItemQuantityUsedMin = 0;
+
+export const setAppointmentRemindersResponseSoldProductsItemUnitPriceMin = 0;
+
+export const SetAppointmentRemindersResponseItem = zod.object({
+  id: zod.string(),
+  clientId: zod.string(),
+  serviceIds: zod.array(zod.string()),
+  servicePrices: zod
+    .array(
+      zod.number().min(setAppointmentRemindersResponseServicePricesItemMin),
+    )
+    .nullish(),
+  serviceListPrices: zod
+    .array(
+      zod.number().min(setAppointmentRemindersResponseServiceListPricesItemMin),
+    )
+    .nullish(),
+  staffId: zod.string().nullish(),
+  date: zod.string().describe("YYYY-MM-DD"),
+  time: zod.string().describe("HH:MM"),
+  durationMins: zod.number(),
+  status: zod.enum(["prenotato", "completato", "annullato", "no-show"]),
+  notes: zod.string().nullish(),
+  usedProductIds: zod
+    .array(zod.string())
+    .nullish()
+    .describe("Deprecated: use usedProducts instead"),
+  usedProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantityUsed: zod
+          .number()
+          .min(setAppointmentRemindersResponseUsedProductsItemQuantityUsedMin)
+          .describe("Amount used in g or ml"),
+      }),
+    )
+    .nullish(),
+  soldProducts: zod
+    .array(
+      zod.object({
+        productId: zod.string(),
+        quantity: zod.number().min(1),
+        unitPrice: zod
+          .number()
+          .min(setAppointmentRemindersResponseSoldProductsItemUnitPriceMin),
+      }),
+    )
+    .nullish(),
+  reminderSentAt: zod
+    .string()
+    .nullish()
+    .describe(
+      "When the WhatsApp reminder was sent (ISO timestamp); null = not sent",
+    ),
+});
+export const SetAppointmentRemindersResponse = zod.array(
+  SetAppointmentRemindersResponseItem,
+);
+
+/**
  * @summary Get salon settings
  */
+export const getSettingsResponseReminderTemplateMax = 2000;
+
 export const GetSettingsResponse = zod.object({
   salonName: zod.string(),
   logoUrl: zod
@@ -1251,11 +1349,20 @@ export const GetSettingsResponse = zod.object({
     .describe(
       "Hex color of the page background behind the cards; null = default warm grey",
     ),
+  reminderTemplate: zod
+    .string()
+    .max(getSettingsResponseReminderTemplateMax)
+    .nullish()
+    .describe(
+      "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text",
+    ),
 });
 
 /**
  * @summary Update salon settings
  */
+export const updateSettingsBodyReminderTemplateMax = 2000;
+
 export const UpdateSettingsBody = zod.object({
   salonName: zod.string(),
   logoUrl: zod
@@ -1278,7 +1385,16 @@ export const UpdateSettingsBody = zod.object({
     .describe(
       "Hex color of the page background behind the cards; null = default warm grey",
     ),
+  reminderTemplate: zod
+    .string()
+    .max(updateSettingsBodyReminderTemplateMax)
+    .nullish()
+    .describe(
+      "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text",
+    ),
 });
+
+export const updateSettingsResponseReminderTemplateMax = 2000;
 
 export const UpdateSettingsResponse = zod.object({
   salonName: zod.string(),
@@ -1301,6 +1417,13 @@ export const UpdateSettingsResponse = zod.object({
     .nullish()
     .describe(
       "Hex color of the page background behind the cards; null = default warm grey",
+    ),
+  reminderTemplate: zod
+    .string()
+    .max(updateSettingsResponseReminderTemplateMax)
+    .nullish()
+    .describe(
+      "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text",
     ),
 });
 

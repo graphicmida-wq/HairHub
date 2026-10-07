@@ -321,8 +321,55 @@ export const GUIDE: GuideChapter[] = [
               totale, la data, l'orario, le note e i prodotti usati o venduti. <Ui>Info cliente</Ui>, sotto il nome,
               apre il riepilogo della cliente.
             </P>
-            <P>In fondo ci sono i tre pulsanti per completarlo, modificarlo o eliminarlo.</P>
+            <P>
+              In fondo ci sono i pulsanti per completarlo, modificarlo o eliminarlo e, se l'appuntamento deve ancora
+              esserci, <Ui>Invia promemoria WhatsApp</Ui> (vedi «Mandare i promemoria su WhatsApp»).
+            </P>
             <Shot name="appuntamento-dettagli" narrow alt="I dettagli di un appuntamento" />
+          </>
+        ),
+      },
+      {
+        id: 'promemoria',
+        title: 'Mandare i promemoria su WhatsApp',
+        keywords: 'promemoria whatsapp messaggio ricordare avvisare cliente domani inviato',
+        body: (
+          <>
+            <P>
+              Lumii prepara il messaggio che ricorda l'appuntamento alla cliente e apre WhatsApp sulla sua chat, con
+              il testo già scritto: tu lo controlli e premi invio. Il messaggio parte dal WhatsApp del telefono o del
+              computer che stai usando, quindi usa quello del salone.
+            </P>
+            <Steps>
+              <>In Agenda tocca <Ui>Promemoria</Ui>: si apre l'elenco degli appuntamenti di domani, una riga per cliente. Con le frecce passi agli altri giorni.</>
+              <>Tocca <Ui>Invia</Ui> accanto alla cliente: si apre WhatsApp con il messaggio pronto.</>
+              <>Premi invio in WhatsApp, poi torna su Lumii e passa alla cliente successiva.</>
+            </Steps>
+            <Shot name="agenda-promemoria" narrow alt="L'elenco dei promemoria di domani" />
+            <P>
+              Puoi mandarlo anche da un solo appuntamento: aprilo e tocca <Ui>Invia promemoria WhatsApp</Ui>.
+            </P>
+            <List>
+              <>
+                <strong>Inviato:</strong> quando tocchi <Ui>Invia</Ui>, Lumii segna il promemoria come inviato, con
+                l'ora, così tutto il salone vede chi è già stato avvisato. Lumii però non sa se poi hai premuto invio
+                in WhatsApp: se il messaggio non è partito, tocca <Ui>Togli segno</Ui>.
+              </>
+              <>
+                <strong>Appuntamento spostato:</strong> se ne cambi il giorno o l'ora, il segno si toglie da solo,
+                perché il messaggio era per l'orario vecchio.
+              </>
+              <>
+                <strong>Nessun numero in scheda</strong> o <strong>Numero da controllare:</strong> la cliente non ha
+                un numero di telefono, oppure quello scritto non sembra giusto (per esempio ha una cifra in più).
+                Correggilo nella scheda della cliente.
+              </>
+            </List>
+            <Tip title="La cliente non ha WhatsApp?">
+              Se il numero non è su WhatsApp, è WhatsApp stesso a dirtelo quando si apre. In quel caso avvisala come
+              fai di solito.
+            </Tip>
+            <P>Il testo del messaggio lo cambia l'amministratore in Impostazioni.</P>
           </>
         ),
       },
@@ -932,7 +979,7 @@ export const GUIDE: GuideChapter[] = [
     id: 'impostazioni',
     title: 'Impostazioni',
     icon: Settings,
-    summary: "Dati del salone, dimensione del testo, aspetto, colori, marche e categorie.",
+    summary: "Dati del salone, testo dei promemoria WhatsApp, dimensione del testo, aspetto, colori, marche e categorie.",
     adminOnly: true,
     topics: [
       {
@@ -945,6 +992,28 @@ export const GUIDE: GuideChapter[] = [
             logo compaiono nel menu e nella schermata di accesso; con <Ui>Mostra nome del salone nell'header</Ui>{' '}
             scegli se mostrare anche il nome accanto al logo. Tocca <Ui>Salva informazioni</Ui>.
           </P>
+        ),
+      },
+      {
+        id: 'promemoria',
+        title: 'Il testo dei promemoria WhatsApp',
+        keywords: 'promemoria whatsapp messaggio testo app web computer',
+        body: (
+          <>
+            <P>
+              In <Ui>Promemoria WhatsApp</Ui> scrivi il messaggio che si apre quando mandi un promemoria dall'Agenda.
+              Le parole tra parentesi graffe vengono sostituite per ogni cliente: tocca <Ui>nome</Ui>,{' '}
+              <Ui>quando</Ui>, <Ui>ora</Ui>, <Ui>servizio</Ui>, <Ui>operatrice</Ui> o <Ui>salone</Ui> per inserirle
+              dove c'è il cursore. «quando» diventa «oggi», «domani» oppure il giorno, per esempio «lunedì 12
+              ottobre». L'<Ui>Anteprima</Ui> mostra come arriverà il messaggio; tocca <Ui>Salva testo</Ui>.{' '}
+              <Ui>Testo iniziale</Ui> rimette quello proposto da Lumii.
+            </P>
+            <P>
+              Su un computer scegli anche come aprire WhatsApp: <Ui>App WhatsApp</Ui> (quella installata) oppure{' '}
+              <Ui>WhatsApp Web</Ui> (nel browser). Vale solo per quel computer; sul telefono si apre sempre l'app.
+            </P>
+            <Shot name="impostazioni-promemoria" alt="Il testo dei promemoria WhatsApp nelle Impostazioni" />
+          </>
         ),
       },
       {

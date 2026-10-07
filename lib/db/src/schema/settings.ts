@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, int, mediumtext } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, int, mediumtext, text } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -12,6 +12,7 @@ export const salonSettingsTable = mysqlTable("salon_settings", {
   email: varchar("email", { length: 255 }),
   brandColor: varchar("brand_color", { length: 20 }),
   backgroundColor: varchar("background_color", { length: 20 }),
+  reminderTemplate: text("reminder_template"),
 });
 
 export const insertSettingsSchema = createInsertSchema(salonSettingsTable).omit({ id: true });

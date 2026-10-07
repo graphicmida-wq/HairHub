@@ -19,6 +19,7 @@ export const appointmentsTable = mysqlTable("appointments", {
   notes: text("notes"),
   usedProductIds: json("used_product_ids").$type<string[]>(),
   usedProducts: json("used_products").$type<{ productId: string; quantityUsed: number }[]>(),
+  reminderSentAt: varchar("reminder_sent_at", { length: 40 }),
 });
 
 export const insertAppointmentSchema = createInsertSchema(appointmentsTable).omit({ id: true });

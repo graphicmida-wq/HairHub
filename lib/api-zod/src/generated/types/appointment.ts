@@ -27,4 +27,6 @@ export interface Appointment {
   usedProductIds?: string[] | null;
   usedProducts?: UsedProductEntry[] | null;
   soldProducts?: SoldProductEntry[] | null;
+  /** When the WhatsApp reminder was sent (ISO timestamp); null = not sent */
+  reminderSentAt?: string | null;
 }

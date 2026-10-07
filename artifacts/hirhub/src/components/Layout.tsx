@@ -31,7 +31,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAdmin, can, logout } = useAuth();
   const { compact: navCompact, onScroll: onMainScroll } = useCompactOnScroll(location.pathname);
 
-  const salonName = settings?.salonName ?? "Capelli & Vanitá";
+  const salonName = settings?.salonName ?? '';
   const logoUrl = settings?.logoUrl ?? null;
   const showName = settings?.showSalonName ?? true;
   const today = format(new Date(), "d MMMM yyyy", { locale: it });

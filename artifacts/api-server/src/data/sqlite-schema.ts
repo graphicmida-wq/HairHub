@@ -61,6 +61,7 @@ export const appointments = sqliteTable("appointments", {
   usedProductIds: text("used_product_ids"),
   usedProducts: text("used_products"),
   soldProducts: text("sold_products"),
+  reminderSentAt: text("reminder_sent_at"),
 });
 
 export const clientFormulas = sqliteTable("client_formulas", {
@@ -136,6 +137,7 @@ export const salonSettings = sqliteTable("salon_settings", {
   email: text("email"),
   brandColor: text("brand_color"),
   backgroundColor: text("background_color"),
+  reminderTemplate: text("reminder_template"),
 });
 
 export type Client = typeof clients.$inferSelect;

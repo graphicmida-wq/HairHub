@@ -42,6 +42,7 @@ export * from "./renameCatalogTagInput";
 export * from "./saleItemInput";
 export * from "./salonSettings";
 export * from "./service";
+export * from "./setAppointmentRemindersInput";
 export * from "./setBrandColorInput";
 export * from "./soldProductEntry";
 export * from "./staffMember";
