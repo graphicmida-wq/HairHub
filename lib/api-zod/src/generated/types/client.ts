@@ -16,4 +16,12 @@ export interface Client {
   notes?: string | null;
   allergies?: string | null;
   hairSpecs?: string | null;
+  /** When this year's birthday wishes were sent (ISO timestamp) */
+  birthdayGreetedAt?: string | null;
+  /** The birthday promotion promised in those wishes (snapshot of the salon's text) */
+  birthdayPromo?: string | null;
+  /** Last day the promotion holds (YYYY-MM-DD) */
+  birthdayPromoUntil?: string | null;
+  /** When the promotion was used (ISO timestamp) */
+  birthdayPromoUsedAt?: string | null;
 }

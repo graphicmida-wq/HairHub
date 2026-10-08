@@ -12,6 +12,11 @@ export const clientsTable = mysqlTable("clients", {
   notes: text("notes"),
   allergies: text("allergies"),
   hairSpecs: text("hair_specs"),
+  // Birthday wishes: when they were sent, the promotion promised then, until when it holds, when it was used
+  birthdayGreetedAt: varchar("birthday_greeted_at", { length: 40 }),
+  birthdayPromo: text("birthday_promo"),
+  birthdayPromoUntil: varchar("birthday_promo_until", { length: 10 }),
+  birthdayPromoUsedAt: varchar("birthday_promo_used_at", { length: 40 }),
 });
 
 export const insertClientSchema = createInsertSchema(clientsTable).omit({ id: true });

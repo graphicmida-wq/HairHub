@@ -44,6 +44,8 @@ import type {
   Service,
   SetAppointmentRemindersInput,
   SetBrandColorInput,
+  SetClientBirthdayGreetingInput,
+  SetClientBirthdayPromoUsedInput,
   StaffMember,
   StockMovement,
   TeamMember,
@@ -3334,6 +3336,180 @@ export const useSetAppointmentReminders = <
   TContext
 > => {
   return useMutation(getSetAppointmentRemindersMutationOptions(options));
+};
+
+/**
+ * @summary Mark this year's birthday wishes as sent (recording the promotion promised) or clear the mark
+ */
+export const getSetClientBirthdayGreetingUrl = () => {
+  return `/api/client-birthday-greetings`;
+};
+
+export const setClientBirthdayGreeting = async (
+  setClientBirthdayGreetingInput: SetClientBirthdayGreetingInput,
+  options?: RequestInit,
+): Promise<Client> => {
+  return customFetch<Client>(getSetClientBirthdayGreetingUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setClientBirthdayGreetingInput),
+  });
+};
+
+export const getSetClientBirthdayGreetingMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setClientBirthdayGreeting>>,
+    TError,
+    { data: BodyType<SetClientBirthdayGreetingInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setClientBirthdayGreeting>>,
+  TError,
+  { data: BodyType<SetClientBirthdayGreetingInput> },
+  TContext
+> => {
+  const mutationKey = ["setClientBirthdayGreeting"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setClientBirthdayGreeting>>,
+    { data: BodyType<SetClientBirthdayGreetingInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return setClientBirthdayGreeting(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetClientBirthdayGreetingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setClientBirthdayGreeting>>
+>;
+export type SetClientBirthdayGreetingMutationBody =
+  BodyType<SetClientBirthdayGreetingInput>;
+export type SetClientBirthdayGreetingMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Mark this year's birthday wishes as sent (recording the promotion promised) or clear the mark
+ */
+export const useSetClientBirthdayGreeting = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setClientBirthdayGreeting>>,
+    TError,
+    { data: BodyType<SetClientBirthdayGreetingInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setClientBirthdayGreeting>>,
+  TError,
+  { data: BodyType<SetClientBirthdayGreetingInput> },
+  TContext
+> => {
+  return useMutation(getSetClientBirthdayGreetingMutationOptions(options));
+};
+
+/**
+ * @summary Mark the birthday promotion as used (or not)
+ */
+export const getSetClientBirthdayPromoUsedUrl = () => {
+  return `/api/client-birthday-promo`;
+};
+
+export const setClientBirthdayPromoUsed = async (
+  setClientBirthdayPromoUsedInput: SetClientBirthdayPromoUsedInput,
+  options?: RequestInit,
+): Promise<Client> => {
+  return customFetch<Client>(getSetClientBirthdayPromoUsedUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setClientBirthdayPromoUsedInput),
+  });
+};
+
+export const getSetClientBirthdayPromoUsedMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setClientBirthdayPromoUsed>>,
+    TError,
+    { data: BodyType<SetClientBirthdayPromoUsedInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setClientBirthdayPromoUsed>>,
+  TError,
+  { data: BodyType<SetClientBirthdayPromoUsedInput> },
+  TContext
+> => {
+  const mutationKey = ["setClientBirthdayPromoUsed"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setClientBirthdayPromoUsed>>,
+    { data: BodyType<SetClientBirthdayPromoUsedInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return setClientBirthdayPromoUsed(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetClientBirthdayPromoUsedMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setClientBirthdayPromoUsed>>
+>;
+export type SetClientBirthdayPromoUsedMutationBody =
+  BodyType<SetClientBirthdayPromoUsedInput>;
+export type SetClientBirthdayPromoUsedMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Mark the birthday promotion as used (or not)
+ */
+export const useSetClientBirthdayPromoUsed = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setClientBirthdayPromoUsed>>,
+    TError,
+    { data: BodyType<SetClientBirthdayPromoUsedInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setClientBirthdayPromoUsed>>,
+  TError,
+  { data: BodyType<SetClientBirthdayPromoUsedInput> },
+  TContext
+> => {
+  return useMutation(getSetClientBirthdayPromoUsedMutationOptions(options));
 };
 
 /**

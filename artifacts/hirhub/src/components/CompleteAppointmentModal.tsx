@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { BirthdayPromoBadge } from './BirthdayPromoBadge';
 import {
   useListAppointments, useListClients, useListServices, useListProducts,
   useUpdateAppointment, useCreateClientFormula,
@@ -365,6 +366,8 @@ export const CompleteAppointmentModal = ({ isOpen, onClose, appointmentId }: { i
             </div>
           </div>
         </div>
+
+        <BirthdayPromoBadge client={client} date={appointment.date} className="-mt-2" />
 
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-stone-700">Servizi e prezzi</label>

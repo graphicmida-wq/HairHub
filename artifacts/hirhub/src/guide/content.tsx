@@ -192,6 +192,10 @@ export const GUIDE: GuideChapter[] = [
               <><strong>Azioni rapide:</strong> nuovo cliente, nuovo prodotto, nuova vendita.</>
               <><strong>Prossimi appuntamenti:</strong> quelli ancora da fare oggi; finita la giornata, quelli del prossimo giorno con appuntamenti. Toccane uno per aprirlo in agenda.</>
               <><strong>Vendite del mese:</strong> pezzi venduti, incasso dei prodotti, confezioni usate nei servizi e i prodotti più venduti.</>
+              <>
+                <strong>Compleanni:</strong> chi compie gli anni oggi e nei prossimi giorni (compare quando almeno una
+                cliente ha il compleanno in scheda). <Ui>Manda gli auguri</Ui> apre l'elenco per mandarli su WhatsApp.
+              </>
               <><strong>Servizi più richiesti</strong> del mese.</>
               <><strong>Attenzione Magazzino:</strong> compare solo quando qualche prodotto è sotto la scorta minima.</>
             </List>
@@ -369,7 +373,11 @@ export const GUIDE: GuideChapter[] = [
               Se il numero non è su WhatsApp, è WhatsApp stesso a dirtelo quando si apre. In quel caso avvisala come
               fai di solito.
             </Tip>
-            <P>Il testo del messaggio lo cambia l'amministratore in Impostazioni.</P>
+            <P>
+              Nella stessa finestra la scheda <Ui>Compleanni</Ui> serve per gli auguri (vedi{' '}
+              <To to="/guida/clienti#compleanni">Compleanni e auguri su WhatsApp</To>). Il testo dei messaggi lo
+              cambia l'amministratore in Impostazioni.
+            </P>
           </>
         ),
       },
@@ -492,7 +500,7 @@ export const GUIDE: GuideChapter[] = [
             <Steps>
               <>Tocca <Ui>Nuovo Cliente</Ui> (o il pulsante <Ui>+</Ui>).</>
               <>Scrivi <Ui>Nome</Ui> e <Ui>Cognome</Ui>. Il telefono è facoltativo, ma aiuta a ritrovarla e a non crearla due volte.</>
-              <>Se li conosci, aggiungi data di nascita, email, <Ui>Allergie / Intolleranze</Ui> e note.</>
+              <>Se li conosci, aggiungi il <Ui>Compleanno</Ui> (basta giorno e mese, l'anno è facoltativo), email, <Ui>Allergie / Intolleranze</Ui> e note.</>
               <>Salva.</>
             </Steps>
             <Shot name="cliente-nuovo" narrow alt="Il modulo Nuovo Cliente" />
@@ -512,13 +520,57 @@ export const GUIDE: GuideChapter[] = [
           <>
             <P>Tocca una cliente per aprire la sua scheda. Trovi:</P>
             <List>
-              <>telefono, email, data di nascita e note; le <strong>allergie</strong> sono in rosso, ben visibili;</>
+              <>telefono, email, compleanno (con l'età, se c'è l'anno) e note; le <strong>allergie</strong> sono in rosso, ben visibili;</>
               <>quante <strong>visite</strong> ha fatto, la data dell'<strong>ultima visita</strong> e quanto ha <strong>speso</strong> in tutto;</>
               <>i prodotti che <strong>compra di solito</strong>;</>
               <>lo <strong>storico</strong> di appuntamenti e acquisti, che puoi filtrare con <Ui>Tutto</Ui>, <Ui>Appuntamenti</Ui> e <Ui>Acquisti</Ui>;</>
               <>le sue <strong>formule</strong>.</>
             </List>
             <Shot name="cliente-scheda" alt="La scheda di una cliente" />
+          </>
+        ),
+      },
+      {
+        id: 'compleanni',
+        title: 'Compleanni e auguri su WhatsApp',
+        keywords: 'compleanno auguri data di nascita promozione promo sconto whatsapp festeggiare',
+        body: (
+          <>
+            <P>
+              Se nella scheda della cliente c'è il compleanno, Lumii te lo ricorda: in Dashboard compare il riquadro{' '}
+              <Ui>Compleanni</Ui>, con chi li compie oggi e nei prossimi 7 giorni.
+            </P>
+            <Shot name="dashboard-compleanni" alt="Il riquadro Compleanni nella Dashboard" />
+            <Steps>
+              <>Nel riquadro tocca <Ui>Manda gli auguri</Ui> (oppure, in Agenda, <Ui>Promemoria</Ui> e poi la scheda <Ui>Compleanni</Ui>).</>
+              <>Accanto alla cliente tocca <Ui>Auguri</Ui>: si apre WhatsApp con il messaggio già scritto, con la promozione di compleanno se il salone ne ha una.</>
+              <>Premi invio in WhatsApp.</>
+            </Steps>
+            <Shot name="compleanni-lista" narrow alt="L'elenco dei compleanni da festeggiare" />
+            <List>
+              <>
+                <strong>Inviato:</strong> Lumii segna gli auguri come mandati, così quest'anno non partono due volte.
+                Se il messaggio non è partito, tocca <Ui>Togli segno</Ui>.
+              </>
+              <>
+                <strong>Compleanni appena passati:</strong> se un compleanno cade quando il salone è chiuso, resta in
+                elenco per 3 giorni, finché non mandi gli auguri.
+              </>
+              <>
+                <strong>La promozione:</strong> quando la cliente torna entro la scadenza, nel suo appuntamento (e in{' '}
+                <Ui>Completa Appuntamento</Ui>) compare l'avviso <Ui>Promo compleanno</Ui>. Applica lo sconto sul
+                prezzo e tocca <Ui>Segna come usata</Ui>, così non viene applicata due volte.
+              </>
+              <>
+                <strong>Nessun numero in scheda</strong> o <strong>Numero da controllare:</strong> come per i
+                promemoria, correggi il numero nella scheda della cliente.
+              </>
+            </List>
+            <Tip title="Poche clienti hanno il compleanno?">
+              Chiedilo man mano, per esempio quando prendi un appuntamento: bastano giorno e mese, l'anno è
+              facoltativo. In fondo all'elenco dei compleanni vedi quante clienti non ce l'hanno ancora.
+            </Tip>
+            <P>Il testo degli auguri e la promozione li sceglie l'amministratore in Impostazioni.</P>
           </>
         ),
       },
@@ -979,7 +1031,7 @@ export const GUIDE: GuideChapter[] = [
     id: 'impostazioni',
     title: 'Impostazioni',
     icon: Settings,
-    summary: "Dati del salone, testo dei promemoria WhatsApp, dimensione del testo, aspetto, colori, marche e categorie.",
+    summary: "Dati del salone, promemoria e auguri su WhatsApp, dimensione del testo, aspetto, colori, marche e categorie.",
     adminOnly: true,
     topics: [
       {
@@ -1013,6 +1065,31 @@ export const GUIDE: GuideChapter[] = [
               <Ui>WhatsApp Web</Ui> (nel browser). Vale solo per quel computer; sul telefono si apre sempre l'app.
             </P>
             <Shot name="impostazioni-promemoria" alt="Il testo dei promemoria WhatsApp nelle Impostazioni" />
+          </>
+        ),
+      },
+      {
+        id: 'compleanni',
+        title: 'Gli auguri di compleanno e la promozione',
+        keywords: 'compleanno auguri promozione promo sconto scadenza giorni',
+        body: (
+          <>
+            <P>
+              In <Ui>Auguri di compleanno</Ui> scrivi la <Ui>Promozione</Ui> da regalare, per esempio «uno sconto del
+              20% su un trattamento», e per quanti giorni vale (<Ui>Valida per</Ui>, contati dal giorno del
+              compleanno). Se la lasci vuota, il messaggio è solo di auguri.
+            </P>
+            <P>
+              Nel <Ui>Testo del messaggio</Ui> le parole tra parentesi graffe vengono sostituite per ogni cliente:{' '}
+              <Ui>nome</Ui>, <Ui>salone</Ui>, <Ui>promozione</Ui> e <Ui>scadenza</Ui> (il giorno in cui la promozione
+              finisce). Finché non lo cambi, il testo proposto da Lumii si adatta da solo alla promozione, che ci sia
+              o no. Controlla l'<Ui>Anteprima</Ui> e tocca <Ui>Salva auguri</Ui>.
+            </P>
+            <Shot name="impostazioni-compleanni" alt="Gli auguri di compleanno nelle Impostazioni" />
+            <P>
+              La promozione promessa resta quella scritta nel momento in cui mandi gli auguri: se la cambi dopo, le
+              clienti già festeggiate mantengono la loro.
+            </P>
           </>
         ),
       },

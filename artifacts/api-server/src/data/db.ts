@@ -86,7 +86,11 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       dob TEXT,
       notes TEXT,
       allergies TEXT,
-      hair_specs TEXT
+      hair_specs TEXT,
+      birthday_greeted_at TEXT,
+      birthday_promo TEXT,
+      birthday_promo_until TEXT,
+      birthday_promo_used_at TEXT
     );
     CREATE TABLE IF NOT EXISTS services (
       id TEXT PRIMARY KEY,
@@ -155,7 +159,10 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
       email TEXT,
       brand_color TEXT,
       background_color TEXT,
-      reminder_template TEXT
+      reminder_template TEXT,
+      birthday_template TEXT,
+      birthday_promo TEXT,
+      birthday_promo_days INTEGER
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -223,6 +230,13 @@ function createSqliteTables(sqlite: BetterSqlite3.Database) {
   try { sqlite.exec("ALTER TABLE users ADD COLUMN permissions TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE appointments ADD COLUMN reminder_sent_at TEXT"); } catch { /* already exists */ }
   try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_greeted_at TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_promo TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_promo_until TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_promo_used_at TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN birthday_template TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN birthday_promo TEXT"); } catch { /* already exists */ }
+  try { sqlite.exec("ALTER TABLE salon_settings ADD COLUMN birthday_promo_days INTEGER"); } catch { /* already exists */ }
   try { sqlite.exec(`CREATE TABLE IF NOT EXISTS client_formulas (
     id TEXT PRIMARY KEY,
     client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -322,7 +336,11 @@ async function initMysql() {
       dob VARCHAR(10),
       notes TEXT,
       allergies TEXT,
-      hair_specs TEXT
+      hair_specs TEXT,
+      birthday_greeted_at VARCHAR(40),
+      birthday_promo TEXT,
+      birthday_promo_until VARCHAR(10),
+      birthday_promo_used_at VARCHAR(40)
     )
   `);
   await db.execute(sql`
@@ -407,7 +425,10 @@ async function initMysql() {
       email VARCHAR(255),
       brand_color VARCHAR(20),
       background_color VARCHAR(20),
-      reminder_template TEXT
+      reminder_template TEXT,
+      birthday_template TEXT,
+      birthday_promo TEXT,
+      birthday_promo_days INT
     )
   `);
   // Widen logo_url on pre-existing tables (originally TEXT = 64KB, too small for a base64 logo).
@@ -527,6 +548,11 @@ async function initMysql() {
   await migrate("ALTER TABLE clients ADD COLUMN notes TEXT");
   await migrate("ALTER TABLE clients ADD COLUMN allergies TEXT");
   await migrate("ALTER TABLE clients ADD COLUMN hair_specs TEXT");
+  // birthday wishes and the promotion promised with them
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_greeted_at VARCHAR(40)");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_promo TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_promo_until VARCHAR(10)");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_promo_used_at VARCHAR(40)");
 
   // services: per-service colour
   await migrate("ALTER TABLE services ADD COLUMN color VARCHAR(9) NOT NULL DEFAULT '#94a3b8'");
@@ -557,6 +583,10 @@ async function initMysql() {
   await migrate("ALTER TABLE salon_settings ADD COLUMN background_color VARCHAR(20)");
   // WhatsApp reminder text (NULL = the app's default text)
   await migrate("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT");
+  // Birthday wishes: text (NULL = default), promotion (NULL = none), days it holds (NULL = 30)
+  await migrate("ALTER TABLE salon_settings ADD COLUMN birthday_template TEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN birthday_promo TEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN birthday_promo_days INT");
 
   // appointments: the multi-service upgrade (single service_id → service_ids[])
   // plus staff assignment, pricing snapshots and product usage. This is the
@@ -2037,6 +2067,9 @@ export async function dbUpdateSettings(data: Partial<{
   brandColor: string | null;
   backgroundColor: string | null;
   reminderTemplate: string | null;
+  birthdayTemplate: string | null;
+  birthdayPromo: string | null;
+  birthdayPromoDays: number | null;
 }>) {
   const current = await dbGetSettings();
   if (_useMysql) {
@@ -2051,6 +2084,9 @@ export async function dbUpdateSettings(data: Partial<{
     if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
     if (data.backgroundColor !== undefined) patch.backgroundColor = data.backgroundColor;
     if (data.reminderTemplate !== undefined) patch.reminderTemplate = data.reminderTemplate;
+    if (data.birthdayTemplate !== undefined) patch.birthdayTemplate = data.birthdayTemplate;
+    if (data.birthdayPromo !== undefined) patch.birthdayPromo = data.birthdayPromo;
+    if (data.birthdayPromoDays !== undefined) patch.birthdayPromoDays = data.birthdayPromoDays;
     await getMysqlDb().update(salonSettingsTable).set(patch).where(eq(salonSettingsTable.id, current.id));
     return dbGetSettings();
   }
@@ -2064,6 +2100,9 @@ export async function dbUpdateSettings(data: Partial<{
   if (data.brandColor !== undefined) patch.brandColor = data.brandColor;
   if (data.backgroundColor !== undefined) patch.backgroundColor = data.backgroundColor;
   if (data.reminderTemplate !== undefined) patch.reminderTemplate = data.reminderTemplate;
+  if (data.birthdayTemplate !== undefined) patch.birthdayTemplate = data.birthdayTemplate;
+  if (data.birthdayPromo !== undefined) patch.birthdayPromo = data.birthdayPromo;
+  if (data.birthdayPromoDays !== undefined) patch.birthdayPromoDays = data.birthdayPromoDays;
   getSqliteDb().update(sqliteSalon).set(patch).where(eq(sqliteSalon.id, current.id)).run();
   return dbGetSettings();
 }

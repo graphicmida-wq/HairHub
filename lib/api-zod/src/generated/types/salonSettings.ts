@@ -23,4 +23,20 @@ export interface SalonSettings {
    * @maxLength 2000
    */
   reminderTemplate?: string | null;
+  /**
+   * Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text
+   * @maxLength 2000
+   */
+  birthdayTemplate?: string | null;
+  /**
+   * Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion
+   * @maxLength 300
+   */
+  birthdayPromo?: string | null;
+  /**
+   * Days after the birthday the promotion holds; null = 30
+   * @minimum 1
+   * @maximum 365
+   */
+  birthdayPromoDays?: number | null;
 }

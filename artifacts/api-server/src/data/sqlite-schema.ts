@@ -10,6 +10,10 @@ export const clients = sqliteTable("clients", {
   notes: text("notes"),
   allergies: text("allergies"),
   hairSpecs: text("hair_specs"),
+  birthdayGreetedAt: text("birthday_greeted_at"),
+  birthdayPromo: text("birthday_promo"),
+  birthdayPromoUntil: text("birthday_promo_until"),
+  birthdayPromoUsedAt: text("birthday_promo_used_at"),
 });
 
 export const services = sqliteTable("services", {
@@ -138,6 +142,9 @@ export const salonSettings = sqliteTable("salon_settings", {
   brandColor: text("brand_color"),
   backgroundColor: text("background_color"),
   reminderTemplate: text("reminder_template"),
+  birthdayTemplate: text("birthday_template"),
+  birthdayPromo: text("birthday_promo"),
+  birthdayPromoDays: integer("birthday_promo_days"),
 });
 
 export type Client = typeof clients.$inferSelect;

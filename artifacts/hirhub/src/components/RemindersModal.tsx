@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { addDays, format, subDays } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Cake, CalendarCheck, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import {
   useGetSettings,
   useListAppointments,
@@ -13,19 +13,19 @@ import {
 import { Modal } from './Modal';
 import { ReminderLink, ReminderNumberProblem, ReminderSentNote } from './Reminder';
 import { buildReminder, whenLabel } from '../lib/whatsapp';
+import { useAuth } from '../lib/auth-context';
+import { cn } from '../lib/utils';
+import { BirthdayReminders, useUpcomingBirthdays } from './BirthdayReminders';
 
 const ymd = (d: Date) => format(d, 'yyyy-MM-dd');
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
- * Agenda → Promemoria: the bookings of one day (tomorrow by default), one row
- * per client, to send the WhatsApp reminders one after the other.
+ * Promemoria → Appuntamenti: the bookings of one day (tomorrow by default), one
+ * row per client, to send the WhatsApp reminders one after the other.
  */
-export const RemindersModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+const AppointmentReminders = () => {
   const [day, setDay] = useState(() => ymd(addDays(new Date(), 1)));
-  useEffect(() => {
-    if (isOpen) setDay(ymd(addDays(new Date(), 1)));
-  }, [isOpen]);
 
   const { data: appointments = [] } = useListAppointments();
   const { data: clients = [] } = useListClients();
@@ -60,7 +60,6 @@ export const RemindersModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const navButton = 'p-2 text-stone-400 hover:text-stone-900 active:bg-stone-100 rounded-full transition-colors shrink-0 disabled:opacity-30 disabled:hover:text-stone-400';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Promemoria WhatsApp">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-1 -mx-2">
           <button
@@ -149,6 +148,63 @@ export const RemindersModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
         <p className="text-sm text-stone-500">
           WhatsApp si apre con il messaggio già scritto: controllalo e premi invio.
         </p>
+      </div>
+  );
+};
+
+export type RemindersTab = 'appuntamenti' | 'compleanni';
+
+/** The WhatsApp messages to send by hand: appointment reminders and birthday wishes */
+export const RemindersModal = ({
+  isOpen,
+  onClose,
+  initialTab = 'appuntamenti',
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialTab?: RemindersTab;
+}) => {
+  const { can } = useAuth();
+  const tabs = ([
+    can('agenda') && { key: 'appuntamenti' as const, label: 'Appuntamenti', icon: MessageCircle },
+    can('clienti') && { key: 'compleanni' as const, label: 'Compleanni', icon: Cake },
+  ].filter(Boolean)) as { key: RemindersTab; label: string; icon: typeof Cake }[];
+  const [tab, setTab] = useState<RemindersTab>(initialTab);
+  useEffect(() => {
+    if (isOpen) setTab(tabs.some(t => t.key === initialTab) ? initialTab : tabs[0]?.key ?? 'appuntamenti');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialTab]);
+  const birthdaysToSend = useUpcomingBirthdays().filter(b => !b.greeted && b.number.kind === 'ok').length;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Promemoria WhatsApp">
+      <div className="flex flex-col gap-4">
+        {tabs.length > 1 && (
+          <div role="tablist" className="flex bg-stone-100 rounded-lg p-0.5">
+            {tabs.map(t => (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.key}
+                onClick={() => setTab(t.key)}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                  tab === t.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800',
+                )}
+              >
+                <t.icon className="w-4 h-4" />
+                {t.label}
+                {t.key === 'compleanni' && birthdaysToSend > 0 && (
+                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-pink-500 text-white text-xs font-semibold flex items-center justify-center">
+                    {birthdaysToSend}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        {tab === 'compleanni' ? <BirthdayReminders /> : <AppointmentReminders />}
       </div>
     </Modal>
   );

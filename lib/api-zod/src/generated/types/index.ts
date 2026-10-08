@@ -44,6 +44,8 @@ export * from "./salonSettings";
 export * from "./service";
 export * from "./setAppointmentRemindersInput";
 export * from "./setBrandColorInput";
+export * from "./setClientBirthdayGreetingInput";
+export * from "./setClientBirthdayPromoUsedInput";
 export * from "./soldProductEntry";
 export * from "./staffMember";
 export * from "./stockMovement";

@@ -808,6 +808,56 @@ paths:
                 items:
                   $ref: "#/components/schemas/Appointment"
 
+  /client-birthday-greetings:
+    post:
+      operationId: setClientBirthdayGreeting
+      tags: [clients]
+      summary: Mark this year's birthday wishes as sent (recording the promotion promised) or clear the mark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetClientBirthdayGreetingInput"
+      responses:
+        "200":
+          description: The updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /client-birthday-promo:
+    post:
+      operationId: setClientBirthdayPromoUsed
+      tags: [clients]
+      summary: Mark the birthday promotion as used (or not)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetClientBirthdayPromoUsedInput"
+      responses:
+        "200":
+          description: The updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /settings:
     get:
       operationId: getSettings
@@ -1053,6 +1103,22 @@ components:
         hairSpecs:
           type: string
           nullable: true
+        birthdayGreetedAt:
+          type: string
+          nullable: true
+          description: "When this year's birthday wishes were sent (ISO timestamp)"
+        birthdayPromo:
+          type: string
+          nullable: true
+          description: "The birthday promotion promised in those wishes (snapshot of the salon's text)"
+        birthdayPromoUntil:
+          type: string
+          nullable: true
+          description: "Last day the promotion holds (YYYY-MM-DD)"
+        birthdayPromoUsedAt:
+          type: string
+          nullable: true
+          description: "When the promotion was used (ISO timestamp)"
       required:
         - id
         - firstName
@@ -2023,6 +2089,32 @@ components:
           type: string
           nullable: true
 
+    SetClientBirthdayGreetingInput:
+      type: object
+      properties:
+        clientId:
+          type: string
+        sent:
+          type: boolean
+        birthday:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+          description: "The birthday the wishes are for (YYYY-MM-DD); required when sent is true"
+      required:
+        - clientId
+        - sent
+
+    SetClientBirthdayPromoUsedInput:
+      type: object
+      properties:
+        clientId:
+          type: string
+        used:
+          type: boolean
+      required:
+        - clientId
+        - used
+
     SetAppointmentRemindersInput:
       type: object
       properties:
@@ -2072,5 +2164,21 @@ components:
           nullable: true
           maxLength: 2000
           description: "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text"
+        birthdayTemplate:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text"
+        birthdayPromo:
+          type: string
+          nullable: true
+          maxLength: 300
+          description: "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion"
+        birthdayPromoDays:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 365
+          description: "Days after the birthday the promotion holds; null = 30"
       required:
         - salonName

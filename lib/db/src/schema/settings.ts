@@ -13,6 +13,9 @@ export const salonSettingsTable = mysqlTable("salon_settings", {
   brandColor: varchar("brand_color", { length: 20 }),
   backgroundColor: varchar("background_color", { length: 20 }),
   reminderTemplate: text("reminder_template"),
+  birthdayTemplate: text("birthday_template"),
+  birthdayPromo: text("birthday_promo"),
+  birthdayPromoDays: int("birthday_promo_days"),
 });
 
 export const insertSettingsSchema = createInsertSchema(salonSettingsTable).omit({ id: true });

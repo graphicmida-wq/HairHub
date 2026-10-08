@@ -36,14 +36,19 @@ export const REMINDER_FIELDS = [
 export type ReminderKey = (typeof REMINDER_FIELDS)[number]['key'];
 export type ReminderValues = Record<ReminderKey, string>;
 
-export function fillReminder(template: string, values: ReminderValues): string {
+/** Replaces {word} with its value; unknown words stay as typed */
+export function fillTemplate(template: string, values: Record<string, string>): string {
   return template
     .replace(/\{(\w+)\}/g, (match, key: string) => {
       const k = key.toLowerCase();
-      return k in values ? values[k as ReminderKey] : match;
+      return k in values ? values[k] : match;
     })
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
+}
+
+export function fillReminder(template: string, values: ReminderValues): string {
+  return fillTemplate(template, values);
 }
 
 /** "oggi", "domani" or "lunedì 12 ottobre", as seen from the moment the message is written */

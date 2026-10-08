@@ -8,6 +8,7 @@ import { FontSizeCard } from '../components/FontSizeCard';
 import { ThemeCard } from '../components/ThemeCard';
 import { CatalogCard } from '../components/CatalogCard';
 import { ReminderTemplateCard } from '../components/ReminderTemplateCard';
+import { BirthdayTemplateCard } from '../components/BirthdayTemplateCard';
 import {
   BRAND_PRESETS,
   paletteFromCustomColor,
@@ -421,6 +422,8 @@ export const Settings = () => {
             </div>
 
             <ReminderTemplateCard />
+
+            <BirthdayTemplateCard />
 
             <FontSizeCard />
 

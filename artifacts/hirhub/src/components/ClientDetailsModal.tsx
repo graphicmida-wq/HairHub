@@ -12,6 +12,8 @@ import { it } from 'date-fns/locale';
 import { toast } from './Toast';
 import type { ClientFormulaProduct, ClientFormula } from '@workspace/api-client-react';
 import { ClientStats, ClientTimeline, useClientHistory } from './ClientHistory';
+import { BirthdayPromoBadge } from './BirthdayPromoBadge';
+import { ageOn, formatBirthday, parseBirthday } from '../lib/birthdays';
 
 interface FormulaFormState {
   name: string;
@@ -73,6 +75,7 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
 
   const client = clients.find(c => c.id === clientId);
   if (!client) return null;
+  const birthday = parseBirthday(client.dob);
 
   const clientFormulas = allFormulas.filter(f => f.clientId === client.id);
 
@@ -189,12 +192,17 @@ export const ClientDetailsModal = ({ isOpen, onClose, clientId, onEdit }: { isOp
             </button>
           </div>
 
-          {(client.dob || client.allergies || client.notes) && (
+          <BirthdayPromoBadge client={client} date={format(new Date(), 'yyyy-MM-dd')} />
+
+          {(birthday || client.allergies || client.notes) && (
             <div className="grid grid-cols-1 gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
-              {client.dob && (
+              {birthday && (
                 <div>
-                  <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider">Data di Nascita</span>
-                  <p className="text-sm font-medium text-stone-900 mt-0.5">{format(new Date(client.dob), 'd MMMM yyyy', { locale: it })}</p>
+                  <span className="text-xs uppercase font-semibold text-stone-400 tracking-wider">Compleanno</span>
+                  <p className="text-sm font-medium text-stone-900 mt-0.5">
+                    {formatBirthday(birthday)}
+                    {birthday.year && <span className="font-normal text-stone-500"> · {ageOn(birthday, new Date())} anni</span>}
+                  </p>
                 </div>
               )}
               {client.allergies && (

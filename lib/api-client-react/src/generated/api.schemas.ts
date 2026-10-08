@@ -57,6 +57,14 @@ export interface Client {
   notes?: string | null;
   allergies?: string | null;
   hairSpecs?: string | null;
+  /** When this year's birthday wishes were sent (ISO timestamp) */
+  birthdayGreetedAt?: string | null;
+  /** The birthday promotion promised in those wishes (snapshot of the salon's text) */
+  birthdayPromo?: string | null;
+  /** Last day the promotion holds (YYYY-MM-DD) */
+  birthdayPromoUntil?: string | null;
+  /** When the promotion was used (ISO timestamp) */
+  birthdayPromoUsedAt?: string | null;
 }
 
 export interface CreateClientInput {
@@ -559,6 +567,21 @@ export interface UpdateClientFormulaInput {
   notes?: string | null;
 }
 
+export interface SetClientBirthdayGreetingInput {
+  clientId: string;
+  sent: boolean;
+  /**
+   * The birthday the wishes are for (YYYY-MM-DD); required when sent is true
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  birthday?: string;
+}
+
+export interface SetClientBirthdayPromoUsedInput {
+  clientId: string;
+  used: boolean;
+}
+
 export interface SetAppointmentRemindersInput {
   /**
    * @minItems 1
@@ -585,6 +608,22 @@ export interface SalonSettings {
    * @maxLength 2000
    */
   reminderTemplate?: string | null;
+  /**
+   * Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text
+   * @maxLength 2000
+   */
+  birthdayTemplate?: string | null;
+  /**
+   * Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion
+   * @maxLength 300
+   */
+  birthdayPromo?: string | null;
+  /**
+   * Days after the birthday the promotion holds; null = 30
+   * @minimum 1
+   * @maximum 365
+   */
+  birthdayPromoDays?: number | null;
 }
 
 export type ListStockMovementsParams = {

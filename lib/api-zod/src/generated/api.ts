@@ -28,6 +28,24 @@ export const ListClientsResponseItem = zod.object({
   notes: zod.string().nullish(),
   allergies: zod.string().nullish(),
   hairSpecs: zod.string().nullish(),
+  birthdayGreetedAt: zod
+    .string()
+    .nullish()
+    .describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: zod
+    .string()
+    .nullish()
+    .describe(
+      "The birthday promotion promised in those wishes (snapshot of the salon's text)",
+    ),
+  birthdayPromoUntil: zod
+    .string()
+    .nullish()
+    .describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: zod
+    .string()
+    .nullish()
+    .describe("When the promotion was used (ISO timestamp)"),
 });
 export const ListClientsResponse = zod.array(ListClientsResponseItem);
 
@@ -62,6 +80,24 @@ export const GetClientResponse = zod.object({
   notes: zod.string().nullish(),
   allergies: zod.string().nullish(),
   hairSpecs: zod.string().nullish(),
+  birthdayGreetedAt: zod
+    .string()
+    .nullish()
+    .describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: zod
+    .string()
+    .nullish()
+    .describe(
+      "The birthday promotion promised in those wishes (snapshot of the salon's text)",
+    ),
+  birthdayPromoUntil: zod
+    .string()
+    .nullish()
+    .describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: zod
+    .string()
+    .nullish()
+    .describe("When the promotion was used (ISO timestamp)"),
 });
 
 /**
@@ -92,6 +128,24 @@ export const UpdateClientResponse = zod.object({
   notes: zod.string().nullish(),
   allergies: zod.string().nullish(),
   hairSpecs: zod.string().nullish(),
+  birthdayGreetedAt: zod
+    .string()
+    .nullish()
+    .describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: zod
+    .string()
+    .nullish()
+    .describe(
+      "The birthday promotion promised in those wishes (snapshot of the salon's text)",
+    ),
+  birthdayPromoUntil: zod
+    .string()
+    .nullish()
+    .describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: zod
+    .string()
+    .nullish()
+    .describe("When the promotion was used (ISO timestamp)"),
 });
 
 /**
@@ -1323,9 +1377,102 @@ export const SetAppointmentRemindersResponse = zod.array(
 );
 
 /**
+ * @summary Mark this year's birthday wishes as sent (recording the promotion promised) or clear the mark
+ */
+export const setClientBirthdayGreetingBodyBirthdayRegExp = new RegExp(
+  "^\\d{4}-\\d{2}-\\d{2}$",
+);
+
+export const SetClientBirthdayGreetingBody = zod.object({
+  clientId: zod.string(),
+  sent: zod.boolean(),
+  birthday: zod
+    .string()
+    .regex(setClientBirthdayGreetingBodyBirthdayRegExp)
+    .optional()
+    .describe(
+      "The birthday the wishes are for (YYYY-MM-DD); required when sent is true",
+    ),
+});
+
+export const SetClientBirthdayGreetingResponse = zod.object({
+  id: zod.string(),
+  firstName: zod.string(),
+  lastName: zod.string(),
+  phone: zod.string(),
+  email: zod.string(),
+  dob: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  allergies: zod.string().nullish(),
+  hairSpecs: zod.string().nullish(),
+  birthdayGreetedAt: zod
+    .string()
+    .nullish()
+    .describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: zod
+    .string()
+    .nullish()
+    .describe(
+      "The birthday promotion promised in those wishes (snapshot of the salon's text)",
+    ),
+  birthdayPromoUntil: zod
+    .string()
+    .nullish()
+    .describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: zod
+    .string()
+    .nullish()
+    .describe("When the promotion was used (ISO timestamp)"),
+});
+
+/**
+ * @summary Mark the birthday promotion as used (or not)
+ */
+export const SetClientBirthdayPromoUsedBody = zod.object({
+  clientId: zod.string(),
+  used: zod.boolean(),
+});
+
+export const SetClientBirthdayPromoUsedResponse = zod.object({
+  id: zod.string(),
+  firstName: zod.string(),
+  lastName: zod.string(),
+  phone: zod.string(),
+  email: zod.string(),
+  dob: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  allergies: zod.string().nullish(),
+  hairSpecs: zod.string().nullish(),
+  birthdayGreetedAt: zod
+    .string()
+    .nullish()
+    .describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: zod
+    .string()
+    .nullish()
+    .describe(
+      "The birthday promotion promised in those wishes (snapshot of the salon's text)",
+    ),
+  birthdayPromoUntil: zod
+    .string()
+    .nullish()
+    .describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: zod
+    .string()
+    .nullish()
+    .describe("When the promotion was used (ISO timestamp)"),
+});
+
+/**
  * @summary Get salon settings
  */
 export const getSettingsResponseReminderTemplateMax = 2000;
+
+export const getSettingsResponseBirthdayTemplateMax = 2000;
+
+export const getSettingsResponseBirthdayPromoMax = 300;
+
+export const getSettingsResponseBirthdayPromoDaysMax = 365;
 
 export const GetSettingsResponse = zod.object({
   salonName: zod.string(),
@@ -1356,12 +1503,38 @@ export const GetSettingsResponse = zod.object({
     .describe(
       "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text",
     ),
+  birthdayTemplate: zod
+    .string()
+    .max(getSettingsResponseBirthdayTemplateMax)
+    .nullish()
+    .describe(
+      "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text",
+    ),
+  birthdayPromo: zod
+    .string()
+    .max(getSettingsResponseBirthdayPromoMax)
+    .nullish()
+    .describe(
+      "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion",
+    ),
+  birthdayPromoDays: zod
+    .number()
+    .min(1)
+    .max(getSettingsResponseBirthdayPromoDaysMax)
+    .nullish()
+    .describe("Days after the birthday the promotion holds; null = 30"),
 });
 
 /**
  * @summary Update salon settings
  */
 export const updateSettingsBodyReminderTemplateMax = 2000;
+
+export const updateSettingsBodyBirthdayTemplateMax = 2000;
+
+export const updateSettingsBodyBirthdayPromoMax = 300;
+
+export const updateSettingsBodyBirthdayPromoDaysMax = 365;
 
 export const UpdateSettingsBody = zod.object({
   salonName: zod.string(),
@@ -1392,9 +1565,35 @@ export const UpdateSettingsBody = zod.object({
     .describe(
       "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text",
     ),
+  birthdayTemplate: zod
+    .string()
+    .max(updateSettingsBodyBirthdayTemplateMax)
+    .nullish()
+    .describe(
+      "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text",
+    ),
+  birthdayPromo: zod
+    .string()
+    .max(updateSettingsBodyBirthdayPromoMax)
+    .nullish()
+    .describe(
+      "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion",
+    ),
+  birthdayPromoDays: zod
+    .number()
+    .min(1)
+    .max(updateSettingsBodyBirthdayPromoDaysMax)
+    .nullish()
+    .describe("Days after the birthday the promotion holds; null = 30"),
 });
 
 export const updateSettingsResponseReminderTemplateMax = 2000;
+
+export const updateSettingsResponseBirthdayTemplateMax = 2000;
+
+export const updateSettingsResponseBirthdayPromoMax = 300;
+
+export const updateSettingsResponseBirthdayPromoDaysMax = 365;
 
 export const UpdateSettingsResponse = zod.object({
   salonName: zod.string(),
@@ -1425,6 +1624,26 @@ export const UpdateSettingsResponse = zod.object({
     .describe(
       "WhatsApp reminder text with {nome}, {quando}, {ora}… placeholders; null = the app's default text",
     ),
+  birthdayTemplate: zod
+    .string()
+    .max(updateSettingsResponseBirthdayTemplateMax)
+    .nullish()
+    .describe(
+      "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text",
+    ),
+  birthdayPromo: zod
+    .string()
+    .max(updateSettingsResponseBirthdayPromoMax)
+    .nullish()
+    .describe(
+      "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion",
+    ),
+  birthdayPromoDays: zod
+    .number()
+    .min(1)
+    .max(updateSettingsResponseBirthdayPromoDaysMax)
+    .nullish()
+    .describe("Days after the birthday the promotion holds; null = 30"),
 });
 
 /**

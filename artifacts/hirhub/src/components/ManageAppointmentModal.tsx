@@ -11,6 +11,7 @@ import { addMinsToTime } from '../lib/utils';
 import { ClientInfoPanel } from './ClientInfoPanel';
 import { buildReminder } from '../lib/whatsapp';
 import { ReminderLink, ReminderNumberProblem, ReminderSentNote } from './Reminder';
+import { BirthdayPromoBadge } from './BirthdayPromoBadge';
 
 export const ManageAppointmentModal = ({
   isOpen,
@@ -155,6 +156,8 @@ export const ManageAppointmentModal = ({
             {appointment.status}
           </span>
         </div>
+
+        <BirthdayPromoBadge client={client} date={appointment.date} />
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-stone-50 p-3 rounded-xl border border-stone-100 flex items-center gap-3">

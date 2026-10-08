@@ -51187,7 +51187,12 @@ var init_clients = __esm({
       dob: varchar("dob", { length: 10 }),
       notes: text2("notes"),
       allergies: text2("allergies"),
-      hairSpecs: text2("hair_specs")
+      hairSpecs: text2("hair_specs"),
+      // Birthday wishes: when they were sent, the promotion promised then, until when it holds, when it was used
+      birthdayGreetedAt: varchar("birthday_greeted_at", { length: 40 }),
+      birthdayPromo: text2("birthday_promo"),
+      birthdayPromoUntil: varchar("birthday_promo_until", { length: 10 }),
+      birthdayPromoUsedAt: varchar("birthday_promo_used_at", { length: 40 })
     });
     insertClientSchema = createInsertSchema(clientsTable).omit({ id: true });
     selectClientSchema = createSelectSchema(clientsTable);
@@ -51310,7 +51315,10 @@ var init_settings = __esm({
       email: varchar("email", { length: 255 }),
       brandColor: varchar("brand_color", { length: 20 }),
       backgroundColor: varchar("background_color", { length: 20 }),
-      reminderTemplate: text2("reminder_template")
+      reminderTemplate: text2("reminder_template"),
+      birthdayTemplate: text2("birthday_template"),
+      birthdayPromo: text2("birthday_promo"),
+      birthdayPromoDays: int("birthday_promo_days")
     });
     insertSettingsSchema = createInsertSchema(salonSettingsTable).omit({ id: true });
     selectSettingsSchema = createSelectSchema(salonSettingsTable);
@@ -55844,7 +55852,13 @@ var ListClientsResponseItem = objectType({
   dob: stringType().nullish(),
   notes: stringType().nullish(),
   allergies: stringType().nullish(),
-  hairSpecs: stringType().nullish()
+  hairSpecs: stringType().nullish(),
+  birthdayGreetedAt: stringType().nullish().describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: stringType().nullish().describe(
+    "The birthday promotion promised in those wishes (snapshot of the salon's text)"
+  ),
+  birthdayPromoUntil: stringType().nullish().describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: stringType().nullish().describe("When the promotion was used (ISO timestamp)")
 });
 var ListClientsResponse = arrayType(ListClientsResponseItem);
 var CreateClientBody = objectType({
@@ -55869,7 +55883,13 @@ var GetClientResponse = objectType({
   dob: stringType().nullish(),
   notes: stringType().nullish(),
   allergies: stringType().nullish(),
-  hairSpecs: stringType().nullish()
+  hairSpecs: stringType().nullish(),
+  birthdayGreetedAt: stringType().nullish().describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: stringType().nullish().describe(
+    "The birthday promotion promised in those wishes (snapshot of the salon's text)"
+  ),
+  birthdayPromoUntil: stringType().nullish().describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: stringType().nullish().describe("When the promotion was used (ISO timestamp)")
 });
 var UpdateClientParams = objectType({
   id: coerce.string()
@@ -55893,7 +55913,13 @@ var UpdateClientResponse = objectType({
   dob: stringType().nullish(),
   notes: stringType().nullish(),
   allergies: stringType().nullish(),
-  hairSpecs: stringType().nullish()
+  hairSpecs: stringType().nullish(),
+  birthdayGreetedAt: stringType().nullish().describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: stringType().nullish().describe(
+    "The birthday promotion promised in those wishes (snapshot of the salon's text)"
+  ),
+  birthdayPromoUntil: stringType().nullish().describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: stringType().nullish().describe("When the promotion was used (ISO timestamp)")
 });
 var DeleteClientParams = objectType({
   id: coerce.string()
@@ -56646,7 +56672,58 @@ var SetAppointmentRemindersResponseItem = objectType({
 var SetAppointmentRemindersResponse = arrayType(
   SetAppointmentRemindersResponseItem
 );
+var setClientBirthdayGreetingBodyBirthdayRegExp = new RegExp(
+  "^\\d{4}-\\d{2}-\\d{2}$"
+);
+var SetClientBirthdayGreetingBody = objectType({
+  clientId: stringType(),
+  sent: booleanType(),
+  birthday: stringType().regex(setClientBirthdayGreetingBodyBirthdayRegExp).optional().describe(
+    "The birthday the wishes are for (YYYY-MM-DD); required when sent is true"
+  )
+});
+var SetClientBirthdayGreetingResponse = objectType({
+  id: stringType(),
+  firstName: stringType(),
+  lastName: stringType(),
+  phone: stringType(),
+  email: stringType(),
+  dob: stringType().nullish(),
+  notes: stringType().nullish(),
+  allergies: stringType().nullish(),
+  hairSpecs: stringType().nullish(),
+  birthdayGreetedAt: stringType().nullish().describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: stringType().nullish().describe(
+    "The birthday promotion promised in those wishes (snapshot of the salon's text)"
+  ),
+  birthdayPromoUntil: stringType().nullish().describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: stringType().nullish().describe("When the promotion was used (ISO timestamp)")
+});
+var SetClientBirthdayPromoUsedBody = objectType({
+  clientId: stringType(),
+  used: booleanType()
+});
+var SetClientBirthdayPromoUsedResponse = objectType({
+  id: stringType(),
+  firstName: stringType(),
+  lastName: stringType(),
+  phone: stringType(),
+  email: stringType(),
+  dob: stringType().nullish(),
+  notes: stringType().nullish(),
+  allergies: stringType().nullish(),
+  hairSpecs: stringType().nullish(),
+  birthdayGreetedAt: stringType().nullish().describe("When this year's birthday wishes were sent (ISO timestamp)"),
+  birthdayPromo: stringType().nullish().describe(
+    "The birthday promotion promised in those wishes (snapshot of the salon's text)"
+  ),
+  birthdayPromoUntil: stringType().nullish().describe("Last day the promotion holds (YYYY-MM-DD)"),
+  birthdayPromoUsedAt: stringType().nullish().describe("When the promotion was used (ISO timestamp)")
+});
 var getSettingsResponseReminderTemplateMax = 2e3;
+var getSettingsResponseBirthdayTemplateMax = 2e3;
+var getSettingsResponseBirthdayPromoMax = 300;
+var getSettingsResponseBirthdayPromoDaysMax = 365;
 var GetSettingsResponse = objectType({
   salonName: stringType(),
   logoUrl: stringType().nullish().describe("Logo image URL or data URL (e.g. data:image/png;base64,...)"),
@@ -56662,9 +56739,19 @@ var GetSettingsResponse = objectType({
   ),
   reminderTemplate: stringType().max(getSettingsResponseReminderTemplateMax).nullish().describe(
     "WhatsApp reminder text with {nome}, {quando}, {ora}\u2026 placeholders; null = the app's default text"
-  )
+  ),
+  birthdayTemplate: stringType().max(getSettingsResponseBirthdayTemplateMax).nullish().describe(
+    "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text"
+  ),
+  birthdayPromo: stringType().max(getSettingsResponseBirthdayPromoMax).nullish().describe(
+    "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion"
+  ),
+  birthdayPromoDays: numberType().min(1).max(getSettingsResponseBirthdayPromoDaysMax).nullish().describe("Days after the birthday the promotion holds; null = 30")
 });
 var updateSettingsBodyReminderTemplateMax = 2e3;
+var updateSettingsBodyBirthdayTemplateMax = 2e3;
+var updateSettingsBodyBirthdayPromoMax = 300;
+var updateSettingsBodyBirthdayPromoDaysMax = 365;
 var UpdateSettingsBody = objectType({
   salonName: stringType(),
   logoUrl: stringType().nullish().describe("Logo image URL or data URL (e.g. data:image/png;base64,...)"),
@@ -56680,9 +56767,19 @@ var UpdateSettingsBody = objectType({
   ),
   reminderTemplate: stringType().max(updateSettingsBodyReminderTemplateMax).nullish().describe(
     "WhatsApp reminder text with {nome}, {quando}, {ora}\u2026 placeholders; null = the app's default text"
-  )
+  ),
+  birthdayTemplate: stringType().max(updateSettingsBodyBirthdayTemplateMax).nullish().describe(
+    "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text"
+  ),
+  birthdayPromo: stringType().max(updateSettingsBodyBirthdayPromoMax).nullish().describe(
+    "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion"
+  ),
+  birthdayPromoDays: numberType().min(1).max(updateSettingsBodyBirthdayPromoDaysMax).nullish().describe("Days after the birthday the promotion holds; null = 30")
 });
 var updateSettingsResponseReminderTemplateMax = 2e3;
+var updateSettingsResponseBirthdayTemplateMax = 2e3;
+var updateSettingsResponseBirthdayPromoMax = 300;
+var updateSettingsResponseBirthdayPromoDaysMax = 365;
 var UpdateSettingsResponse = objectType({
   salonName: stringType(),
   logoUrl: stringType().nullish().describe("Logo image URL or data URL (e.g. data:image/png;base64,...)"),
@@ -56698,7 +56795,14 @@ var UpdateSettingsResponse = objectType({
   ),
   reminderTemplate: stringType().max(updateSettingsResponseReminderTemplateMax).nullish().describe(
     "WhatsApp reminder text with {nome}, {quando}, {ora}\u2026 placeholders; null = the app's default text"
-  )
+  ),
+  birthdayTemplate: stringType().max(updateSettingsResponseBirthdayTemplateMax).nullish().describe(
+    "Birthday wishes text with {nome}, {salone}, {promozione}, {scadenza}; null = the app's default text"
+  ),
+  birthdayPromo: stringType().max(updateSettingsResponseBirthdayPromoMax).nullish().describe(
+    "Birthday promotion, e.g. 'uno sconto del 20% su un trattamento'; null = no promotion"
+  ),
+  birthdayPromoDays: numberType().min(1).max(updateSettingsResponseBirthdayPromoDaysMax).nullish().describe("Days after the birthday the promotion holds; null = 30")
 });
 var LoginBody = objectType({
   username: stringType(),
@@ -59352,7 +59456,11 @@ var clients = sqliteTable("clients", {
   dob: text("dob"),
   notes: text("notes"),
   allergies: text("allergies"),
-  hairSpecs: text("hair_specs")
+  hairSpecs: text("hair_specs"),
+  birthdayGreetedAt: text("birthday_greeted_at"),
+  birthdayPromo: text("birthday_promo"),
+  birthdayPromoUntil: text("birthday_promo_until"),
+  birthdayPromoUsedAt: text("birthday_promo_used_at")
 });
 var services = sqliteTable("services", {
   id: text("id").primaryKey(),
@@ -59466,7 +59574,10 @@ var salonSettings = sqliteTable("salon_settings", {
   email: text("email"),
   brandColor: text("brand_color"),
   backgroundColor: text("background_color"),
-  reminderTemplate: text("reminder_template")
+  reminderTemplate: text("reminder_template"),
+  birthdayTemplate: text("birthday_template"),
+  birthdayPromo: text("birthday_promo"),
+  birthdayPromoDays: integer("birthday_promo_days")
 });
 
 // src/data/db.ts
@@ -59502,7 +59613,11 @@ function createSqliteTables(sqlite) {
       dob TEXT,
       notes TEXT,
       allergies TEXT,
-      hair_specs TEXT
+      hair_specs TEXT,
+      birthday_greeted_at TEXT,
+      birthday_promo TEXT,
+      birthday_promo_until TEXT,
+      birthday_promo_used_at TEXT
     );
     CREATE TABLE IF NOT EXISTS services (
       id TEXT PRIMARY KEY,
@@ -59571,7 +59686,10 @@ function createSqliteTables(sqlite) {
       email TEXT,
       brand_color TEXT,
       background_color TEXT,
-      reminder_template TEXT
+      reminder_template TEXT,
+      birthday_template TEXT,
+      birthday_promo TEXT,
+      birthday_promo_days INTEGER
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -59707,6 +59825,34 @@ function createSqliteTables(sqlite) {
   } catch {
   }
   try {
+    sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_greeted_at TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_promo TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_promo_until TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE clients ADD COLUMN birthday_promo_used_at TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE salon_settings ADD COLUMN birthday_template TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE salon_settings ADD COLUMN birthday_promo TEXT");
+  } catch {
+  }
+  try {
+    sqlite.exec("ALTER TABLE salon_settings ADD COLUMN birthday_promo_days INTEGER");
+  } catch {
+  }
+  try {
     sqlite.exec(`CREATE TABLE IF NOT EXISTS client_formulas (
     id TEXT PRIMARY KEY,
     client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -59797,7 +59943,11 @@ async function initMysql() {
       dob VARCHAR(10),
       notes TEXT,
       allergies TEXT,
-      hair_specs TEXT
+      hair_specs TEXT,
+      birthday_greeted_at VARCHAR(40),
+      birthday_promo TEXT,
+      birthday_promo_until VARCHAR(10),
+      birthday_promo_used_at VARCHAR(40)
     )
   `);
   await db.execute(sql`
@@ -59882,7 +60032,10 @@ async function initMysql() {
       email VARCHAR(255),
       brand_color VARCHAR(20),
       background_color VARCHAR(20),
-      reminder_template TEXT
+      reminder_template TEXT,
+      birthday_template TEXT,
+      birthday_promo TEXT,
+      birthday_promo_days INT
     )
   `);
   try {
@@ -59984,6 +60137,10 @@ async function initMysql() {
   await migrate("ALTER TABLE clients ADD COLUMN notes TEXT");
   await migrate("ALTER TABLE clients ADD COLUMN allergies TEXT");
   await migrate("ALTER TABLE clients ADD COLUMN hair_specs TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_greeted_at VARCHAR(40)");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_promo TEXT");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_promo_until VARCHAR(10)");
+  await migrate("ALTER TABLE clients ADD COLUMN birthday_promo_used_at VARCHAR(40)");
   await migrate("ALTER TABLE services ADD COLUMN color VARCHAR(9) NOT NULL DEFAULT '#94a3b8'");
   await migrate("ALTER TABLE products ADD COLUMN price DECIMAL(10,2) NOT NULL DEFAULT 0");
   await migrate("ALTER TABLE products ADD COLUMN unit_size DECIMAL(10,2)");
@@ -60003,6 +60160,9 @@ async function initMysql() {
   await migrate("ALTER TABLE salon_settings ADD COLUMN brand_color VARCHAR(20)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN background_color VARCHAR(20)");
   await migrate("ALTER TABLE salon_settings ADD COLUMN reminder_template TEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN birthday_template TEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN birthday_promo TEXT");
+  await migrate("ALTER TABLE salon_settings ADD COLUMN birthday_promo_days INT");
   await migrate("ALTER TABLE appointments ADD COLUMN service_ids JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN service_prices JSON");
   await migrate("ALTER TABLE appointments ADD COLUMN service_list_prices JSON");
@@ -61115,6 +61275,9 @@ async function dbUpdateSettings(data) {
     if (data.brandColor !== void 0) patch2.brandColor = data.brandColor;
     if (data.backgroundColor !== void 0) patch2.backgroundColor = data.backgroundColor;
     if (data.reminderTemplate !== void 0) patch2.reminderTemplate = data.reminderTemplate;
+    if (data.birthdayTemplate !== void 0) patch2.birthdayTemplate = data.birthdayTemplate;
+    if (data.birthdayPromo !== void 0) patch2.birthdayPromo = data.birthdayPromo;
+    if (data.birthdayPromoDays !== void 0) patch2.birthdayPromoDays = data.birthdayPromoDays;
     await getMysqlDb().update(salonSettingsTable2).set(patch2).where(eq(salonSettingsTable2.id, current.id));
     return dbGetSettings();
   }
@@ -61128,6 +61291,9 @@ async function dbUpdateSettings(data) {
   if (data.brandColor !== void 0) patch.brandColor = data.brandColor;
   if (data.backgroundColor !== void 0) patch.backgroundColor = data.backgroundColor;
   if (data.reminderTemplate !== void 0) patch.reminderTemplate = data.reminderTemplate;
+  if (data.birthdayTemplate !== void 0) patch.birthdayTemplate = data.birthdayTemplate;
+  if (data.birthdayPromo !== void 0) patch.birthdayPromo = data.birthdayPromo;
+  if (data.birthdayPromoDays !== void 0) patch.birthdayPromoDays = data.birthdayPromoDays;
   getSqliteDb().update(salonSettings).set(patch).where(eq(salonSettings.id, current.id)).run();
   return dbGetSettings();
 }
@@ -61330,6 +61496,70 @@ router3.put("/clients/:id", async (req, res) => {
   const parsed = UpdateClientResponse.safeParse(updated);
   if (!parsed.success) {
     req.log.error({ err: parsed.error }, "Response schema mismatch on PUT /clients/:id");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
+});
+var DEFAULT_BIRTHDAY_PROMO_DAYS = 30;
+function addDaysYmd(ymd, days) {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+router3.post("/client-birthday-greetings", async (req, res) => {
+  const body = SetClientBirthdayGreetingBody.safeParse(req.body);
+  if (!body.success || body.data.sent && !body.data.birthday) {
+    res.status(400).json({ message: body.success ? "Missing birthday" : body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  if (!await dbGetClient(body.data.clientId)) {
+    res.status(404).json({ message: "Client not found" });
+    return;
+  }
+  let patch;
+  if (body.data.sent) {
+    const settings = await dbGetSettings();
+    const promo = settings.birthdayPromo?.trim() || null;
+    const days = settings.birthdayPromoDays ?? DEFAULT_BIRTHDAY_PROMO_DAYS;
+    patch = {
+      birthdayGreetedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      birthdayPromo: promo,
+      birthdayPromoUntil: promo ? addDaysYmd(body.data.birthday, days) : null,
+      birthdayPromoUsedAt: null
+    };
+  } else {
+    patch = { birthdayGreetedAt: null, birthdayPromo: null, birthdayPromoUntil: null, birthdayPromoUsedAt: null };
+  }
+  const updated = await dbUpdateClient(body.data.clientId, patch);
+  const parsed = SetClientBirthdayGreetingResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /client-birthday-greetings");
+    res.status(500).json({ message: "Internal server error" });
+    return;
+  }
+  res.json(parsed.data);
+});
+router3.post("/client-birthday-promo", async (req, res) => {
+  const body = SetClientBirthdayPromoUsedBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ message: body.error.issues[0]?.message ?? "Invalid request body" });
+    return;
+  }
+  const client = await dbGetClient(body.data.clientId);
+  if (!client) {
+    res.status(404).json({ message: "Client not found" });
+    return;
+  }
+  if (!client.birthdayPromo) {
+    res.status(400).json({ message: "Nessuna promozione di compleanno per questa cliente" });
+    return;
+  }
+  const updated = await dbUpdateClient(body.data.clientId, {
+    birthdayPromoUsedAt: body.data.used ? (/* @__PURE__ */ new Date()).toISOString() : null
+  });
+  const parsed = SetClientBirthdayPromoUsedResponse.safeParse(updated);
+  if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Response schema mismatch on POST /client-birthday-promo");
     res.status(500).json({ message: "Internal server error" });
     return;
   }

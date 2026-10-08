@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { BirthdayInput } from './BirthdayInput';
 import { useListClients, useUpdateClient, useDeleteClient, getListClientsQueryKey, getListAppointmentsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from './Toast';
@@ -92,19 +93,15 @@ export const EditClientModal = ({ isOpen, onClose, clientId }: { isOpen: boolean
             onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
             className={INPUT} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className={LABEL}>Data di Nascita</label>
-            <input type="date" value={formData.dob}
-              onChange={e => setFormData(p => ({ ...p, dob: e.target.value }))}
-              className={INPUT} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className={LABEL}>Email</label>
-            <input type="email" value={formData.email}
-              onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-              className={INPUT} />
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className={LABEL}>Compleanno <span className="font-normal text-stone-400">(l'anno è facoltativo)</span></label>
+          <BirthdayInput value={formData.dob} onChange={dob => setFormData(p => ({ ...p, dob }))} inputClass={INPUT} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className={LABEL}>Email</label>
+          <input type="email" value={formData.email}
+            onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+            className={INPUT} />
         </div>
         <div className="flex flex-col gap-1">
           <label className={LABEL}>Allergie / Intolleranze</label>

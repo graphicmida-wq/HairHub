@@ -6,7 +6,7 @@ import {
   Loader2, Package2, TrendingUp, TrendingDown,
   UserPlus, Scissors, CalendarDays, Calendar,
   Clock, ChevronRight, MoreHorizontal, ShoppingBag,
-  BarChart3, type LucideIcon,
+  BarChart3, Cake, CheckCircle2, type LucideIcon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format, isToday, isTomorrow } from 'date-fns';
@@ -19,6 +19,10 @@ import { TREND_MONTHS, useKpiTrends } from '../lib/useKpiTrends';
 import { Sparkline } from '../components/Sparkline';
 import { useAuth } from '../lib/auth-context';
 import { GuideLink } from '../components/GuideLink';
+import { useListClients } from '@workspace/api-client-react';
+import { RemindersModal } from '../components/RemindersModal';
+import { ageLine, useUpcomingBirthdays } from '../components/BirthdayReminders';
+import { dayLabel, parseBirthday } from '../lib/birthdays';
 
 const CARD_BORDER = 'var(--color-card-border)';
 const CARD_SHADOW = '0 2px 12px rgba(92,88,112,0.04)';
@@ -33,6 +37,86 @@ const PAGE_MUTED = 'var(--color-on-page-muted)';
 const PAGE_LINK = 'var(--color-on-page-link)';
 // "Prossimi appuntamenti" is a quick glance: the next few, the rest is in the Agenda
 const MAX_UPCOMING = 5;
+
+const MAX_BIRTHDAYS = 5;
+
+/** Birthdays of the coming days, with the way to send the wishes (Promemoria → Compleanni) */
+const BirthdaysPanel = () => {
+  const list = useUpcomingBirthdays();
+  const [open, setOpen] = React.useState(false);
+  const shown = list.slice(0, MAX_BIRTHDAYS);
+  const more = list.length - shown.length;
+  return (
+    <section className="dash-panel">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif', color: PAGE_HEADING }}>
+          <span className="premium-only section-icon"><Cake className="w-4 h-4" /></span>
+          Compleanni
+        </h2>
+        {list.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+            style={{ color: PAGE_LINK }}
+          >
+            Manda gli auguri <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW }}>
+        {list.length === 0 ? (
+          <div className="p-6 text-center text-sm" style={{ color: TEXT_MUTED }}>
+            Nessun compleanno nei prossimi 7 giorni.
+          </div>
+        ) : (
+          <div className="py-0.5">
+            {shown.map(b => (
+              <div
+                key={b.client.id + b.date}
+                role="button"
+                tabIndex={0}
+                onClick={() => setOpen(true)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
+                className="flex items-center p-3 mx-1 my-0.5 rounded-xl transition-colors cursor-pointer"
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-card-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <div className="w-20 pr-3 mr-3 shrink-0 text-sm font-semibold" style={{ borderRight: `1px solid ${CARD_BORDER}`, color: b.offset === 0 ? 'var(--color-brand-primary)' : TEXT_HEADING }}>
+                  {Math.abs(b.offset) <= 1
+                    ? dayLabel(b.date, b.offset)
+                    : format(new Date(b.date + 'T12:00:00'), 'EEE d', { locale: it }).replace(/^./, c => c.toUpperCase())}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate" style={{ color: TEXT_HEADING }}>
+                    {b.client.firstName} {b.client.lastName}
+                  </p>
+                  {ageLine(b) && <p className="text-xs truncate" style={{ color: TEXT_BODY }}>{ageLine(b)}</p>}
+                </div>
+                {b.greeted && (
+                  <span className="flex items-center gap-1 text-xs font-medium text-emerald-700 shrink-0 ml-2">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Auguri inviati
+                  </span>
+                )}
+              </div>
+            ))}
+            {more > 0 && (
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors hover:bg-stone-50"
+                style={{ borderTop: `1px solid ${CARD_BORDER}`, color: 'var(--color-brand-primary)' }}
+              >
+                Vedi tutti <span style={{ color: TEXT_MUTED }}>· altri {more}</span> <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <RemindersModal isOpen={open} onClose={() => setOpen(false)} initialTab="compleanni" />
+    </section>
+  );
+};
 
 const KpiCard = ({
   icon: Icon,
@@ -116,6 +200,8 @@ export const Dashboard = () => {
   const premium = useTheme() === 'premium';
   const trends = useKpiTrends(premium);
   const { can } = useAuth();
+  const { data: allClients = [] } = useListClients();
+  const anyBirthday = allClients.some(c => parseBirthday(c.dob));
   const quickActions = [
     can('clienti') && { label: 'Nuovo Cliente', icon: Users, modal: 'isNewClientOpen' as const },
     can('magazzino') && { label: 'Nuovo Prodotto', icon: Plus, modal: 'isNewProductOpen' as const },
@@ -410,6 +496,8 @@ export const Dashboard = () => {
             </div>
 
             <div className="flex flex-col gap-6">
+
+              {can('clienti') && anyBirthday && <BirthdaysPanel />}
 
               <section className="dash-panel">
                 <div className="flex items-center justify-between mb-4">
